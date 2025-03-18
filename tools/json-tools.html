@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Tools - Multi-Tools</title>
+    <meta name="description" content="Format, validate, and transform JSON data with real-time preview and error detection.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 992px) {
+            .editor-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--background-color);
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .editor-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .editor-content {
+            position: relative;
+            flex-grow: 1;
+            min-height: 400px;
+        }
+
+        .json-input {
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+            padding: 1rem;
+            border: none;
+            background: transparent;
+            font-family: monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            resize: none;
+            color: var(--text-primary);
+            white-space: pre;
+            tab-size: 4;
+        }
+
+        .json-input:focus {
+            outline: none;
+        }
+
+        .json-output {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            white-space: pre;
+            tab-size: 4;
+        }
+
+        .tools-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            background: var(--background-color);
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .tool-icon {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+        .validation-status {
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: var(--border-radius);
+            display: none;
+        }
+
+        .validation-status.valid {
+            display: block;
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+
+        .validation-status.invalid {
+            display: block;
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+
+        .path-input {
+            font-family: monospace;
+        }
+
+        .transform-result {
+            font-family: monospace;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: var(--border-radius);
+            display: none;
+        }
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+            background: var(--background-color);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        @keyframes copied {
+            0%, 100% { opacity: 0; }
+            10%, 90% { opacity: 1; }
+        }
+
+        .copied-tooltip {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            animation: copied 2s ease-in-out;
+            pointer-events: none;
+        }
+
+        .error-line {
+            background: rgba(220, 53, 69, 0.1);
+        }
+
+        .string { color: #28a745; }
+        .number { color: #007bff; }
+        .boolean { color: #dc3545; }
+        .null { color: #6c757d; }
+        .key { color: #6610f2; }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-code me-2"></i>
+                            JSON Tools
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tools Panel -->
+                        <div class="tools-panel">
+                            <!-- Format Options -->
+                            <div class="tool-card">
+                                <div class="tool-header">
+                                    <i class="fas fa-indent tool-icon"></i>
+                                    <h6 class="mb-0">Format Options</h6>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="indentSize" class="form-label">Indent Size</label>
+                                    <select class="form-select" id="indentSize">
+                                        <option value="2">2 spaces</option>
+                                        <option value="4" selected>4 spaces</option>
+                                        <option value="8">8 spaces</option>
+                                    </select>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="sortKeys">
+                                    <label class="form-check-label" for="sortKeys">
+                                        Sort object keys
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Transform Tools -->
+                            <div class="tool-card">
+                                <div class="tool-header">
+                                    <i class="fas fa-magic tool-icon"></i>
+                                    <h6 class="mb-0">Transform</h6>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="jsonPath" class="form-label">JSON Path</label>
+                                    <input type="text" class="form-control path-input" id="jsonPath" placeholder="$.store.book[0].title">
+                                </div>
+                                <button class="btn btn-outline-primary w-100" id="extractBtn">
+                                    <i class="fas fa-search me-2"></i>Extract Value
+                                </button>
+                                <div class="transform-result" id="transformResult"></div>
+                            </div>
+
+                            <!-- Validation -->
+                            <div class="tool-card">
+                                <div class="tool-header">
+                                    <i class="fas fa-check-circle tool-icon"></i>
+                                    <h6 class="mb-0">Validation</h6>
+                                </div>
+                                <div class="validation-status" id="validationStatus">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <span>Valid JSON</span>
+                                </div>
+                                <button class="btn btn-outline-primary w-100" id="validateBtn">
+                                    <i class="fas fa-check me-2"></i>Validate JSON
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- JSON Stats -->
+                        <div class="stats-panel">
+                            <div class="stat-card">
+                                <div class="stat-value" id="sizeValue">0</div>
+                                <div class="stat-label">Size (bytes)</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="objectsValue">0</div>
+                                <div class="stat-label">Objects</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="arraysValue">0</div>
+                                <div class="stat-label">Arrays</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="keysValue">0</div>
+                                <div class="stat-label">Keys</div>
+                            </div>
+                        </div>
+
+                        <!-- Editor Container -->
+                        <div class="editor-container">
+                            <!-- Input Panel -->
+                            <div class="editor-panel">
+                                <div class="editor-header">
+                                    <h6 class="editor-title">Input JSON</h6>
+                                    <div class="editor-actions">
+                                        <button class="btn btn-sm btn-outline-secondary" id="pasteBtn" title="Paste from clipboard">
+                                            <i class="fas fa-paste"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="formatBtn" title="Format JSON">
+                                            <i class="fas fa-indent"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="minifyBtn" title="Minify JSON">
+                                            <i class="fas fa-compress-alt"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" id="clearBtn" title="Clear input">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="editor-content">
+                                    <textarea class="json-input" id="jsonInput" placeholder="Paste your JSON here..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Output Panel -->
+                            <div class="editor-panel">
+                                <div class="editor-header">
+                                    <h6 class="editor-title">Formatted JSON</h6>
+                                    <div class="editor-actions">
+                                        <button class="btn btn-sm btn-outline-primary" id="copyBtn" title="Copy to clipboard">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="downloadBtn" title="Download JSON">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="editor-content">
+                                    <div class="json-output" id="jsonOutput"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About JSON Tools</h2>
+                        <p>Format, validate, and transform JSON data with real-time preview and error detection. Features syntax highlighting and JSON path extraction.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>JSON formatting with customizable indentation</li>
+                            <li>Real-time validation and error detection</li>
+                            <li>JSON path extraction</li>
+                            <li>Syntax highlighting</li>
+                            <li>Statistics and analysis</li>
+                            <li>Copy and download functionality</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All processing is done locally in your browser. Your JSON data is never sent to any server.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JSONPath Library -->
+    <script src="https://cdn.jsdelivr.net/npm/jsonpath-plus@7.2.0/dist/index-browser-esm.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const jsonInput = document.getElementById('jsonInput');
+            const jsonOutput = document.getElementById('jsonOutput');
+            const indentSize = document.getElementById('indentSize');
+            const sortKeys = document.getElementById('sortKeys');
+            const jsonPath = document.getElementById('jsonPath');
+            const extractBtn = document.getElementById('extractBtn');
+            const transformResult = document.getElementById('transformResult');
+            const validationStatus = document.getElementById('validationStatus');
+            const validateBtn = document.getElementById('validateBtn');
+            const formatBtn = document.getElementById('formatBtn');
+            const minifyBtn = document.getElementById('minifyBtn');
+            const pasteBtn = document.getElementById('pasteBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const sizeValue = document.getElementById('sizeValue');
+            const objectsValue = document.getElementById('objectsValue');
+            const arraysValue = document.getElementById('arraysValue');
+            const keysValue = document.getElementById('keysValue');
+
+            // Format JSON
+            function formatJSON(json, indent = 4, sort = false) {
+                try {
+                    let parsed = (typeof json === 'string') ? JSON.parse(json) : json;
+                    if (sort) {
+                        parsed = sortObjectKeys(parsed);
+                    }
+                    return JSON.stringify(parsed, null, indent);
+                } catch (error) {
+                    console.error('Formatting error:', error);
+                    return json;
+                }
+            }
+
+            // Sort object keys
+            function sortObjectKeys(obj) {
+                if (Array.isArray(obj)) {
+                    return obj.map(sortObjectKeys);
+                } else if (obj !== null && typeof obj === 'object') {
+                    return Object.keys(obj).sort().reduce((result, key) => {
+                        result[key] = sortObjectKeys(obj[key]);
+                        return result;
+                    }, {});
+                }
+                return obj;
+            }
+
+            // Validate JSON
+            function validateJSON(json) {
+                try {
+                    JSON.parse(json);
+                    validationStatus.className = 'validation-status valid';
+                    validationStatus.innerHTML = '<i class="fas fa-check-circle me-2"></i>Valid JSON';
+                    return true;
+                } catch (error) {
+                    validationStatus.className = 'validation-status invalid';
+                    validationStatus.innerHTML = `<i class="fas fa-times-circle me-2"></i>${error.message}`;
+                    return false;
+                }
+            }
+
+            // Update statistics
+            function updateStats(json) {
+                try {
+                    const parsed = (typeof json === 'string') ? JSON.parse(json) : json;
+                    
+                    let objects = 0;
+                    let arrays = 0;
+                    let keys = 0;
+
+                    function traverse(obj) {
+                        if (Array.isArray(obj)) {
+                            arrays++;
+                            obj.forEach(traverse);
+                        } else if (obj !== null && typeof obj === 'object') {
+                            objects++;
+                            keys += Object.keys(obj).length;
+                            Object.values(obj).forEach(traverse);
+                        }
+                    }
+
+                    traverse(parsed);
+
+                    sizeValue.textContent = new Blob([json]).size;
+                    objectsValue.textContent = objects;
+                    arraysValue.textContent = arrays;
+                    keysValue.textContent = keys;
+                } catch (error) {
+                    console.error('Stats error:', error);
+                }
+            }
+
+            // Syntax highlighting
+            function highlightSyntax(json) {
+                try {
+                    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+                        let cls = 'number';
+                        if (/^"/.test(match)) {
+                            cls = /:$/.test(match) ? 'key' : 'string';
+                            match = match.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        } else if (/true|false/.test(match)) {
+                            cls = 'boolean';
+                        } else if (/null/.test(match)) {
+                            cls = 'null';
+                        }
+                        return `<span class="${cls}">${match}</span>`;
+                    });
+                } catch (error) {
+                    console.error('Highlight error:', error);
+                    return json;
+                }
+            }
+
+            // Update output
+            function updateOutput(json) {
+                try {
+                    const formatted = formatJSON(json, parseInt(indentSize.value), sortKeys.checked);
+                    jsonOutput.innerHTML = highlightSyntax(formatted);
+                    validateJSON(json);
+                    updateStats(json);
+                } catch (error) {
+                    console.error('Update error:', error);
+                }
+            }
+
+            // Event listeners
+            jsonInput.addEventListener('input', () => {
+                updateOutput(jsonInput.value);
+            });
+
+            indentSize.addEventListener('change', () => {
+                updateOutput(jsonInput.value);
+            });
+
+            sortKeys.addEventListener('change', () => {
+                updateOutput(jsonInput.value);
+            });
+
+            formatBtn.addEventListener('click', () => {
+                if (jsonInput.value) {
+                    const formatted = formatJSON(jsonInput.value, parseInt(indentSize.value), sortKeys.checked);
+                    jsonInput.value = formatted;
+                    updateOutput(formatted);
+                }
+            });
+
+            minifyBtn.addEventListener('click', () => {
+                if (jsonInput.value) {
+                    try {
+                        const minified = JSON.stringify(JSON.parse(jsonInput.value));
+                        jsonInput.value = minified;
+                        updateOutput(minified);
+                    } catch (error) {
+                        console.error('Minify error:', error);
+                    }
+                }
+            });
+
+            validateBtn.addEventListener('click', () => {
+                validateJSON(jsonInput.value);
+            });
+
+            extractBtn.addEventListener('click', () => {
+                if (!jsonInput.value || !jsonPath.value) return;
+
+                try {
+                    const parsed = JSON.parse(jsonInput.value);
+                    const result = JSONPath({
+                        path: jsonPath.value,
+                        json: parsed
+                    });
+
+                    transformResult.style.display = 'block';
+                    transformResult.textContent = JSON.stringify(result, null, 2);
+                } catch (error) {
+                    transformResult.style.display = 'block';
+                    transformResult.textContent = `Error: ${error.message}`;
+                }
+            });
+
+            pasteBtn.addEventListener('click', () => {
+                navigator.clipboard.readText().then(text => {
+                    jsonInput.value = text;
+                    updateOutput(text);
+                });
+            });
+
+            clearBtn.addEventListener('click', () => {
+                jsonInput.value = '';
+                jsonOutput.innerHTML = '';
+                validationStatus.style.display = 'none';
+                transformResult.style.display = 'none';
+                updateStats('{}');
+            });
+
+            copyBtn.addEventListener('click', () => {
+                const text = jsonOutput.textContent;
+                if (text) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'copied-tooltip';
+                        tooltip.textContent = 'Copied to clipboard!';
+                        document.body.appendChild(tooltip);
+                        
+                        setTimeout(() => {
+                            document.body.removeChild(tooltip);
+                        }, 2000);
+                    });
+                }
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                const text = jsonOutput.textContent;
+                if (text) {
+                    const blob = new Blob([text], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'formatted.json';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                }
+            });
+
+            // Initialize with empty stats
+            updateStats('{}');
+        });
+    </script>
+</body>
+</html> 

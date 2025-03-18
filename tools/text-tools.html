@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Tools - Multi-Tools</title>
+    <meta name="description" content="Text manipulation tools including word count, character count, case conversion, and more.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .text-input {
+            min-height: 200px;
+            font-family: monospace;
+            resize: vertical;
+        }
+
+        .stats-container {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .tool-card {
+            height: 100%;
+            transition: all 0.2s;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .tool-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .history-item {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            background: var(--background-color);
+        }
+
+        .history-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 0.25rem;
+        }
+
+        .history-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .tool-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-font me-2"></i>
+                            Text Tools
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Text Input -->
+                        <div class="mb-3">
+                            <label class="form-label">Input Text</label>
+                            <textarea class="form-control text-input" id="inputText" placeholder="Enter or paste your text here..."></textarea>
+                        </div>
+
+                        <!-- Text Statistics -->
+                        <div class="stats-container mb-4">
+                            <h5 class="mb-3">Text Statistics</h5>
+                            <div class="stat-item">
+                                <span class="stat-label">Characters (with spaces)</span>
+                                <span class="stat-value" id="charCount">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Characters (without spaces)</span>
+                                <span class="stat-value" id="charNoSpaceCount">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Words</span>
+                                <span class="stat-value" id="wordCount">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Lines</span>
+                                <span class="stat-value" id="lineCount">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Paragraphs</span>
+                                <span class="stat-value" id="paragraphCount">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Reading Time</span>
+                                <span class="stat-value" id="readingTime">0 min</span>
+                            </div>
+                        </div>
+
+                        <!-- Text Tools -->
+                        <div class="row g-3 mb-4">
+                            <!-- Case Conversion -->
+                            <div class="col-md-4">
+                                <div class="card tool-card">
+                                    <div class="card-body">
+                                        <div class="tool-icon">
+                                            <i class="fas fa-text-height"></i>
+                                        </div>
+                                        <h5 class="card-title h6">Case Conversion</h5>
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="convertCase('upper')">
+                                                UPPERCASE
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="convertCase('lower')">
+                                                lowercase
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="convertCase('title')">
+                                                Title Case
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="convertCase('sentence')">
+                                                Sentence case
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Text Transformation -->
+                            <div class="col-md-4">
+                                <div class="card tool-card">
+                                    <div class="card-body">
+                                        <div class="tool-icon">
+                                            <i class="fas fa-magic"></i>
+                                        </div>
+                                        <h5 class="card-title h6">Text Transformation</h5>
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="transformText('reverse')">
+                                                Reverse Text
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="transformText('remove-spaces')">
+                                                Remove Extra Spaces
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="transformText('remove-lines')">
+                                                Remove Empty Lines
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="transformText('sort-lines')">
+                                                Sort Lines
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Text Extraction -->
+                            <div class="col-md-4">
+                                <div class="card tool-card">
+                                    <div class="card-body">
+                                        <div class="tool-icon">
+                                            <i class="fas fa-filter"></i>
+                                        </div>
+                                        <h5 class="card-title h6">Text Extraction</h5>
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="extractText('emails')">
+                                                Extract Emails
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="extractText('urls')">
+                                                Extract URLs
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="extractText('numbers')">
+                                                Extract Numbers
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="extractText('unique')">
+                                                Extract Unique Words
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Text History -->
+                        <div class="mt-4">
+                            <h5 class="mb-3">Recent Changes</h5>
+                            <div id="history"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Text Tools</h2>
+                        <p>A collection of text manipulation and analysis tools to help you work with text content.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Real-time text statistics (character count, word count, etc.)</li>
+                            <li>Case conversion tools (uppercase, lowercase, title case)</li>
+                            <li>Text transformation tools (reverse, remove spaces, sort lines)</li>
+                            <li>Text extraction tools (emails, URLs, numbers)</li>
+                            <li>Change history tracking</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All text processing is done locally in your browser for privacy.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        // DOM Elements
+        const inputText = document.getElementById('inputText');
+        const history = [];
+
+        // Update text statistics
+        function updateStats() {
+            const text = inputText.value;
+            
+            // Character counts
+            document.getElementById('charCount').textContent = text.length;
+            document.getElementById('charNoSpaceCount').textContent = text.replace(/\s/g, '').length;
+            
+            // Word count
+            const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+            document.getElementById('wordCount').textContent = words.length;
+            
+            // Line count
+            const lines = text.split('\n');
+            document.getElementById('lineCount').textContent = lines.length;
+            
+            // Paragraph count
+            const paragraphs = text.split('\n\n').filter(para => para.trim().length > 0);
+            document.getElementById('paragraphCount').textContent = paragraphs.length;
+            
+            // Reading time (assuming 200 words per minute)
+            const readingMinutes = Math.ceil(words.length / 200);
+            document.getElementById('readingTime').textContent = `${readingMinutes} min`;
+        }
+
+        // Convert case
+        function convertCase(type) {
+            const text = inputText.value;
+            let result = '';
+
+            switch (type) {
+                case 'upper':
+                    result = text.toUpperCase();
+                    break;
+                case 'lower':
+                    result = text.toLowerCase();
+                    break;
+                case 'title':
+                    result = text.replace(/\w\S*/g, txt => 
+                        txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+                    );
+                    break;
+                case 'sentence':
+                    result = text.toLowerCase().replace(/(^\w|\.\s+\w)/g, letter => 
+                        letter.toUpperCase()
+                    );
+                    break;
+            }
+
+            updateText(result, `Convert to ${type} case`);
+        }
+
+        // Transform text
+        function transformText(type) {
+            const text = inputText.value;
+            let result = '';
+
+            switch (type) {
+                case 'reverse':
+                    result = text.split('').reverse().join('');
+                    break;
+                case 'remove-spaces':
+                    result = text.replace(/\s+/g, ' ').trim();
+                    break;
+                case 'remove-lines':
+                    result = text.split('\n').filter(line => line.trim()).join('\n');
+                    break;
+                case 'sort-lines':
+                    result = text.split('\n').filter(line => line.trim()).sort().join('\n');
+                    break;
+            }
+
+            updateText(result, `Transform: ${type}`);
+        }
+
+        // Extract text
+        function extractText(type) {
+            const text = inputText.value;
+            let result = '';
+
+            switch (type) {
+                case 'emails':
+                    const emails = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+                    result = emails.join('\n');
+                    break;
+                case 'urls':
+                    const urls = text.match(/https?:\/\/[^\s]+/g) || [];
+                    result = urls.join('\n');
+                    break;
+                case 'numbers':
+                    const numbers = text.match(/\b\d+\.?\d*\b/g) || [];
+                    result = numbers.join('\n');
+                    break;
+                case 'unique':
+                    const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+                    result = [...new Set(words)].sort().join('\n');
+                    break;
+            }
+
+            updateText(result, `Extract: ${type}`);
+        }
+
+        // Update text and history
+        function updateText(newText, action) {
+            // Add to history
+            if (newText !== inputText.value) {
+                history.unshift({
+                    text: newText,
+                    action,
+                    timestamp: new Date().toLocaleTimeString()
+                });
+
+                if (history.length > 10) history.pop();
+
+                // Update history display
+                const historyDiv = document.getElementById('history');
+                historyDiv.innerHTML = history.map(item => `
+                    <div class="history-item">
+                        <div class="history-text">${item.text.substring(0, 50)}${item.text.length > 50 ? '...' : ''}</div>
+                        <div class="history-meta">
+                            <span>${item.action}</span>
+                            <small>${item.timestamp}</small>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Update input
+            inputText.value = newText;
+            updateStats();
+        }
+
+        // Event listeners
+        inputText.addEventListener('input', updateStats);
+
+        // Initialize
+        updateStats();
+    </script>
+</body>
+</html>

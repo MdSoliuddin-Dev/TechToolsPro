@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Tags Generator - Multi-Tools</title>
+    <meta name="description" content="Generate SEO-friendly meta tags for your website. Create optimized meta descriptions, titles, and social media tags.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .character-count {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .character-count.warning {
+            color: var(--warning-color);
+        }
+
+        .character-count.danger {
+            color: var(--danger-color);
+        }
+
+        .preview-card {
+            background: var(--background-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .preview-title {
+            color: #1a0dab;
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .preview-url {
+            color: #006621;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .preview-description {
+            color: #545454;
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        .social-preview {
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .social-preview-image {
+            width: 100%;
+            height: 250px;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
+
+        .social-preview-content {
+            padding: 1rem;
+        }
+
+        .social-preview-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .social-preview-description {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .code-output {
+            background: #2d2d2d;
+            color: #ffffff;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            font-family: 'Courier New', monospace;
+            position: relative;
+            margin-top: 1rem;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            opacity: 0.7;
+            transition: opacity var(--transition-speed);
+        }
+
+        .copy-button:hover {
+            opacity: 1;
+        }
+
+        .nav-tabs {
+            margin-bottom: 1rem;
+        }
+
+        .tab-content {
+            padding: 1rem;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-tags me-2"></i>
+                            Meta Tags Generator
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Input Form -->
+                        <form id="metaForm">
+                            <div class="form-group">
+                                <label for="pageTitle" class="form-label">Page Title</label>
+                                <input type="text" class="form-control" id="pageTitle" maxlength="60" placeholder="Enter your page title">
+                                <div class="character-count" id="titleCount">0/60 characters</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="metaDescription" class="form-label">Meta Description</label>
+                                <textarea class="form-control" id="metaDescription" rows="3" maxlength="160" placeholder="Enter your meta description"></textarea>
+                                <div class="character-count" id="descriptionCount">0/160 characters</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="keywords" class="form-label">Keywords (comma-separated)</label>
+                                <input type="text" class="form-control" id="keywords" placeholder="keyword1, keyword2, keyword3">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="canonicalUrl" class="form-label">Canonical URL</label>
+                                <input type="url" class="form-control" id="canonicalUrl" placeholder="https://example.com/page">
+                            </div>
+
+                            <!-- Social Media Tags -->
+                            <h5 class="mt-4">Social Media Tags</h5>
+                            <div class="form-group">
+                                <label for="ogTitle" class="form-label">Open Graph Title</label>
+                                <input type="text" class="form-control" id="ogTitle" placeholder="Title for social media">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ogDescription" class="form-label">Open Graph Description</label>
+                                <textarea class="form-control" id="ogDescription" rows="2" placeholder="Description for social media"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ogImage" class="form-label">Open Graph Image URL</label>
+                                <input type="url" class="form-control" id="ogImage" placeholder="https://example.com/image.jpg">
+                            </div>
+                        </form>
+
+                        <!-- Preview Tabs -->
+                        <ul class="nav nav-tabs mt-4" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#searchPreview">Search Preview</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#socialPreview">Social Preview</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#codePreview">Generated Code</a>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Search Preview -->
+                            <div class="tab-pane fade show active" id="searchPreview">
+                                <div class="preview-card">
+                                    <div class="preview-title" id="previewTitle">Page Title</div>
+                                    <div class="preview-url" id="previewUrl">example.com</div>
+                                    <div class="preview-description" id="previewDescription">Meta description will appear here...</div>
+                                </div>
+                            </div>
+
+                            <!-- Social Preview -->
+                            <div class="tab-pane fade" id="socialPreview">
+                                <div class="social-preview">
+                                    <div class="social-preview-image" id="previewImage">
+                                        <i class="fas fa-image fa-3x"></i>
+                                    </div>
+                                    <div class="social-preview-content">
+                                        <div class="social-preview-title" id="previewOgTitle">Social Title</div>
+                                        <div class="social-preview-description" id="previewOgDescription">Social description will appear here...</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Code Preview -->
+                            <div class="tab-pane fade" id="codePreview">
+                                <div class="code-output">
+                                    <pre id="generatedCode"></pre>
+                                    <button class="btn btn-sm btn-light copy-button" id="copyButton">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Meta Tags Generator</h2>
+                        <p>Create optimized meta tags for your website to improve SEO and social media sharing. This tool helps you generate all necessary meta tags with proper formatting.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Generate basic SEO meta tags</li>
+                            <li>Create Open Graph tags for social media</li>
+                            <li>Live preview of search results</li>
+                            <li>Social media preview</li>
+                            <li>Character count validation</li>
+                            <li>One-click code copy</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Keep your meta descriptions between 150-160 characters for optimal search engine display.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('metaForm');
+            const titleInput = document.getElementById('pageTitle');
+            const descriptionInput = document.getElementById('metaDescription');
+            const keywordsInput = document.getElementById('keywords');
+            const canonicalInput = document.getElementById('canonicalUrl');
+            const ogTitleInput = document.getElementById('ogTitle');
+            const ogDescriptionInput = document.getElementById('ogDescription');
+            const ogImageInput = document.getElementById('ogImage');
+
+            const titleCount = document.getElementById('titleCount');
+            const descriptionCount = document.getElementById('descriptionCount');
+            const generatedCode = document.getElementById('generatedCode');
+            const copyButton = document.getElementById('copyButton');
+
+            // Preview elements
+            const previewTitle = document.getElementById('previewTitle');
+            const previewUrl = document.getElementById('previewUrl');
+            const previewDescription = document.getElementById('previewDescription');
+            const previewOgTitle = document.getElementById('previewOgTitle');
+            const previewOgDescription = document.getElementById('previewOgDescription');
+            const previewImage = document.getElementById('previewImage');
+
+            // Update character counts
+            function updateCharacterCount(input, display, maxLength) {
+                const length = input.value.length;
+                display.textContent = `${length}/${maxLength} characters`;
+                
+                if (length >= maxLength) {
+                    display.classList.add('danger');
+                } else if (length >= maxLength * 0.8) {
+                    display.classList.add('warning');
+                    display.classList.remove('danger');
+                } else {
+                    display.classList.remove('warning', 'danger');
+                }
+            }
+
+            // Update previews
+            function updatePreviews() {
+                // Search preview
+                previewTitle.textContent = titleInput.value || 'Page Title';
+                previewDescription.textContent = descriptionInput.value || 'Meta description will appear here...';
+                previewUrl.textContent = canonicalInput.value || 'example.com';
+
+                // Social preview
+                previewOgTitle.textContent = ogTitleInput.value || titleInput.value || 'Social Title';
+                previewOgDescription.textContent = ogDescriptionInput.value || descriptionInput.value || 'Social description will appear here...';
+                
+                if (ogImageInput.value) {
+                    previewImage.innerHTML = `<img src="${ogImageInput.value}" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;">`;
+                } else {
+                    previewImage.innerHTML = '<i class="fas fa-image fa-3x"></i>';
+                }
+
+                // Generate meta tags
+                const metaTags = [];
+                
+                if (titleInput.value) {
+                    metaTags.push(`<title>${titleInput.value}</title>`);
+                }
+
+                if (descriptionInput.value) {
+                    metaTags.push(`<meta name="description" content="${descriptionInput.value}">`);
+                }
+
+                if (keywordsInput.value) {
+                    metaTags.push(`<meta name="keywords" content="${keywordsInput.value}">`);
+                }
+
+                if (canonicalInput.value) {
+                    metaTags.push(`<link rel="canonical" href="${canonicalInput.value}">`);
+                }
+
+                // Open Graph tags
+                if (ogTitleInput.value || titleInput.value) {
+                    metaTags.push(`<meta property="og:title" content="${ogTitleInput.value || titleInput.value}">`);
+                }
+
+                if (ogDescriptionInput.value || descriptionInput.value) {
+                    metaTags.push(`<meta property="og:description" content="${ogDescriptionInput.value || descriptionInput.value}">`);
+                }
+
+                if (ogImageInput.value) {
+                    metaTags.push(`<meta property="og:image" content="${ogImageInput.value}">`);
+                }
+
+                if (canonicalInput.value) {
+                    metaTags.push(`<meta property="og:url" content="${canonicalInput.value}">`);
+                }
+
+                // Twitter Card tags
+                metaTags.push('<meta name="twitter:card" content="summary_large_image">');
+                
+                generatedCode.textContent = metaTags.join('\n');
+            }
+
+            // Event listeners
+            titleInput.addEventListener('input', () => {
+                updateCharacterCount(titleInput, titleCount, 60);
+                updatePreviews();
+            });
+
+            descriptionInput.addEventListener('input', () => {
+                updateCharacterCount(descriptionInput, descriptionCount, 160);
+                updatePreviews();
+            });
+
+            [keywordsInput, canonicalInput, ogTitleInput, ogDescriptionInput, ogImageInput].forEach(input => {
+                input.addEventListener('input', updatePreviews);
+            });
+
+            // Copy button
+            copyButton.addEventListener('click', () => {
+                navigator.clipboard.writeText(generatedCode.textContent).then(() => {
+                    copyButton.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        copyButton.innerHTML = '<i class="fas fa-copy"></i>';
+                    }, 1000);
+                });
+            });
+
+            // Initial update
+            updatePreviews();
+        });
+    </script>
+</body>
+</html> 

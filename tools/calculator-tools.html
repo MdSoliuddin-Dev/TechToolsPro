@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator Tools - Multi-Tools</title>
+    <meta name="description" content="Calculator tools including scientific calculator, unit converter, and mathematical functions.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Math.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.js"></script>
+    <style>
+        .calculator {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .calculator-display {
+            font-family: monospace;
+            font-size: 2rem;
+            padding: 1rem;
+            text-align: right;
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            min-height: 4rem;
+            position: relative;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .calculator-history {
+            position: absolute;
+            top: 0.25rem;
+            left: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .calculator-buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+        }
+
+        .calculator-button {
+            aspect-ratio: 1;
+            font-size: 1.25rem;
+            border: 1px solid var(--border-color);
+            background: var(--background-color);
+            transition: all 0.2s;
+        }
+
+        .calculator-button:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .calculator-button.wide {
+            grid-column: span 2;
+            aspect-ratio: 2;
+        }
+
+        .calculator-button.operator {
+            background: rgba(var(--primary-rgb), 0.1);
+            color: var(--primary);
+        }
+
+        .calculator-button.function {
+            background: rgba(var(--secondary-rgb), 0.1);
+            color: var(--secondary);
+        }
+
+        .calculator-button.equals {
+            background: var(--primary);
+            color: white;
+        }
+
+        .history-item {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            background: var(--background-color);
+            font-family: monospace;
+        }
+
+        .history-expression {
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .history-result {
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+
+        .function-card {
+            height: 100%;
+            transition: all 0.2s;
+        }
+
+        .function-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .function-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .calculator-buttons {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .calculator-button.wide {
+                aspect-ratio: 1;
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-calculator me-2"></i>
+                            Calculator Tools
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tool Sections -->
+                        <ul class="nav nav-tabs mb-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#calculator" type="button">
+                                    <i class="fas fa-calculator me-2"></i>Scientific
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#functions" type="button">
+                                    <i class="fas fa-function me-2"></i>Functions
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Scientific Calculator -->
+                            <div class="tab-pane fade show active" id="calculator" role="tabpanel">
+                                <div class="calculator">
+                                    <div class="calculator-display">
+                                        <div class="calculator-history" id="calcHistory"></div>
+                                        <div id="display">0</div>
+                                    </div>
+                                    <div class="calculator-buttons">
+                                        <!-- Functions -->
+                                        <button class="calculator-button function" onclick="insertFunction('sin')">sin</button>
+                                        <button class="calculator-button function" onclick="insertFunction('cos')">cos</button>
+                                        <button class="calculator-button function" onclick="insertFunction('tan')">tan</button>
+                                        <button class="calculator-button function" onclick="insertFunction('log')">log</button>
+                                        <button class="calculator-button function" onclick="insertFunction('ln')">ln</button>
+
+                                        <!-- Constants -->
+                                        <button class="calculator-button function" onclick="insertConstant('pi')">π</button>
+                                        <button class="calculator-button function" onclick="insertConstant('e')">e</button>
+                                        <button class="calculator-button operator" onclick="insertOperator('^')">^</button>
+                                        <button class="calculator-button operator" onclick="insertOperator('sqrt')">√</button>
+                                        <button class="calculator-button" onclick="clearDisplay()">C</button>
+
+                                        <!-- Numbers and operators -->
+                                        <button class="calculator-button" onclick="appendNumber('7')">7</button>
+                                        <button class="calculator-button" onclick="appendNumber('8')">8</button>
+                                        <button class="calculator-button" onclick="appendNumber('9')">9</button>
+                                        <button class="calculator-button operator" onclick="insertOperator('/')">/</button>
+                                        <button class="calculator-button operator" onclick="insertOperator('%')">%</button>
+
+                                        <button class="calculator-button" onclick="appendNumber('4')">4</button>
+                                        <button class="calculator-button" onclick="appendNumber('5')">5</button>
+                                        <button class="calculator-button" onclick="appendNumber('6')">6</button>
+                                        <button class="calculator-button operator" onclick="insertOperator('*')">×</button>
+                                        <button class="calculator-button" onclick="backspace()">⌫</button>
+
+                                        <button class="calculator-button" onclick="appendNumber('1')">1</button>
+                                        <button class="calculator-button" onclick="appendNumber('2')">2</button>
+                                        <button class="calculator-button" onclick="appendNumber('3')">3</button>
+                                        <button class="calculator-button operator" onclick="insertOperator('-')">-</button>
+                                        <button class="calculator-button operator" onclick="insertOperator('(')">(</button>
+
+                                        <button class="calculator-button" onclick="appendNumber('0')">0</button>
+                                        <button class="calculator-button" onclick="appendNumber('.')">.</button>
+                                        <button class="calculator-button equals" onclick="calculate()">=</button>
+                                        <button class="calculator-button operator" onclick="insertOperator('+')">+</button>
+                                        <button class="calculator-button operator" onclick="insertOperator(')')">)</button>
+                                    </div>
+                                </div>
+
+                                <!-- Calculation History -->
+                                <div class="mt-4">
+                                    <h5 class="mb-3">Calculation History</h5>
+                                    <div id="history"></div>
+                                </div>
+                            </div>
+
+                            <!-- Mathematical Functions -->
+                            <div class="tab-pane fade" id="functions" role="tabpanel">
+                                <div class="row g-3">
+                                    <!-- Statistics -->
+                                    <div class="col-md-6">
+                                        <div class="card function-card">
+                                            <div class="card-body">
+                                                <div class="function-icon">
+                                                    <i class="fas fa-chart-line"></i>
+                                                </div>
+                                                <h5 class="card-title">Statistics</h5>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Enter numbers (comma separated)</label>
+                                                    <textarea class="form-control font-monospace" id="statsInput" rows="3" placeholder="1, 2, 3, 4, 5"></textarea>
+                                                </div>
+                                                <button class="btn btn-primary" onclick="calculateStats()">
+                                                    Calculate Statistics
+                                                </button>
+                                                <div class="mt-3" id="statsResult"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Matrix Operations -->
+                                    <div class="col-md-6">
+                                        <div class="card function-card">
+                                            <div class="card-body">
+                                                <div class="function-icon">
+                                                    <i class="fas fa-th"></i>
+                                                </div>
+                                                <h5 class="card-title">Matrix Operations</h5>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Enter matrix (rows separated by semicolon)</label>
+                                                    <textarea class="form-control font-monospace" id="matrixInput" rows="3" placeholder="1,2,3; 4,5,6; 7,8,9"></textarea>
+                                                </div>
+                                                <div class="d-grid gap-2">
+                                                    <button class="btn btn-outline-primary" onclick="calculateDeterminant()">
+                                                        Calculate Determinant
+                                                    </button>
+                                                    <button class="btn btn-outline-primary" onclick="calculateInverse()">
+                                                        Calculate Inverse
+                                                    </button>
+                                                </div>
+                                                <div class="mt-3" id="matrixResult"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Equation Solver -->
+                                    <div class="col-md-6">
+                                        <div class="card function-card">
+                                            <div class="card-body">
+                                                <div class="function-icon">
+                                                    <i class="fas fa-square-root-alt"></i>
+                                                </div>
+                                                <h5 class="card-title">Equation Solver</h5>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Enter equation (use x as variable)</label>
+                                                    <input type="text" class="form-control font-monospace" id="equationInput" placeholder="x^2 + 2*x - 1 = 0">
+                                                </div>
+                                                <button class="btn btn-primary" onclick="solveEquation()">
+                                                    Solve Equation
+                                                </button>
+                                                <div class="mt-3" id="equationResult"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Complex Numbers -->
+                                    <div class="col-md-6">
+                                        <div class="card function-card">
+                                            <div class="card-body">
+                                                <div class="function-icon">
+                                                    <i class="fas fa-infinity"></i>
+                                                </div>
+                                                <h5 class="card-title">Complex Numbers</h5>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Enter complex number (a + bi)</label>
+                                                    <input type="text" class="form-control font-monospace" id="complexInput" placeholder="1 + 2i">
+                                                </div>
+                                                <div class="d-grid gap-2">
+                                                    <button class="btn btn-outline-primary" onclick="calculatePolar()">
+                                                        Convert to Polar
+                                                    </button>
+                                                    <button class="btn btn-outline-primary" onclick="calculateRoots()">
+                                                        Calculate Roots
+                                                    </button>
+                                                </div>
+                                                <div class="mt-3" id="complexResult"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Calculator Tools</h2>
+                        <p>A comprehensive set of calculator tools for scientific calculations and mathematical functions.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Scientific calculator with trigonometric functions</li>
+                            <li>Statistical calculations (mean, median, mode, etc.)</li>
+                            <li>Matrix operations (determinant, inverse)</li>
+                            <li>Equation solver</li>
+                            <li>Complex number operations</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All calculations are performed locally in your browser using the Math.js library.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        // Calculator state
+        let currentExpression = '';
+        let lastResult = '';
+        const history = [];
+
+        // Display functions
+        function updateDisplay() {
+            document.getElementById('display').textContent = currentExpression || '0';
+            document.getElementById('calcHistory').textContent = lastResult;
+        }
+
+        function appendNumber(num) {
+            currentExpression += num;
+            updateDisplay();
+        }
+
+        function insertOperator(op) {
+            currentExpression += op;
+            updateDisplay();
+        }
+
+        function insertFunction(func) {
+            currentExpression += `${func}(`;
+            updateDisplay();
+        }
+
+        function insertConstant(constant) {
+            currentExpression += constant;
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentExpression = '';
+            lastResult = '';
+            updateDisplay();
+        }
+
+        function backspace() {
+            currentExpression = currentExpression.slice(0, -1);
+            updateDisplay();
+        }
+
+        // Calculate result
+        function calculate() {
+            try {
+                const result = math.evaluate(currentExpression);
+                
+                // Add to history
+                if (currentExpression) {
+                    history.unshift({
+                        expression: currentExpression,
+                        result: result
+                    });
+
+                    if (history.length > 10) history.pop();
+                    updateHistory();
+                }
+
+                lastResult = currentExpression;
+                currentExpression = result.toString();
+                updateDisplay();
+            } catch (error) {
+                currentExpression = 'Error';
+                updateDisplay();
+                setTimeout(clearDisplay, 1000);
+            }
+        }
+
+        // Update history display
+        function updateHistory() {
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <div class="history-expression">${item.expression}</div>
+                    <div class="history-result">${item.result}</div>
+                </div>
+            `).join('');
+        }
+
+        // Statistical calculations
+        function calculateStats() {
+            try {
+                const input = document.getElementById('statsInput').value;
+                const numbers = input.split(',').map(n => parseFloat(n.trim())).filter(n => !isNaN(n));
+                
+                if (numbers.length === 0) throw new Error('No valid numbers');
+
+                const mean = math.mean(numbers);
+                const median = math.median(numbers);
+                const std = math.std(numbers);
+                const min = math.min(numbers);
+                const max = math.max(numbers);
+
+                document.getElementById('statsResult').innerHTML = `
+                    <div class="alert alert-success">
+                        <div><strong>Mean:</strong> ${mean.toFixed(4)}</div>
+                        <div><strong>Median:</strong> ${median.toFixed(4)}</div>
+                        <div><strong>Standard Deviation:</strong> ${std.toFixed(4)}</div>
+                        <div><strong>Min:</strong> ${min}</div>
+                        <div><strong>Max:</strong> ${max}</div>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('statsResult').innerHTML = `
+                    <div class="alert alert-danger">
+                        Invalid input. Please enter comma-separated numbers.
+                    </div>
+                `;
+            }
+        }
+
+        // Matrix operations
+        function calculateDeterminant() {
+            try {
+                const input = document.getElementById('matrixInput').value;
+                const matrix = math.matrix(input.split(';').map(row => 
+                    row.split(',').map(n => parseFloat(n.trim()))
+                ));
+                
+                const det = math.det(matrix);
+
+                document.getElementById('matrixResult').innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Determinant:</strong> ${det}
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('matrixResult').innerHTML = `
+                    <div class="alert alert-danger">
+                        Invalid matrix format. Use comma for columns and semicolon for rows.
+                    </div>
+                `;
+            }
+        }
+
+        function calculateInverse() {
+            try {
+                const input = document.getElementById('matrixInput').value;
+                const matrix = math.matrix(input.split(';').map(row => 
+                    row.split(',').map(n => parseFloat(n.trim()))
+                ));
+                
+                const inverse = math.inv(matrix);
+
+                document.getElementById('matrixResult').innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Inverse Matrix:</strong><br>
+                        <pre class="mb-0">${math.format(inverse, {precision: 4})}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('matrixResult').innerHTML = `
+                    <div class="alert alert-danger">
+                        Cannot calculate inverse. Matrix must be square and non-singular.
+                    </div>
+                `;
+            }
+        }
+
+        // Equation solver
+        function solveEquation() {
+            try {
+                const input = document.getElementById('equationInput').value;
+                const equation = input.split('=')[0]; // Only consider left side of equation
+                
+                // Create a function from the equation
+                const f = math.parse(equation);
+                const derivative = math.derivative(f, 'x');
+                
+                // Use Newton's method to find roots
+                let x = 1;
+                for (let i = 0; i < 100; i++) {
+                    const fx = f.evaluate({x: x});
+                    const dfx = derivative.evaluate({x: x});
+                    if (Math.abs(fx) < 1e-10) break;
+                    x = x - fx/dfx;
+                }
+
+                document.getElementById('equationResult').innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Solution:</strong> x = ${x.toFixed(4)}
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('equationResult').innerHTML = `
+                    <div class="alert alert-danger">
+                        Invalid equation format. Use x as variable.
+                    </div>
+                `;
+            }
+        }
+
+        // Complex number operations
+        function calculatePolar() {
+            try {
+                const input = document.getElementById('complexInput').value;
+                const complex = math.complex(input);
+                const r = math.abs(complex);
+                const theta = math.arg(complex);
+
+                document.getElementById('complexResult').innerHTML = `
+                    <div class="alert alert-success">
+                        <div><strong>Magnitude (r):</strong> ${r.toFixed(4)}</div>
+                        <div><strong>Angle (θ):</strong> ${theta.toFixed(4)} rad</div>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('complexResult').innerHTML = `
+                    <div class="alert alert-danger">
+                        Invalid complex number format. Use a + bi format.
+                    </div>
+                `;
+            }
+        }
+
+        function calculateRoots() {
+            try {
+                const input = document.getElementById('complexInput').value;
+                const complex = math.complex(input);
+                const roots = [];
+                
+                // Calculate square roots
+                const r = math.sqrt(math.abs(complex));
+                const theta = math.arg(complex);
+                
+                for (let k = 0; k < 2; k++) {
+                    const root = math.complex({
+                        r: r,
+                        phi: (theta + 2 * math.pi * k) / 2
+                    });
+                    roots.push(root);
+                }
+
+                document.getElementById('complexResult').innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Square Roots:</strong><br>
+                        ${roots.map(root => math.format(root, {precision: 4})).join('<br>')}
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('complexResult').innerHTML = `
+                    <div class="alert alert-danger">
+                        Invalid complex number format. Use a + bi format.
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize calculator
+        updateDisplay();
+    </script>
+</body>
+</html> 

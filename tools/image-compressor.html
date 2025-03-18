@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Compressor - Multi-Tools</title>
+    <meta name="description" content="Compress your images with advanced algorithms while maintaining quality. Support for multiple formats and batch processing.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: border 0.3s ease;
+            cursor: pointer;
+        }
+        .drop-zone:hover {
+            border-color: #0056b3;
+        }
+        .drop-zone.dragover {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-color: #0056b3;
+        }
+        .preview-container {
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .preview-item {
+            border: 1px solid #dee2e6;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            position: relative;
+        }
+        .preview-item img {
+            max-width: 100%;
+            max-height: 300px;
+        }
+        .delete-image {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #dc3545;
+            color: white;
+            border: 2px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-size: 14px;
+            z-index: 1;
+        }
+        .delete-image:hover {
+            background: #bb2d3b;
+        }
+        .image-name {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+            word-break: break-all;
+        }
+        .size-info {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .compression-progress {
+            height: 5px;
+            margin-top: 1rem;
+        }
+        .optimization-tips {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+        .image-preview {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        .image-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            display: block;
+            margin: 0 auto;
+        }
+        .preview-controls {
+            margin-top: 1rem;
+            display: none;
+        }
+        .compression-ratio {
+            display: inline-block;
+            margin-left: 1rem;
+        }
+        .preview-controls .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1><i class="fas fa-compress me-2"></i>Image Compressor</h1>
+                <p class="tool-description">Advanced image compression with smart optimization algorithms. Reduce file size while maintaining visual quality.</p>
+            </div>
+
+            <!-- Tool Content -->
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                        <h4>Drag & Drop your images here</h4>
+                        <p>or</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose Files
+                        </button>
+                        <input type="file" id="fileInput" hidden accept="image/*" multiple>
+                        <p class="mt-2 text-muted">Supports: JPG, PNG, WebP, GIF</p>
+                    </div>
+
+                    <div class="preview-container" id="previewContainer">
+                        <div class="preview-grid" id="previewGrid">
+                            <!-- Preview items will be added here -->
+                        </div>
+                        <div class="progress compression-progress" style="display: none;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-success" id="compressBtn">
+                                <i class="fas fa-compress me-2"></i>Compress Images
+                            </button>
+                            <button class="btn btn-primary ms-2" id="addMoreBtn">
+                                <i class="fas fa-plus me-2"></i>Add More Images
+                            </button>
+                            <button class="btn btn-danger ms-2" id="clearBtn">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Compression Settings -->
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Compression Settings</h5>
+                            
+                            <!-- Compression Mode -->
+                            <div class="mb-3">
+                                <label class="form-label">Compression Mode</label>
+                                <select class="form-select" id="compressionMode">
+                                    <option value="auto">Auto (Smart Compression)</option>
+                                    <option value="aggressive">Aggressive (Maximum Savings)</option>
+                                    <option value="lossless">Lossless (Perfect Quality)</option>
+                                    <option value="custom">Custom Settings</option>
+                                </select>
+                            </div>
+
+                            <!-- Custom Settings -->
+                            <div id="customSettings" style="display: none;">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Quality Level</label>
+                                        <input type="range" class="form-range" id="quality" min="1" max="100" value="80">
+                                        <div class="text-end">
+                                            <span id="qualityValue">80%</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Color Quantization</label>
+                                        <select class="form-select" id="colorQuantization">
+                                            <option value="none">None</option>
+                                            <option value="low">Low (256 colors)</option>
+                                            <option value="medium">Medium (128 colors)</option>
+                                            <option value="high">High (64 colors)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Format Options -->
+                            <div class="mb-3">
+                                <label class="form-label">Output Format</label>
+                                <select class="form-select" id="outputFormat">
+                                    <option value="zip">ZIP (Multiple Files)</option>
+                                    <option value="pdf">PDF (Single Document)</option>
+                                    <option value="image/jpeg">JPEG (Single Image)</option>
+                                    <option value="image/png">PNG (Single Image)</option>
+                                    <option value="image/webp">WebP (Single Image)</option>
+                                </select>
+                                <div class="form-text">Select how you want to download your compressed images</div>
+                            </div>
+
+                            <!-- Advanced Options -->
+                            <div class="mb-3">
+                                <label class="form-label">Advanced Options</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="stripMetadata" checked>
+                                    <label class="form-check-label" for="stripMetadata">
+                                        Strip metadata (EXIF, XMP, etc.)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="preserveTransparency" checked>
+                                    <label class="form-check-label" for="preserveTransparency">
+                                        Preserve transparency
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="enableRetina">
+                                    <label class="form-check-label" for="enableRetina">
+                                        Generate Retina (@2x) version
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Batch Processing -->
+                            <div class="mb-3">
+                                <label class="form-label">Batch Processing</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="enableBatch" checked>
+                                    <label class="form-check-label" for="enableBatch">
+                                        Process multiple images
+                                    </label>
+                                </div>
+                                <div id="batchSettings">
+                                    <div class="mt-2">
+                                        <label class="form-label">Output Naming Pattern</label>
+                                        <input type="text" class="form-control" id="namingPattern" value="{name}_compressed">
+                                        <div class="form-text">Available variables: {name}, {size}, {date}, {index}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Size Limit -->
+                            <div class="mb-3">
+                                <label class="form-label">Target File Size</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="targetSize" placeholder="Optional">
+                                    <select class="form-select" id="sizeUnit" style="max-width: 100px;">
+                                        <option value="KB">KB</option>
+                                        <option value="MB">MB</option>
+                                    </select>
+                                </div>
+                                <div class="form-text">Leave empty for automatic optimization</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Optimization Tips -->
+                    <div class="optimization-tips">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Smart Optimization Tips</h6>
+                        <ul class="mb-0" id="optimizationTips">
+                            <!-- Tips will be added dynamically -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Section -->
+            <div class="ad-section mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="ad-placeholder text-center">
+                            <div id="tool-ad-space" class="bg-light p-3">
+                                <p class="text-muted">Advertisement Space</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JSZip for batch downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/components.js"></script>
+    <!-- PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewGrid = document.getElementById('previewGrid');
+        const compressBtn = document.getElementById('compressBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const addMoreBtn = document.getElementById('addMoreBtn');
+        const compressionMode = document.getElementById('compressionMode');
+        const customSettings = document.getElementById('customSettings');
+        const quality = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        const optimizationTips = document.getElementById('optimizationTips');
+
+        let files = [];
+
+        // Event Listeners
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        compressionMode.addEventListener('change', () => {
+            customSettings.style.display = 
+                compressionMode.value === 'custom' ? 'block' : 'none';
+            updateOptimizationTips();
+        });
+
+        quality.addEventListener('input', (e) => {
+            qualityValue.textContent = e.target.value + '%';
+            updateOptimizationTips();
+        });
+
+        compressBtn.addEventListener('click', compressImages);
+        clearBtn.addEventListener('click', clearImages);
+        addMoreBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Handle files
+        function handleFiles(newFiles) {
+            const imageFiles = newFiles.filter(file => file.type.startsWith('image/'));
+            if (imageFiles.length === 0) {
+                alert('Please select valid image files.');
+                return;
+            }
+
+            // Process each new file
+            imageFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewItem = createPreviewItem(file, e.target.result, files.length);
+                    previewGrid.appendChild(previewItem);
+                    files.push(file);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            previewContainer.style.display = 'block';
+            dropZone.style.display = 'none';
+            updateOptimizationTips();
+            fileInput.value = ''; // Reset file input
+        }
+
+        // Create preview item
+        function createPreviewItem(file, src, index) {
+            const div = document.createElement('div');
+            div.className = 'preview-item';
+            div.dataset.index = index;
+            div.innerHTML = `
+                <button class="delete-image" title="Delete image">×</button>
+                <div class="image-preview">
+                    <img src="${src}" alt="Preview ${index + 1}" class="original-preview">
+                    <img src="" alt="Compressed Preview ${index + 1}" class="compressed-preview" style="display: none;">
+                </div>
+                <div class="image-name">${file.name}</div>
+                <div class="size-info">
+                    Original: ${formatFileSize(file.size)}
+                </div>
+                <div class="compressed-size" style="display: none;">
+                    Compressed: <span>-</span>
+                </div>
+                <div class="preview-controls mt-2" style="display: none;">
+                    <button class="btn btn-sm btn-outline-primary toggle-preview">Show Original</button>
+                    <button class="btn btn-sm btn-success download-btn" style="display: none;">
+                        <i class="fas fa-download me-1"></i>Download
+                    </button>
+                </div>
+            `;
+
+            // Add delete button event listener
+            const deleteBtn = div.querySelector('.delete-image');
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm('Are you sure you want to remove this image?')) {
+                    deleteImage(index);
+                }
+            });
+
+            // Add toggle preview button event listener
+            const toggleBtn = div.querySelector('.toggle-preview');
+            const originalPreview = div.querySelector('.original-preview');
+            const compressedPreview = div.querySelector('.compressed-preview');
+            
+            toggleBtn.addEventListener('click', () => {
+                const isShowingOriginal = toggleBtn.textContent === 'Show Original';
+                originalPreview.style.display = isShowingOriginal ? 'block' : 'none';
+                compressedPreview.style.display = isShowingOriginal ? 'none' : 'block';
+                toggleBtn.textContent = isShowingOriginal ? 'Show Compressed' : 'Show Original';
+            });
+
+            return div;
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Update optimization tips
+        function updateOptimizationTips() {
+            const tips = [];
+            const mode = compressionMode.value;
+            const qualityLevel = parseInt(quality.value);
+            const outputFormat = document.getElementById('outputFormat').value;
+            const targetSize = getTargetFileSize();
+
+            // Mode-specific tips
+            if (mode === 'auto') {
+                tips.push('Smart compression will analyze each image and apply optimal settings');
+            } else if (mode === 'aggressive') {
+                tips.push('Maximum compression may result in visible quality loss');
+            } else if (mode === 'custom') {
+                if (qualityLevel < 60) {
+                    tips.push('Low quality setting may result in visible artifacts');
+                }
+            }
+
+            // Format-specific tips for uploaded images
+            files.forEach((file, index) => {
+                const format = file.type.toLowerCase();
+                const size = file.size;
+                const fileName = file.name;
+                
+                // Size-based tips
+                if (size > 5 * 1024 * 1024) {
+                    tips.push(`"${fileName}" is large (${formatFileSize(size)}). Consider using WebP format for better compression`);
+                }
+
+                // Format conversion warnings
+                if (format === 'image/jpeg' && outputFormat === 'image/png') {
+                    tips.push(`Warning: Converting "${fileName}" from JPEG to PNG:\n` +
+                        '• May increase file size\n' +
+                        '• Best for images needing transparency\n' +
+                        '• Consider keeping as JPEG for photos\n' +
+                        '• Use WebP for better compression with transparency');
+                }
+
+                // Format-specific tips
+                if (format === 'image/png') {
+                    if (outputFormat === 'image/jpeg') {
+                        tips.push(`"${fileName}": Converting PNG to JPEG:\n` +
+                            '• Will remove transparency\n' +
+                            '• Good for photos without transparency\n' +
+                            '• Smaller file size for photos');
+                    } else {
+                        tips.push(`"${fileName}": PNG optimization tips:\n` +
+                            '• Best for graphics/logos/text\n' +
+                            '• Use color quantization for limited colors\n' +
+                            '• Consider WebP for photos with transparency');
+                    }
+                } else if (format === 'image/jpeg') {
+                    if (outputFormat === 'image/jpeg' || outputFormat === 'image/webp') {
+                        tips.push(`"${fileName}": JPEG optimization tips:\n` +
+                            '• Quality 70-85% for photos\n' +
+                            '• Lower quality for smaller size\n' +
+                            '• WebP may provide better compression');
+                    }
+                } else if (format === 'image/gif') {
+                    tips.push(`"${fileName}": GIF conversion tips:\n` +
+                        '• PNG for static graphics with transparency\n' +
+                        '• JPEG for photos without transparency\n' +
+                        '• WebP for best balance of quality and size');
+                } else if (format === 'image/webp') {
+                    if (outputFormat !== 'image/webp') {
+                        tips.push(`"${fileName}": Note: Converting from WebP may increase file size`);
+                    }
+                }
+
+                // Resolution-based tips
+                const img = new Image();
+                img.onload = () => {
+                    if (img.width > 2000 || img.height > 2000) {
+                        tips.push(`"${fileName}" has large dimensions (${img.width}x${img.height}). Consider resizing for web use`);
+                        optimizationTips.innerHTML = tips.map(tip => formatTip(tip)).join('');
+                    }
+                };
+                img.src = URL.createObjectURL(file);
+            });
+
+            // Target size tips with format considerations
+            if (targetSize) {
+                const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+                if (totalSize > targetSize * 1.5) {
+                    const formatTip = outputFormat === 'image/png' ? 
+                        'Consider JPEG/WebP for photos to reach target size' :
+                        'Try WebP format for best compression';
+                    
+                    tips.push('To reach target size (' + formatFileSize(targetSize) + '):\n' +
+                        `• ${formatTip}\n` +
+                        '• Enable aggressive mode if needed\n' +
+                        '• Consider reducing image dimensions');
+                }
+            }
+
+            // Output format tips
+            if (outputFormat === 'pdf') {
+                tips.push('PDF output tips:\n' +
+                    '• JPEG compression works best for photos\n' +
+                    '• Medium quality (70-80%) recommended\n' +
+                    '• Reduce dimensions for large images');
+            } else if (outputFormat === 'zip') {
+                tips.push('ZIP output tips:\n' +
+                    '• WebP offers best compression\n' +
+                    '• PNG for graphics needing transparency\n' +
+                    '• JPEG for photos without transparency');
+            }
+
+            // Format and display tips
+            optimizationTips.innerHTML = tips.map(tip => formatTip(tip)).join('');
+        }
+
+        // Helper function to format tips with bullets
+        function formatTip(tip) {
+            if (tip.includes('•')) {
+                const [title, ...bullets] = tip.split('\n');
+                return `<li class="mb-2">
+                    <strong>${title}</strong>
+                    <ul class="mt-1 mb-0">
+                        ${bullets.map(bullet => `<li>${bullet.trim()}</li>`).join('')}
+                    </ul>
+                </li>`;
+            }
+            return `<li class="mb-2">${tip}</li>`;
+        }
+
+        // Compress images
+        async function compressImages() {
+            if (files.length === 0) {
+                alert('Please select at least one image to compress.');
+                return;
+            }
+
+            const progressBar = document.querySelector('.compression-progress');
+            progressBar.style.display = 'block';
+            const progress = progressBar.querySelector('.progress-bar');
+            progress.style.width = '0%';
+            
+            const outputFormat = document.getElementById('outputFormat').value;
+            const compressionMode = document.getElementById('compressionMode').value;
+            const preserveTransparency = document.getElementById('preserveTransparency').checked;
+            
+            try {
+                progress.style.width = '30%';
+                compressBtn.disabled = true;
+                
+                if (outputFormat === 'pdf') {
+                    await generatePDF(progress, compressionMode);
+                } else if (outputFormat === 'zip') {
+                    await generateZip(progress, compressionMode, preserveTransparency);
+                } else {
+                    await generateSingleImage(outputFormat, progress, compressionMode);
+                }
+                
+                progress.style.width = '100%';
+            } catch (error) {
+                console.error('Error during compression:', error);
+                alert('An error occurred: ' + (error.message || 'Failed to process images. Please try again.'));
+            } finally {
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                    progress.style.width = '0%';
+                    compressBtn.disabled = false;
+                }, 1000);
+            }
+        }
+
+        // Generate PDF
+        async function generatePDF(progress, compressionMode) {
+            try {
+                // Create PDF document
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = doc.internal.pageSize.width;
+                const pageHeight = doc.internal.pageSize.height;
+                const margin = 10;
+                let yOffset = margin;
+
+                for (let i = 0; i < files.length; i++) {
+                    progress.style.width = `${30 + (i / files.length * 50)}%`;
+
+                    try {
+                        // Create temporary image element
+                        const img = new Image();
+                        const imageUrl = await new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => resolve(e.target.result);
+                            reader.readAsDataURL(files[i]);
+                        });
+                        
+                        await new Promise((resolve, reject) => {
+                            img.onload = resolve;
+                            img.onerror = reject;
+                            img.src = imageUrl;
+                        });
+
+                        // Calculate dimensions
+                        let imgWidth = pageWidth - (margin * 2);
+                        let imgHeight = (img.height * imgWidth) / img.width;
+
+                        // Scale down if image is too tall
+                        if (imgHeight > pageHeight - (margin * 2)) {
+                            imgHeight = pageHeight - (margin * 2);
+                            imgWidth = (img.width * imgHeight) / img.height;
+                        }
+
+                        // Add new page if needed
+                        if (i > 0 && yOffset + imgHeight > pageHeight - margin) {
+                            doc.addPage();
+                            yOffset = margin;
+                        }
+
+                        // Create canvas and compress image
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+
+                        // Get quality based on compression mode
+                        const quality = compressionMode === 'custom' ? parseInt(document.getElementById('quality').value) / 100 : 
+                                      compressionMode === 'aggressive' ? 0.6 :
+                                      compressionMode === 'lossless' ? 1.0 : 0.8;
+
+                        // Add image to PDF
+                        try {
+                            const imgData = canvas.toDataURL('image/jpeg', quality);
+                            doc.addImage(imgData, 'JPEG', margin, yOffset, imgWidth, imgHeight);
+
+                            // Update preview with compressed size
+                            const previewItem = previewGrid.children[i];
+                            const compressedSize = previewItem.querySelector('.compressed-size');
+                            compressedSize.style.display = 'block';
+                            
+                            const blob = await new Promise(resolve => {
+                                canvas.toBlob(resolve, 'image/jpeg', quality);
+                            });
+                            compressedSize.querySelector('span').textContent = formatFileSize(blob.size);
+
+                            yOffset += imgHeight + margin;
+                        } catch (err) {
+                            console.error('Error adding image to PDF:', err);
+                            throw new Error(`Failed to add image ${i + 1} to PDF. The image might be too large.`);
+                        }
+
+                    } catch (err) {
+                        console.error('Error processing image:', err);
+                        throw new Error(`Failed to process image ${i + 1}. Please try a different format.`);
+                    }
+                }
+
+                // Save PDF
+                try {
+                    doc.save('compressed_images.pdf');
+                } catch (err) {
+                    throw new Error('Failed to save PDF. The file might be too large.');
+                }
+
+            } catch (error) {
+                console.error('PDF generation error:', error);
+                throw new Error(error.message || 'Failed to generate PDF. Please try again.');
+            }
+        }
+
+        // Update preview with compressed image
+        function updatePreviewWithCompressed(previewItem, blob, quality) {
+            const compressedPreview = previewItem.querySelector('.compressed-preview');
+            const compressedSize = previewItem.querySelector('.compressed-size');
+            const previewControls = previewItem.querySelector('.preview-controls');
+            const downloadBtn = previewItem.querySelector('.download-btn');
+            const originalSize = parseInt(previewItem.querySelector('.size-info').textContent.match(/\d+/)[0]);
+            
+            // Update compressed preview
+            const url = URL.createObjectURL(blob);
+            compressedPreview.src = url;
+            compressedPreview.style.display = 'block';
+            previewItem.querySelector('.original-preview').style.display = 'none';
+            
+            // Update size info
+            compressedSize.style.display = 'block';
+            compressedSize.querySelector('span').textContent = formatFileSize(blob.size);
+            
+            // Show controls
+            previewControls.style.display = 'flex';
+            previewControls.style.justifyContent = 'space-between';
+            previewControls.style.alignItems = 'center';
+            
+            // Setup download button
+            downloadBtn.style.display = 'inline-block';
+            downloadBtn.onclick = () => {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `compressed_${files[parseInt(previewItem.dataset.index)].name}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+
+            // Add compression ratio indicator
+            const compressionRatio = Math.round((1 - (blob.size / originalSize)) * 100);
+            const ratioIndicator = document.createElement('div');
+            ratioIndicator.className = 'compression-ratio';
+            ratioIndicator.innerHTML = `
+                <span class="badge ${compressionRatio > 0 ? 'bg-success' : 'bg-warning'}">
+                    ${compressionRatio > 0 ? `-${compressionRatio}%` : 'No reduction'}
+                </span>
+            `;
+            compressedSize.appendChild(ratioIndicator);
+        }
+
+        // Get target file size in bytes
+        function getTargetFileSize() {
+            const targetSize = document.getElementById('targetSize').value;
+            const sizeUnit = document.getElementById('sizeUnit').value;
+            
+            if (!targetSize) return null;
+            
+            const size = parseFloat(targetSize);
+            if (isNaN(size) || size <= 0) return null;
+            
+            return size * (sizeUnit === 'MB' ? 1024 * 1024 : 1024);
+        }
+
+        // Compress image to target size
+        async function compressToTargetSize(canvas, format, initialQuality, targetSize, maxAttempts = 15) {
+            let minQuality = 0.01;
+            let maxQuality = 1;
+            let currentQuality = initialQuality;
+            let attempts = 0;
+            let bestBlob = null;
+            let bestQuality = 0;
+            let bestSizeDiff = Infinity;
+            
+            // First try dimension adjustment if needed
+            const originalWidth = canvas.width;
+            const originalHeight = canvas.height;
+            const originalSize = await new Promise(resolve => {
+                canvas.toBlob(blob => resolve(blob.size), format, 1.0);
+            });
+            
+            if (originalSize > targetSize * 1.5) {
+                // Calculate scale based on target size
+                const scaleFactor = Math.sqrt(targetSize / originalSize);
+                const newWidth = Math.floor(originalWidth * scaleFactor);
+                const newHeight = Math.floor(originalHeight * scaleFactor);
+                
+                // Create new canvas with adjusted dimensions
+                const scaledCanvas = document.createElement('canvas');
+                scaledCanvas.width = newWidth;
+                scaledCanvas.height = newHeight;
+                const ctx = scaledCanvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(canvas, 0, 0, newWidth, newHeight);
+                canvas = scaledCanvas;
+            }
+            
+            while (attempts < maxAttempts) {
+                attempts++;
+                
+                const blob = await new Promise(resolve => {
+                    canvas.toBlob(resolve, format, currentQuality);
+                });
+                
+                const sizeDiff = Math.abs(blob.size - targetSize);
+                if (sizeDiff < bestSizeDiff) {
+                    bestBlob = blob;
+                    bestQuality = currentQuality;
+                    bestSizeDiff = sizeDiff;
+                }
+                
+                // If we're within 2% of target size or this is our last attempt, return best result
+                if (sizeDiff / targetSize < 0.02 || attempts === maxAttempts) {
+                    break;
+                }
+                
+                // Binary search with dynamic adjustment
+                if (blob.size > targetSize) {
+                    maxQuality = currentQuality;
+                    currentQuality = (minQuality + currentQuality) / 2;
+                } else {
+                    minQuality = currentQuality;
+                    currentQuality = (currentQuality + maxQuality) / 2;
+                }
+            }
+            
+            return { blob: bestBlob, quality: bestQuality };
+        }
+
+        // Generate single image
+        async function generateSingleImage(format, progress, compressionMode) {
+            if (files.length === 0) return;
+            
+            progress.style.width = '50%';
+            
+            try {
+                const file = files[0];
+                const img = new Image();
+                const imageUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = () => reject(new Error('Failed to load image'));
+                    img.src = imageUrl;
+                });
+
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set initial canvas dimensions
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                
+                // Get target file size
+                const targetSize = getTargetFileSize();
+                
+                // Draw original image
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                // Check if we're converting from JPEG to PNG and it's a photo
+                const isPhoto = await isPhotographic(ctx, canvas.width, canvas.height);
+                const isJpegToPng = file.type.toLowerCase() === 'image/jpeg' && format === 'image/png';
+                
+                if (isJpegToPng && isPhoto) {
+                    if (!confirm('Converting this photo from JPEG to PNG may significantly increase file size without quality benefits. Continue anyway?')) {
+                        // Switch back to JPEG format if user cancels
+                        format = 'image/jpeg';
+                    }
+                }
+                
+                // Initial quality based on compression mode and format
+                let quality = format === 'image/png' ? undefined : 
+                             compressionMode === 'custom' ? parseInt(document.getElementById('quality').value) / 100 : 
+                             compressionMode === 'aggressive' ? 0.3 :
+                             compressionMode === 'lossless' ? 1.0 : 0.7;
+
+                let blob;
+                // If target size is set and format supports quality adjustment
+                if (targetSize && format !== 'image/png') {
+                    const result = await compressToTargetSize(canvas, format, quality, targetSize);
+                    blob = result.blob;
+                    quality = result.quality;
+                    
+                    // If we're still not close enough to target size, try WebP format
+                    if (Math.abs(blob.size - targetSize) / targetSize > 0.1 && format !== 'image/webp') {
+                        const webpResult = await compressToTargetSize(canvas, 'image/webp', quality, targetSize);
+                        if (Math.abs(webpResult.blob.size - targetSize) < Math.abs(blob.size - targetSize)) {
+                            blob = webpResult.blob;
+                            quality = webpResult.quality;
+                            format = 'image/webp';
+                        }
+                    }
+                } else {
+                    // For PNG, apply color quantization if it's not a photo
+                    if (format === 'image/png' && !isPhoto) {
+                        const colorQuantization = document.getElementById('colorQuantization').value;
+                        if (colorQuantization !== 'none') {
+                            const colors = colorQuantization === 'high' ? 64 : 
+                                         colorQuantization === 'medium' ? 128 : 256;
+                            quantizeColors(ctx.getImageData(0, 0, canvas.width, canvas.height), colors);
+                            ctx.putImageData(imageData, 0, 0);
+                        }
+                    }
+                    
+                    // Create blob with appropriate settings
+                    blob = await new Promise((resolve, reject) => {
+                        canvas.toBlob(
+                            blob => blob ? resolve(blob) : reject(new Error('Failed to compress image')),
+                            format,
+                            quality
+                        );
+                    });
+                }
+                
+                // Update preview with compressed image
+                const previewItem = previewGrid.children[0];
+                updatePreviewWithCompressed(previewItem, blob, quality);
+                
+                // Show detailed success message
+                const savings = Math.round((1 - (blob.size / file.size)) * 100);
+                let message = `Image compressed successfully!\n`;
+                message += `Original size: ${formatFileSize(file.size)}\n`;
+                message += `Compressed size: ${formatFileSize(blob.size)}\n`;
+                message += `Format: ${format.split('/')[1].toUpperCase()}\n`;
+                message += savings > 0 ? `Savings: ${savings}%\n` : 'File size increased\n';
+                
+                if (targetSize) {
+                    const targetDiff = Math.abs(blob.size - targetSize) / targetSize * 100;
+                    message += `\nTarget size: ${formatFileSize(targetSize)}\n`;
+                    message += `Difference from target: ${targetDiff.toFixed(1)}%\n`;
+                    
+                    if (targetDiff > 10) {
+                        message += `\nNote: The target size was difficult to achieve while maintaining acceptable quality.`;
+                        if (format !== 'image/webp') {
+                            message += `\nTry using WebP format for better compression.`;
+                        }
+                    }
+                }
+                
+                alert(message);
+                
+            } catch (error) {
+                console.error('Error processing image:', error);
+                throw new Error(`Failed to process image: ${error.message}. Please try a different format or check the image file.`);
+            }
+        }
+
+        // Helper function to detect if an image is photographic
+        async function isPhotographic(ctx, width, height) {
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            let uniqueColors = new Set();
+            let sampleSize = 1000; // Sample pixels for performance
+            let step = Math.max(1, Math.floor((width * height) / sampleSize));
+            
+            for (let i = 0; i < data.length; i += 4 * step) {
+                const color = `${data[i]},${data[i+1]},${data[i+2]}`;
+                uniqueColors.add(color);
+                if (uniqueColors.size > 256) {
+                    return true; // Likely a photo if many unique colors
+                }
+            }
+            
+            return false; // Likely graphics if limited colors
+        }
+
+        // Color quantization function
+        function quantizeColors(imageData, numColors) {
+            const data = imageData.data;
+            const pixels = [];
+            
+            // Convert to RGB array
+            for (let i = 0; i < data.length; i += 4) {
+                pixels.push([data[i], data[i + 1], data[i + 2]]);
+            }
+            
+            // Simple median cut quantization
+            const palette = medianCut(pixels, numColors);
+            
+            // Apply palette to image
+            for (let i = 0; i < data.length; i += 4) {
+                const pixel = [data[i], data[i + 1], data[i + 2]];
+                const closest = findClosestColor(pixel, palette);
+                data[i] = closest[0];
+                data[i + 1] = closest[1];
+                data[i + 2] = closest[2];
+            }
+        }
+
+        // Find closest color in palette
+        function findClosestColor(pixel, palette) {
+            let minDist = Number.MAX_VALUE;
+            let closest = palette[0];
+            
+            for (const color of palette) {
+                const dist = colorDistance(pixel, color);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closest = color;
+                }
+            }
+            
+            return closest;
+        }
+
+        // Calculate color distance
+        function colorDistance(c1, c2) {
+            const rDiff = c1[0] - c2[0];
+            const gDiff = c1[1] - c2[1];
+            const bDiff = c1[2] - c2[2];
+            return rDiff * rDiff + gDiff * gDiff + bDiff * bDiff;
+        }
+
+        // Median cut algorithm for color quantization
+        function medianCut(pixels, numColors) {
+            if (numColors <= 0) return [];
+            if (numColors === 1) {
+                const avg = pixels.reduce((acc, pixel) => [
+                    acc[0] + pixel[0] / pixels.length,
+                    acc[1] + pixel[1] / pixels.length,
+                    acc[2] + pixel[2] / pixels.length
+                ], [0, 0, 0]);
+                return [avg.map(Math.round)];
+            }
+            
+            // Find the color component with the largest range
+            const ranges = [0, 1, 2].map(i => {
+                const min = Math.min(...pixels.map(p => p[i]));
+                const max = Math.max(...pixels.map(p => p[i]));
+                return max - min;
+            });
+            const largestRange = ranges.indexOf(Math.max(...ranges));
+            
+            // Sort pixels by the component with largest range
+            pixels.sort((a, b) => a[largestRange] - b[largestRange]);
+            
+            // Split pixels into two groups
+            const mid = pixels.length >> 1;
+            const left = pixels.slice(0, mid);
+            const right = pixels.slice(mid);
+            
+            // Recursively process each half
+            return [
+                ...medianCut(left, numColors >> 1),
+                ...medianCut(right, numColors - (numColors >> 1))
+            ];
+        }
+
+        // Check if image has transparency
+        function hasTransparency(ctx, width, height) {
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            for (let i = 3; i < data.length; i += 4) {
+                if (data[i] < 255) return true;
+            }
+            return false;
+        }
+
+        // Generate ZIP
+        async function generateZip(progress, compressionMode, preserveTransparency) {
+            try {
+                const zip = new JSZip();
+                
+                for (let i = 0; i < files.length; i++) {
+                    progress.style.width = `${30 + (i / files.length * 50)}%`;
+                    
+                    const file = files[i];
+                    // Create a new image element
+                    const img = new Image();
+                    const imageUrl = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsDataURL(file);
+                    });
+
+                    // Wait for image to load
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = () => reject(new Error(`Failed to load image: ${file.name}`));
+                        img.src = imageUrl;
+                    });
+                    
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    const quality = compressionMode === 'custom' ? parseInt(document.getElementById('quality').value) / 100 : 
+                                  compressionMode === 'aggressive' ? 0.6 :
+                                  compressionMode === 'lossless' ? 1.0 : 0.8;
+                    
+                    const format = preserveTransparency ? 'image/png' : 'image/webp';
+                    const blob = await new Promise((resolve, reject) => {
+                        canvas.toBlob(
+                            blob => blob ? resolve(blob) : reject(new Error(`Failed to compress image: ${file.name}`)),
+                            format,
+                            quality
+                        );
+                    });
+                    
+                    const filename = document.getElementById('namingPattern').value
+                        .replace('{name}', file.name.replace(/\.[^/.]+$/, ""))
+                        .replace('{size}', formatFileSize(blob.size))
+                        .replace('{date}', new Date().toISOString().split('T')[0])
+                        .replace('{index}', (i + 1).toString().padStart(3, '0')) +
+                        getExtensionFromMimeType(format);
+                    
+                    zip.file(filename, blob);
+                    
+                    // Update preview
+                    const previewItem = previewGrid.children[i];
+                    const compressedSize = previewItem.querySelector('.compressed-size');
+                    compressedSize.style.display = 'block';
+                    compressedSize.querySelector('span').textContent = formatFileSize(blob.size);
+                }
+                
+                progress.style.width = '90%';
+                
+                const zipBlob = await zip.generateAsync({
+                    type: 'blob',
+                    compression: 'DEFLATE',
+                    compressionOptions: { level: 6 }
+                });
+                
+                const url = URL.createObjectURL(zipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'compressed_images.zip';
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                
+                // Show success message
+                alert('Images compressed and zipped successfully!');
+            } catch (error) {
+                console.error('ZIP generation error:', error);
+                throw new Error(error.message || 'Failed to generate ZIP file. Please try again.');
+            }
+        }
+
+        // Get file extension from MIME type
+        function getExtensionFromMimeType(mimeType) {
+            const extensions = {
+                'image/jpeg': '.jpg',
+                'image/png': '.png',
+                'image/webp': '.webp',
+                'image/avif': '.avif'
+            };
+            return extensions[mimeType] || '.jpg';
+        }
+
+        // Delete individual image
+        function deleteImage(index) {
+            // Remove file from array
+            files.splice(index, 1);
+            
+            // Remove preview item
+            const items = previewGrid.querySelectorAll('.preview-item');
+            items[index].remove();
+            
+            // Update indices for remaining items
+            items.forEach((item, i) => {
+                if (i > index) {
+                    item.dataset.index = i - 1;
+                    const deleteBtn = item.querySelector('.delete-image');
+                    const newIndex = i - 1;
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (confirm('Are you sure you want to remove this image?')) {
+                            deleteImage(newIndex);
+                        }
+                    };
+                }
+            });
+
+            // If no images left, show drop zone
+            if (files.length === 0) {
+                previewContainer.style.display = 'none';
+                dropZone.style.display = 'block';
+            }
+
+            // Update optimization tips
+            updateOptimizationTips();
+        }
+
+        // Clear images
+        function clearImages() {
+            files = [];
+            previewGrid.innerHTML = '';
+            previewContainer.style.display = 'none';
+            dropZone.style.display = 'block';
+            fileInput.value = '';
+            optimizationTips.innerHTML = '';
+        }
+    </script>
+</body>
+</html> 

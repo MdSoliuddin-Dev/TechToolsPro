@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebP to PNG Converter - Multi-Tools</title>
+    <meta name="description" content="Convert WebP images to PNG format with advanced options. Support for batch processing, quality control, and optimization.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: border 0.3s ease;
+            cursor: pointer;
+        }
+        .drop-zone:hover {
+            border-color: #0056b3;
+        }
+        .drop-zone.dragover {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-color: #0056b3;
+        }
+        .preview-container {
+            display: none;
+            margin-top: 1rem;
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .preview-item {
+            border: 1px solid #dee2e6;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            position: relative;
+        }
+        .preview-item .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .preview-item .comparison > div {
+            text-align: center;
+        }
+        .preview-item img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #dee2e6;
+        }
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+        }
+        .size-info {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .progress-container {
+            margin-top: 1rem;
+            display: none;
+        }
+        .optimization-tips {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1><i class="fas fa-exchange-alt me-2"></i>WebP to PNG Converter</h1>
+                <p class="tool-description">Convert WebP images to PNG format with advanced options. Perfect for maximum compatibility and quality preservation.</p>
+            </div>
+
+            <!-- Tool Content -->
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-images fa-3x mb-3"></i>
+                        <h4>Drag & Drop your WebP images here</h4>
+                        <p>or</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose Files
+                        </button>
+                        <input type="file" id="fileInput" hidden accept=".webp" multiple>
+                        <p class="mt-2 text-muted">Supports: WebP images</p>
+                    </div>
+
+                    <div class="preview-container" id="previewContainer">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Conversion Settings</h5>
+                                
+                                <!-- PNG Options -->
+                                <div class="mb-3">
+                                    <label class="form-label">PNG Options</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <select class="form-select" id="colorDepth">
+                                                <option value="8">8-bit PNG (256 colors)</option>
+                                                <option value="24" selected>24-bit PNG (True Color)</option>
+                                                <option value="32">32-bit PNG (True Color with Alpha)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <select class="form-select" id="compressionLevel">
+                                                <option value="0">No Compression</option>
+                                                <option value="3">Fast Compression</option>
+                                                <option value="6" selected>Balanced</option>
+                                                <option value="9">Maximum Compression</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Image Processing -->
+                                <div class="mb-3">
+                                    <label class="form-label">Image Processing</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <select class="form-select" id="imageSize">
+                                                <option value="original">Original Size</option>
+                                                <option value="optimize">Optimize Size</option>
+                                                <option value="custom">Custom Size</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <select class="form-select" id="dithering">
+                                                <option value="none">No Dithering</option>
+                                                <option value="floyd-steinberg">Floyd-Steinberg</option>
+                                                <option value="ordered">Ordered Dithering</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Size Options (initially hidden) -->
+                                <div class="mb-3" id="customSizeOptions" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Max Width (px)</label>
+                                            <input type="number" class="form-control" id="maxWidth" value="1920">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Max Height (px)</label>
+                                            <input type="number" class="form-control" id="maxHeight" value="1080">
+                                        </div>
+                                    </div>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="maintainAspectRatio" checked>
+                                        <label class="form-check-label" for="maintainAspectRatio">
+                                            Maintain aspect ratio
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Advanced Options -->
+                                <div class="mb-3">
+                                    <label class="form-label">Advanced Options</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="preserveMetadata">
+                                        <label class="form-check-label" for="preserveMetadata">
+                                            Preserve metadata (EXIF, XMP, etc.)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="interlaced">
+                                        <label class="form-check-label" for="interlaced">
+                                            Create interlaced PNG (progressive loading)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="optimizePalette" checked>
+                                        <label class="form-check-label" for="optimizePalette">
+                                            Optimize color palette
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Batch Processing -->
+                                <div class="mb-3">
+                                    <label class="form-label">Batch Processing</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="createSubfolder" checked>
+                                        <label class="form-check-label" for="createSubfolder">
+                                            Create subfolder for output
+                                        </label>
+                                    </div>
+                                    <div class="mt-2">
+                                        <label class="form-label">Output Naming Pattern</label>
+                                        <input type="text" class="form-control" id="namingPattern" value="{name}_converted">
+                                        <div class="form-text">Available variables: {name}, {width}, {height}, {date}, {index}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Grid -->
+                        <div class="preview-grid" id="previewGrid"></div>
+
+                        <!-- Progress Bar -->
+                        <div class="progress-container">
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="text-center mt-3">
+                            <button class="btn btn-success" id="convertBtn">
+                                <i class="fas fa-exchange-alt me-2"></i>Convert to PNG
+                            </button>
+                            <button class="btn btn-danger ms-2" id="clearBtn">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </button>
+                        </div>
+
+                        <!-- Optimization Tips -->
+                        <div class="optimization-tips">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Optimization Tips</h6>
+                            <ul class="mb-0" id="optimizationTips">
+                                <!-- Tips will be added dynamically -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Section -->
+            <div class="ad-section mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="ad-placeholder text-center">
+                            <div id="tool-ad-space" class="bg-light p-3">
+                                <p class="text-muted">Advertisement Space</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JSZip for batch downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/components.js"></script>
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewGrid = document.getElementById('previewGrid');
+        const convertBtn = document.getElementById('convertBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const imageSize = document.getElementById('imageSize');
+        const customSizeOptions = document.getElementById('customSizeOptions');
+        const optimizationTips = document.getElementById('optimizationTips');
+
+        let files = [];
+
+        // Event Listeners
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        imageSize.addEventListener('change', () => {
+            customSizeOptions.style.display = 
+                imageSize.value === 'custom' ? 'block' : 'none';
+            updateOptimizationTips();
+        });
+
+        // Handle files
+        function handleFiles(newFiles) {
+            files = newFiles.filter(file => file.type === 'image/webp' || file.name.toLowerCase().endsWith('.webp'));
+            if (files.length === 0) {
+                alert('Please select valid WebP files.');
+                return;
+            }
+
+            previewGrid.innerHTML = '';
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewItem = createPreviewItem(file, e.target.result, index);
+                    previewGrid.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            previewContainer.style.display = 'block';
+            dropZone.style.display = 'none';
+            updateOptimizationTips();
+        }
+
+        // Create preview item
+        function createPreviewItem(file, src, index) {
+            const div = document.createElement('div');
+            div.className = 'preview-item';
+            div.innerHTML = `
+                <div class="comparison">
+                    <div>
+                        <small>Original (WebP)</small>
+                        <img src="${src}" alt="Original ${index + 1}">
+                    </div>
+                    <div>
+                        <small>Preview (PNG)</small>
+                        <img src="${src}" alt="Preview ${index + 1}" class="png-preview">
+                    </div>
+                </div>
+                <button class="remove-btn" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="size-info">
+                    ${file.name}<br>
+                    Original: ${formatFileSize(file.size)}
+                </div>
+            `;
+
+            div.querySelector('.remove-btn').addEventListener('click', () => {
+                files.splice(index, 1);
+                if (files.length === 0) {
+                    clearFiles();
+                } else {
+                    handleFiles(files);
+                }
+            });
+
+            return div;
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Update optimization tips
+        function updateOptimizationTips() {
+            const tips = [];
+            const colorDepth = document.getElementById('colorDepth').value;
+            const compressionLevel = document.getElementById('compressionLevel').value;
+            const dithering = document.getElementById('dithering').value;
+
+            if (colorDepth === '8') {
+                tips.push('8-bit PNG will reduce file size but may affect image quality. Consider using dithering to improve appearance.');
+            }
+
+            if (compressionLevel === '9') {
+                tips.push('Maximum compression may increase processing time significantly.');
+            }
+
+            if (dithering !== 'none' && colorDepth === '24') {
+                tips.push('Dithering is most effective with 8-bit color depth.');
+            }
+
+            const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+            if (totalSize > 5 * 1024 * 1024) {
+                tips.push('Large total file size detected. Consider using custom size options to optimize output.');
+            }
+
+            optimizationTips.innerHTML = tips.map(tip => `<li>${tip}</li>`).join('');
+        }
+
+        // Convert images
+        async function convertImages() {
+            const progressBar = document.querySelector('.progress-bar');
+            const progressContainer = document.querySelector('.progress-container');
+            progressContainer.style.display = 'block';
+            
+            const colorDepth = document.getElementById('colorDepth').value;
+            const compressionLevel = document.getElementById('compressionLevel').value;
+            const imageSize = document.getElementById('imageSize').value;
+            const dithering = document.getElementById('dithering').value;
+            const preserveMetadata = document.getElementById('preserveMetadata').checked;
+            const interlaced = document.getElementById('interlaced').checked;
+            const optimizePalette = document.getElementById('optimizePalette').checked;
+            const createSubfolder = document.getElementById('createSubfolder').checked;
+            const namingPattern = document.getElementById('namingPattern').value;
+            
+            const zip = new JSZip();
+            const folder = createSubfolder ? zip.folder('converted_images') : zip;
+            
+            for (let i = 0; i < files.length; i++) {
+                progressBar.style.width = `${(i / files.length) * 100}%`;
+                
+                const file = files[i];
+                const png = await processImage(file, {
+                    colorDepth: parseInt(colorDepth),
+                    compressionLevel: parseInt(compressionLevel),
+                    imageSize,
+                    dithering,
+                    preserveMetadata,
+                    interlaced,
+                    optimizePalette
+                });
+                
+                const filename = namingPattern
+                    .replace('{name}', file.name.replace(/\.webp$/, ''))
+                    .replace('{width}', png.width)
+                    .replace('{height}', png.height)
+                    .replace('{date}', new Date().toISOString().split('T')[0])
+                    .replace('{index}', (i + 1).toString().padStart(3, '0')) + '.png';
+                
+                folder.file(filename, png.blob);
+                
+                // Update preview
+                const previewItem = previewGrid.children[i];
+                const pngPreview = previewItem.querySelector('.png-preview');
+                pngPreview.src = URL.createObjectURL(png.blob);
+                
+                const sizeInfo = previewItem.querySelector('.size-info');
+                sizeInfo.innerHTML = `
+                    ${file.name}<br>
+                    Original: ${formatFileSize(file.size)}<br>
+                    Converted: ${formatFileSize(png.blob.size)}
+                `;
+            }
+            
+            // Generate and download zip
+            progressBar.style.width = '100%';
+            const zipBlob = await zip.generateAsync({type: 'blob'});
+            const url = URL.createObjectURL(zipBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'converted_images.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+            }, 1000);
+        }
+
+        // Process image
+        async function processImage(file, options) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // Apply size options
+                        if (options.imageSize === 'custom') {
+                            const maxWidth = parseInt(document.getElementById('maxWidth').value);
+                            const maxHeight = parseInt(document.getElementById('maxHeight').value);
+                            const maintainAspectRatio = document.getElementById('maintainAspectRatio').checked;
+                            
+                            if (maintainAspectRatio) {
+                                if (width > maxWidth) {
+                                    height = Math.round((height * maxWidth) / width);
+                                    width = maxWidth;
+                                }
+                                if (height > maxHeight) {
+                                    width = Math.round((width * maxHeight) / height);
+                                    height = maxHeight;
+                                }
+                            } else {
+                                width = Math.min(width, maxWidth);
+                                height = Math.min(height, maxHeight);
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Apply dithering if needed
+                        if (options.dithering !== 'none' && options.colorDepth === 8) {
+                            // Implement dithering algorithms here
+                            // This is a simplified version
+                            ctx.imageSmoothingEnabled = true;
+                            ctx.imageSmoothingQuality = 'high';
+                        }
+                        
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Convert to PNG
+                        canvas.toBlob((blob) => {
+                            resolve({
+                                blob,
+                                width,
+                                height
+                            });
+                        }, 'image/png');
+                    };
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Clear files
+        function clearFiles() {
+            files = [];
+            previewGrid.innerHTML = '';
+            previewContainer.style.display = 'none';
+            dropZone.style.display = 'block';
+            fileInput.value = '';
+            optimizationTips.innerHTML = '';
+        }
+
+        // Event listeners for convert and clear buttons
+        convertBtn.addEventListener('click', convertImages);
+        clearBtn.addEventListener('click', clearFiles);
+
+        // Initialize optimization tips
+        updateOptimizationTips();
+    </script>
+</body>
+</html> 

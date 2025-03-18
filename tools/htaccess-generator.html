@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTACCESS Generator - Multi-Tools</title>
+    <meta name="description" content="Generate HTACCESS rules for URL redirects, rewrites, and other server configurations.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- CodeMirror -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/apache/apache.min.js"></script>
+    <style>
+        .CodeMirror {
+            height: 300px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+
+        .rule-container {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .rule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .rule-title {
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            z-index: 10;
+        }
+
+        .template-card {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .template-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .template-card.selected {
+            border-color: var(--primary);
+            background-color: rgba(var(--primary-rgb), 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .rule-header {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-exchange-alt me-2"></i>
+                            HTACCESS Generator
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tool Sections -->
+                        <ul class="nav nav-tabs mb-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#redirects" type="button">
+                                    <i class="fas fa-random me-2"></i>Redirects
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#templates" type="button">
+                                    <i class="fas fa-clipboard-list me-2"></i>Templates
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Redirects -->
+                            <div class="tab-pane fade show active" id="redirects" role="tabpanel">
+                                <div id="redirectRules">
+                                    <div class="rule-container">
+                                        <div class="rule-header">
+                                            <div class="rule-title">Redirect Rule #1</div>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="removeRule(this)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Redirect Type</label>
+                                                <select class="form-select" onchange="updateRule(this)">
+                                                    <option value="301">301 (Permanent)</option>
+                                                    <option value="302">302 (Temporary)</option>
+                                                    <option value="rewrite">URL Rewrite</option>
+                                                    <option value="proxy">Proxy Pass</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Match Type</label>
+                                                <select class="form-select" onchange="updateRule(this)">
+                                                    <option value="exact">Exact Match</option>
+                                                    <option value="start">Starts With</option>
+                                                    <option value="regex">Regular Expression</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Source URL</label>
+                                                <input type="text" class="form-control" placeholder="/old-page" oninput="updateRule(this)">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Target URL</label>
+                                                <input type="text" class="form-control" placeholder="/new-page" oninput="updateRule(this)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-outline-primary mb-3" onclick="addRule()">
+                                    <i class="fas fa-plus me-2"></i>Add Rule
+                                </button>
+
+                                <div class="position-relative">
+                                    <textarea id="htaccessOutput"></textarea>
+                                    <button class="btn btn-outline-primary btn-sm copy-btn" onclick="copyToClipboard()">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Templates -->
+                            <div class="tab-pane fade" id="templates" role="tabpanel">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="card template-card" onclick="loadTemplate('www')">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="fas fa-globe me-2"></i>
+                                                    WWW Redirect
+                                                </h5>
+                                                <p class="card-text small text-muted">
+                                                    Redirect non-www to www version
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card template-card" onclick="loadTemplate('https')">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="fas fa-lock me-2"></i>
+                                                    HTTPS Redirect
+                                                </h5>
+                                                <p class="card-text small text-muted">
+                                                    Force HTTPS for all requests
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card template-card" onclick="loadTemplate('trailing')">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="fas fa-slash me-2"></i>
+                                                    Trailing Slash
+                                                </h5>
+                                                <p class="card-text small text-muted">
+                                                    Add trailing slash to URLs
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card template-card" onclick="loadTemplate('error')">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                                    Error Pages
+                                                </h5>
+                                                <p class="card-text small text-muted">
+                                                    Custom error page redirects
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card template-card" onclick="loadTemplate('cache')">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="fas fa-clock me-2"></i>
+                                                    Browser Cache
+                                                </h5>
+                                                <p class="card-text small text-muted">
+                                                    Configure browser caching
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card template-card" onclick="loadTemplate('security')">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="fas fa-shield-alt me-2"></i>
+                                                    Security Rules
+                                                </h5>
+                                                <p class="card-text small text-muted">
+                                                    Basic security configurations
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About HTACCESS Generator</h2>
+                        <p>A powerful tool for generating Apache HTACCESS rules for URL redirects, rewrites, and other server configurations.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Multiple redirect types (301, 302, Rewrite, Proxy)</li>
+                            <li>Pattern matching options</li>
+                            <li>Common configuration templates</li>
+                            <li>Syntax highlighting</li>
+                            <li>Copy to clipboard functionality</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Test the generated rules in a development environment before using them in production.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize CodeMirror editor
+            const editor = CodeMirror.fromTextArea(document.getElementById('htaccessOutput'), {
+                mode: 'apache',
+                theme: 'monokai',
+                lineNumbers: true,
+                readOnly: true
+            });
+
+            // Add Rule
+            window.addRule = () => {
+                const rules = document.getElementById('redirectRules');
+                const newRule = rules.children[0].cloneNode(true);
+                const ruleCount = rules.children.length + 1;
+                
+                newRule.querySelector('.rule-title').textContent = `Redirect Rule #${ruleCount}`;
+                newRule.querySelectorAll('input').forEach(input => input.value = '');
+                newRule.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+                
+                rules.appendChild(newRule);
+                updateOutput();
+            };
+
+            // Remove Rule
+            window.removeRule = (button) => {
+                const rules = document.getElementById('redirectRules');
+                if (rules.children.length > 1) {
+                    button.closest('.rule-container').remove();
+                    updateOutput();
+                }
+            };
+
+            // Update Rule
+            window.updateRule = () => {
+                updateOutput();
+            };
+
+            // Update Output
+            function updateOutput() {
+                const rules = document.getElementById('redirectRules');
+                let output = '# Apache HTACCESS Rules\n# Generated by HTACCESS Generator\n\n';
+
+                Array.from(rules.children).forEach(rule => {
+                    const type = rule.querySelector('select:first-of-type').value;
+                    const match = rule.querySelector('select:last-of-type').value;
+                    const source = rule.querySelector('input:first-of-type').value.trim();
+                    const target = rule.querySelector('input:last-of-type').value.trim();
+
+                    if (source && target) {
+                        switch (type) {
+                            case '301':
+                            case '302':
+                                output += `Redirect ${type} ${source} ${target}\n`;
+                                break;
+                            case 'rewrite':
+                                output += 'RewriteEngine On\n';
+                                switch (match) {
+                                    case 'exact':
+                                        output += `RewriteRule ^${source.replace(/^\//, '')}$ ${target} [L]\n`;
+                                        break;
+                                    case 'start':
+                                        output += `RewriteRule ^${source.replace(/^\//, '')} ${target} [L]\n`;
+                                        break;
+                                    case 'regex':
+                                        output += `RewriteRule ${source} ${target} [L]\n`;
+                                        break;
+                                }
+                                break;
+                            case 'proxy':
+                                output += `ProxyPass ${source} ${target}\n`;
+                                output += `ProxyPassReverse ${source} ${target}\n`;
+                                break;
+                        }
+                        output += '\n';
+                    }
+                });
+
+                editor.setValue(output.trim());
+            }
+
+            // Load Template
+            window.loadTemplate = (type) => {
+                let template = '';
+                
+                switch (type) {
+                    case 'www':
+                        template = `# Redirect non-www to www
+RewriteEngine On
+RewriteCond %{HTTP_HOST} !^www\. [NC]
+RewriteRule ^(.*)$ http://www.%{HTTP_HOST}/$1 [R=301,L]`;
+                        break;
+                    case 'https':
+                        template = `# Force HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]`;
+                        break;
+                    case 'trailing':
+                        template = `# Add trailing slash
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_URI} !/$
+RewriteRule ^(.*)$ $1/ [L,R=301]`;
+                        break;
+                    case 'error':
+                        template = `# Custom error pages
+ErrorDocument 404 /404.html
+ErrorDocument 500 /500.html
+ErrorDocument 403 /403.html`;
+                        break;
+                    case 'cache':
+                        template = `# Browser caching
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>`;
+                        break;
+                    case 'security':
+                        template = `# Security headers
+<IfModule mod_headers.c>
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-Content-Type-Options "nosniff"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Protect .htaccess
+<Files .htaccess>
+    Order allow,deny
+    Deny from all
+</Files>`;
+                        break;
+                }
+
+                editor.setValue(template);
+            };
+
+            // Copy to Clipboard
+            window.copyToClipboard = () => {
+                const text = editor.getValue();
+                navigator.clipboard.writeText(text).then(() => {
+                    const button = document.querySelector('.copy-btn');
+                    const originalHtml = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        button.innerHTML = originalHtml;
+                    }, 1500);
+                });
+            };
+
+            // Initialize with empty output
+            updateOutput();
+        });
+    </script>
+</body>
+</html> 

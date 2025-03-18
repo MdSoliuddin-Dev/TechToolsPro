@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Speech - Multi-Tools</title>
+    <meta name="description" content="Convert text to natural-sounding speech with multiple voice options and language support.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .voice-controls {
+            background: var(--background-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .range-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .range-control label {
+            min-width: 100px;
+        }
+
+        .btn-play {
+            min-width: 120px;
+        }
+
+        .character-count {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-volume-up me-2"></i>
+                            Text to Speech
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Text Input -->
+                        <div class="mb-3">
+                            <label for="textInput" class="form-label">Enter your text</label>
+                            <textarea id="textInput" class="form-control" rows="6" 
+                                placeholder="Type or paste your text here (up to 1000 characters)..."
+                                maxlength="1000"></textarea>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span class="character-count">
+                                    Characters: <span id="charCount">0</span>/1000
+                                </span>
+                                <button id="clearText" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-eraser me-1"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Voice Controls -->
+                        <div class="voice-controls">
+                            <!-- Voice Selection -->
+                            <div class="mb-3">
+                                <label for="voiceSelect" class="form-label">Select Voice</label>
+                                <select id="voiceSelect" class="form-select"></select>
+                            </div>
+
+                            <!-- Rate and Pitch Controls -->
+                            <div class="range-control">
+                                <label for="rate" class="form-label">Speed:</label>
+                                <input type="range" class="form-range flex-grow-1" id="rate" min="0.5" max="2" value="1" step="0.1">
+                                <span id="rateValue" class="ms-2">1.0x</span>
+                            </div>
+
+                            <div class="range-control">
+                                <label for="pitch" class="form-label">Pitch:</label>
+                                <input type="range" class="form-range flex-grow-1" id="pitch" min="0.5" max="2" value="1" step="0.1">
+                                <span id="pitchValue" class="ms-2">1.0x</span>
+                            </div>
+
+                            <!-- Playback Controls -->
+                            <div class="d-flex gap-2 mt-4">
+                                <button id="playButton" class="btn btn-primary btn-play">
+                                    <i class="fas fa-play me-2"></i>Play
+                                </button>
+                                <button id="pauseButton" class="btn btn-secondary btn-play" disabled>
+                                    <i class="fas fa-pause me-2"></i>Pause
+                                </button>
+                                <button id="stopButton" class="btn btn-danger btn-play" disabled>
+                                    <i class="fas fa-stop me-2"></i>Stop
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Text to Speech</h2>
+                        <p>Convert written text into natural-sounding speech with our free online text-to-speech tool. Perfect for content creators, language learners, and accessibility needs.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Multiple voice options</li>
+                            <li>Adjustable speech rate and pitch</li>
+                            <li>Support for multiple languages</li>
+                            <li>Playback controls (play, pause, stop)</li>
+                            <li>Up to 1000 characters per conversion</li>
+                            <li>No sign-up required</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Voice availability may vary depending on your browser and operating system.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const textInput = document.getElementById('textInput');
+            const voiceSelect = document.getElementById('voiceSelect');
+            const rate = document.getElementById('rate');
+            const pitch = document.getElementById('pitch');
+            const rateValue = document.getElementById('rateValue');
+            const pitchValue = document.getElementById('pitchValue');
+            const playButton = document.getElementById('playButton');
+            const pauseButton = document.getElementById('pauseButton');
+            const stopButton = document.getElementById('stopButton');
+            const clearButton = document.getElementById('clearText');
+            const charCount = document.getElementById('charCount');
+
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+
+            // Load voices
+            function loadVoices() {
+                const voices = speechSynthesis.getVoices();
+                voiceSelect.innerHTML = voices
+                    .map((voice, index) => `<option value="${index}">${voice.name} (${voice.lang})</option>`)
+                    .join('');
+            }
+
+            // Chrome loads voices asynchronously
+            speechSynthesis.onvoiceschanged = loadVoices;
+            loadVoices(); // For other browsers
+
+            // Update character count
+            textInput.addEventListener('input', () => {
+                charCount.textContent = textInput.value.length;
+            });
+
+            // Update rate and pitch displays
+            rate.addEventListener('input', () => rateValue.textContent = `${rate.value}x`);
+            pitch.addEventListener('input', () => pitchValue.textContent = `${pitch.value}x`);
+
+            // Clear text
+            clearButton.addEventListener('click', () => {
+                textInput.value = '';
+                charCount.textContent = '0';
+            });
+
+            // Play button
+            playButton.addEventListener('click', () => {
+                if (currentUtterance) {
+                    speechSynthesis.cancel();
+                }
+
+                if (textInput.value) {
+                    const utterance = new SpeechSynthesisUtterance(textInput.value);
+                    const voices = speechSynthesis.getVoices();
+                    
+                    utterance.voice = voices[voiceSelect.value];
+                    utterance.rate = parseFloat(rate.value);
+                    utterance.pitch = parseFloat(pitch.value);
+
+                    utterance.onstart = () => {
+                        playButton.disabled = true;
+                        pauseButton.disabled = false;
+                        stopButton.disabled = false;
+                    };
+
+                    utterance.onend = () => {
+                        playButton.disabled = false;
+                        pauseButton.disabled = true;
+                        stopButton.disabled = true;
+                    };
+
+                    currentUtterance = utterance;
+                    speechSynthesis.speak(utterance);
+                }
+            });
+
+            // Pause button
+            pauseButton.addEventListener('click', () => {
+                if (speechSynthesis.speaking) {
+                    if (speechSynthesis.paused) {
+                        speechSynthesis.resume();
+                        pauseButton.innerHTML = '<i class="fas fa-pause me-2"></i>Pause';
+                    } else {
+                        speechSynthesis.pause();
+                        pauseButton.innerHTML = '<i class="fas fa-play me-2"></i>Resume';
+                    }
+                }
+            });
+
+            // Stop button
+            stopButton.addEventListener('click', () => {
+                speechSynthesis.cancel();
+                playButton.disabled = false;
+                pauseButton.disabled = true;
+                stopButton.disabled = true;
+            });
+        });
+    </script>
+</body>
+</html> 

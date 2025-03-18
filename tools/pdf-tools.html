@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Tools - Multi-Tools</title>
+    <meta name="description" content="Merge, split, compress, and manage PDF files. Free online PDF tools with client-side processing.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        .tool-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            background: var(--background-color);
+        }
+
+        .tool-card:hover {
+            background: rgba(var(--primary-rgb), 0.1);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .tool-card.active {
+            background: rgba(var(--primary-rgb), 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .tool-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: all var(--transition-speed);
+            background: var(--background-color);
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .drop-zone.dragover {
+            background: rgba(var(--primary-rgb), 0.1);
+            border-color: var(--secondary-color);
+        }
+
+        .pdf-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .pdf-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            background: var(--background-color);
+        }
+
+        .pdf-preview {
+            width: 50px;
+            height: 70px;
+            margin-right: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background: white;
+        }
+
+        .pdf-preview canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .pdf-info {
+            flex-grow: 1;
+        }
+
+        .pdf-name {
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .pdf-pages {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .pdf-size {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .pdf-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .page-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .page-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 0.5rem;
+            text-align: center;
+            background: white;
+        }
+
+        .page-preview {
+            width: 100%;
+            aspect-ratio: 0.707;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+
+        .page-number {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .progress {
+            height: 0.5rem;
+        }
+
+        .compression-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .compression-option {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .compression-option:hover {
+            background: rgba(var(--primary-rgb), 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .compression-option.active {
+            background: rgba(var(--primary-rgb), 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .range-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-file-pdf me-2"></i>
+                            PDF Tools
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tool Selection -->
+                        <div class="tool-selector">
+                            <div class="tool-card active" data-tool="merge">
+                                <i class="fas fa-object-group tool-icon"></i>
+                                <h3 class="h6">Merge PDFs</h3>
+                                <small class="text-muted">Combine multiple PDFs into one</small>
+                            </div>
+                            <div class="tool-card" data-tool="split">
+                                <i class="fas fa-cut tool-icon"></i>
+                                <h3 class="h6">Split PDF</h3>
+                                <small class="text-muted">Extract pages from PDF</small>
+                            </div>
+                            <div class="tool-card" data-tool="compress">
+                                <i class="fas fa-compress-arrows-alt tool-icon"></i>
+                                <h3 class="h6">Compress PDF</h3>
+                                <small class="text-muted">Reduce PDF file size</small>
+                            </div>
+                        </div>
+
+                        <!-- Merge Tool -->
+                        <div id="mergeTool" class="tool-content">
+                            <div class="drop-zone" id="mergeDropZone">
+                                <i class="fas fa-file-pdf fa-3x mb-3"></i>
+                                <h3 class="h5">Drag & Drop PDF files here</h3>
+                                <p class="text-muted">or click to select files</p>
+                                <input type="file" id="mergeFileInput" multiple accept=".pdf" style="display: none;">
+                            </div>
+                            <div class="pdf-list" id="mergePdfList"></div>
+                            <button class="btn btn-primary w-100 mt-3" id="mergeBtn" style="display: none;">
+                                <i class="fas fa-object-group me-2"></i>Merge PDFs
+                            </button>
+                        </div>
+
+                        <!-- Split Tool -->
+                        <div id="splitTool" class="tool-content" style="display: none;">
+                            <div class="drop-zone" id="splitDropZone">
+                                <i class="fas fa-file-pdf fa-3x mb-3"></i>
+                                <h3 class="h5">Drag & Drop a PDF file here</h3>
+                                <p class="text-muted">or click to select file</p>
+                                <input type="file" id="splitFileInput" accept=".pdf" style="display: none;">
+                            </div>
+                            <div id="pageSelection" style="display: none;">
+                                <h5 class="mb-3">Select Pages to Extract</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Page Range</label>
+                                    <input type="text" class="form-control" id="pageRange" placeholder="e.g., 1-3, 5, 7-9">
+                                    <small class="text-muted">Enter page numbers and/or ranges separated by commas</small>
+                                </div>
+                                <div class="page-grid" id="pageGrid"></div>
+                                <button class="btn btn-primary w-100 mt-3" id="splitBtn">
+                                    <i class="fas fa-cut me-2"></i>Split PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Compress Tool -->
+                        <div id="compressTool" class="tool-content" style="display: none;">
+                            <div class="drop-zone" id="compressDropZone">
+                                <i class="fas fa-file-pdf fa-3x mb-3"></i>
+                                <h3 class="h5">Drag & Drop a PDF file here</h3>
+                                <p class="text-muted">or click to select file</p>
+                                <input type="file" id="compressFileInput" accept=".pdf" style="display: none;">
+                            </div>
+                            <div id="compressionOptions" style="display: none;">
+                                <h5 class="mb-3">Compression Level</h5>
+                                <div class="compression-options">
+                                    <div class="compression-option active" data-level="low">
+                                        <i class="fas fa-feather mb-2"></i>
+                                        <h6>Light</h6>
+                                        <small class="text-muted">Best quality</small>
+                                    </div>
+                                    <div class="compression-option" data-level="medium">
+                                        <i class="fas fa-balance-scale mb-2"></i>
+                                        <h6>Medium</h6>
+                                        <small class="text-muted">Balanced</small>
+                                    </div>
+                                    <div class="compression-option" data-level="high">
+                                        <i class="fas fa-compress mb-2"></i>
+                                        <h6>High</h6>
+                                        <small class="text-muted">Smallest size</small>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary w-100 mt-3" id="compressBtn">
+                                    <i class="fas fa-compress-arrows-alt me-2"></i>Compress PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Progress -->
+                        <div class="progress-container" id="progressContainer">
+                            <div class="progress mb-2">
+                                <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted" id="progressText">Processing...</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About PDF Tools</h2>
+                        <p>A collection of powerful tools to manage your PDF files. Merge multiple PDFs, extract pages, and compress PDF files - all in your browser.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Merge multiple PDF files into one</li>
+                            <li>Split PDF and extract specific pages</li>
+                            <li>Compress PDF files with different quality levels</li>
+                            <li>Preview pages before processing</li>
+                            <li>Client-side processing for security</li>
+                            <li>No file size limits</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All operations are performed locally in your browser. Your files are never uploaded to any server.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize PDF.js worker
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+            // Tool selection
+            const toolCards = document.querySelectorAll('.tool-card');
+            const toolContents = document.querySelectorAll('.tool-content');
+
+            toolCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    toolCards.forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    
+                    const tool = card.dataset.tool;
+                    toolContents.forEach(content => {
+                        content.style.display = content.id === `${tool}Tool` ? 'block' : 'none';
+                    });
+                });
+            });
+
+            // Merge Tool
+            const mergeDropZone = document.getElementById('mergeDropZone');
+            const mergeFileInput = document.getElementById('mergeFileInput');
+            const mergePdfList = document.getElementById('mergePdfList');
+            const mergeBtn = document.getElementById('mergeBtn');
+            let mergeFiles = [];
+
+            setupDropZone(mergeDropZone, mergeFileInput, handleMergeFiles);
+
+            function handleMergeFiles(files) {
+                Array.from(files).forEach(file => {
+                    if (file.type === 'application/pdf') {
+                        mergeFiles.push(file);
+                        updateMergePdfList();
+                    }
+                });
+                mergeBtn.style.display = mergeFiles.length > 1 ? 'block' : 'none';
+            }
+
+            function updateMergePdfList() {
+                mergePdfList.innerHTML = '';
+                mergeFiles.forEach((file, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'pdf-item';
+                    div.innerHTML = `
+                        <div class="pdf-preview" id="mergePreview${index}"></div>
+                        <div class="pdf-info">
+                            <p class="pdf-name">${file.name}</p>
+                            <p class="pdf-size">${formatFileSize(file.size)}</p>
+                        </div>
+                        <div class="pdf-actions">
+                            ${index > 0 ? `
+                                <button class="btn btn-sm btn-outline-secondary" onclick="movePdfUp(${index})">
+                                    <i class="fas fa-arrow-up"></i>
+                                </button>
+                            ` : ''}
+                            ${index < mergeFiles.length - 1 ? `
+                                <button class="btn btn-sm btn-outline-secondary" onclick="movePdfDown(${index})">
+                                    <i class="fas fa-arrow-down"></i>
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeMergePdf(${index})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                    mergePdfList.appendChild(div);
+                    renderPdfPreview(file, `mergePreview${index}`);
+                });
+            }
+
+            // Split Tool
+            const splitDropZone = document.getElementById('splitDropZone');
+            const splitFileInput = document.getElementById('splitFileInput');
+            const pageSelection = document.getElementById('pageSelection');
+            const pageGrid = document.getElementById('pageGrid');
+            const pageRange = document.getElementById('pageRange');
+            const splitBtn = document.getElementById('splitBtn');
+            let splitFile = null;
+
+            setupDropZone(splitDropZone, splitFileInput, handleSplitFile);
+
+            function handleSplitFile(files) {
+                if (files[0]?.type === 'application/pdf') {
+                    splitFile = files[0];
+                    pageSelection.style.display = 'block';
+                    renderPageGrid(splitFile);
+                }
+            }
+
+            async function renderPageGrid(file) {
+                const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+                pageGrid.innerHTML = '';
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'page-item';
+                    div.innerHTML = `
+                        <div class="page-preview" id="pagePreview${i}"></div>
+                        <div class="page-number">Page ${i}</div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${i}" id="page${i}">
+                            <label class="form-check-label" for="page${i}">Select</label>
+                        </div>
+                    `;
+                    pageGrid.appendChild(div);
+                    
+                    const page = await pdf.getPage(i);
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    const viewport = page.getViewport({ scale: 0.3 });
+                    
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+                    
+                    document.getElementById(`pagePreview${i}`).appendChild(canvas);
+                }
+            }
+
+            // Compress Tool
+            const compressDropZone = document.getElementById('compressDropZone');
+            const compressFileInput = document.getElementById('compressFileInput');
+            const compressionOptions = document.getElementById('compressionOptions');
+            const compressBtn = document.getElementById('compressBtn');
+            let compressFile = null;
+
+            setupDropZone(compressDropZone, compressFileInput, handleCompressFile);
+
+            function handleCompressFile(files) {
+                if (files[0]?.type === 'application/pdf') {
+                    compressFile = files[0];
+                    compressionOptions.style.display = 'block';
+                }
+            }
+
+            // Compression options
+            const compressionLevels = document.querySelectorAll('.compression-option');
+            compressionLevels.forEach(level => {
+                level.addEventListener('click', () => {
+                    compressionLevels.forEach(l => l.classList.remove('active'));
+                    level.classList.add('active');
+                });
+            });
+
+            // Common functions
+            function setupDropZone(dropZone, fileInput, handler) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, preventDefaults, false);
+                    document.body.addEventListener(eventName, preventDefaults, false);
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, () => {
+                        dropZone.classList.add('dragover');
+                    });
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, () => {
+                        dropZone.classList.remove('dragover');
+                    });
+                });
+
+                dropZone.addEventListener('click', () => fileInput.click());
+                fileInput.addEventListener('change', e => handler(e.target.files));
+                dropZone.addEventListener('drop', e => handler(e.dataTransfer.files));
+            }
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            async function renderPdfPreview(file, containerId) {
+                const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+                const page = await pdf.getPage(1);
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                const viewport = page.getViewport({ scale: 0.2 });
+                
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+                
+                document.getElementById(containerId).appendChild(canvas);
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Global functions for PDF management
+            window.movePdfUp = index => {
+                if (index > 0) {
+                    [mergeFiles[index], mergeFiles[index - 1]] = [mergeFiles[index - 1], mergeFiles[index]];
+                    updateMergePdfList();
+                }
+            };
+
+            window.movePdfDown = index => {
+                if (index < mergeFiles.length - 1) {
+                    [mergeFiles[index], mergeFiles[index + 1]] = [mergeFiles[index + 1], mergeFiles[index]];
+                    updateMergePdfList();
+                }
+            };
+
+            window.removeMergePdf = index => {
+                mergeFiles.splice(index, 1);
+                updateMergePdfList();
+                mergeBtn.style.display = mergeFiles.length > 1 ? 'block' : 'none';
+            };
+
+            // Tool buttons
+            mergeBtn.addEventListener('click', () => {
+                alert('This is a demo version. In the full version, PDFs would be merged and downloaded.');
+            });
+
+            splitBtn.addEventListener('click', () => {
+                alert('This is a demo version. In the full version, the PDF would be split according to your selection.');
+            });
+
+            compressBtn.addEventListener('click', () => {
+                alert('This is a demo version. In the full version, the PDF would be compressed and downloaded.');
+            });
+        });
+    </script>
+</body>
+</html> 

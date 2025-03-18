@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to JPG Converter - Multi-Tools</title>
+    <meta name="description" content="Convert any image format to JPG/JPEG online. Free, fast, and easy to use.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: border 0.3s ease;
+            cursor: pointer;
+        }
+        .drop-zone:hover {
+            border-color: #0056b3;
+        }
+        .drop-zone.dragover {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-color: #0056b3;
+        }
+        #preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 1rem;
+        }
+        .preview-container {
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+        .bg-preview {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: var(--border-radius);
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .preview-item {
+            text-align: center;
+        }
+        .preview-item img {
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #dee2e6;
+            border-radius: var(--border-radius);
+        }
+        .preview-label {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .image-info {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background-color: #e9ecef;
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+        }
+        #previewResized {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1><i class="fas fa-file-image me-2"></i>Image to JPG Converter</h1>
+                <p class="tool-description">Convert your images to JPG format with just a few clicks. Supports PNG, WebP, GIF, and other formats.</p>
+            </div>
+
+            <!-- Tool Content -->
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                        <h4>Drag & Drop your image here</h4>
+                        <p>or</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose File
+                        </button>
+                        <input type="file" id="fileInput" hidden accept="image/*">
+                    </div>
+
+                    <div class="preview-container" id="previewContainer">
+                        <div class="preview-grid">
+                            <div class="preview-item">
+                                <div class="preview-label">Original Image</div>
+                                <div class="bg-preview">
+                                    <img id="preview" alt="Original">
+                                </div>
+                                <div class="image-info" id="originalInfo">
+                                    Size: 0 x 0 pixels<br>
+                                    File size: 0 KB
+                                </div>
+                            </div>
+                            <div class="preview-item">
+                                <div class="preview-label">Preview Result</div>
+                                <div class="bg-preview">
+                                    <img id="previewResized" alt="Preview">
+                                </div>
+                                <div class="image-info" id="previewInfo">
+                                    Size: 0 x 0 pixels<br>
+                                    Estimated size: 0 KB
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-success" id="convertBtn">
+                                <i class="fas fa-download me-2"></i>Download JPG
+                            </button>
+                            <button class="btn btn-primary ms-2" id="previewBtn">
+                                <i class="fas fa-eye me-2"></i>Update Preview
+                            </button>
+                            <button class="btn btn-danger ms-2" id="clearBtn">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Settings -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Advanced Compression</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Compression Method</label>
+                                        <select class="form-select" id="compressionMethod">
+                                            <option value="standard">Standard</option>
+                                            <option value="progressive">Progressive</option>
+                                            <option value="optimized">Optimized</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Chroma Subsampling</label>
+                                        <select class="form-select" id="chromaSubsampling">
+                                            <option value="4:4:4">4:4:4 (No Subsampling)</option>
+                                            <option value="4:2:2">4:2:2 (Balanced)</option>
+                                            <option value="4:2:0" selected>4:2:0 (Maximum Compression)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Target File Size (KB)</label>
+                                <input type="number" class="form-control" id="targetSize" placeholder="Optional">
+                                <div class="form-text">Leave empty for automatic optimization</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Image Effects</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Brightness</label>
+                                        <input type="range" class="form-range" id="brightness" min="-100" max="100" value="0">
+                                        <div class="text-end">
+                                            <span id="brightnessValue">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Contrast</label>
+                                        <input type="range" class="form-range" id="contrast" min="-100" max="100" value="0">
+                                        <div class="text-end">
+                                            <span id="contrastValue">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Saturation</label>
+                                        <input type="range" class="form-range" id="saturation" min="-100" max="100" value="0">
+                                        <div class="text-end">
+                                            <span id="saturationValue">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Sharpness</label>
+                                        <input type="range" class="form-range" id="sharpness" min="0" max="100" value="0">
+                                        <div class="text-end">
+                                            <span id="sharpnessValue">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Filter</label>
+                                        <select class="form-select" id="imageFilter">
+                                            <option value="none">None</option>
+                                            <option value="grayscale">Grayscale</option>
+                                            <option value="sepia">Sepia</option>
+                                            <option value="blur">Blur</option>
+                                            <option value="vintage">Vintage</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Filter Intensity</label>
+                                        <input type="range" class="form-range" id="filterIntensity" min="0" max="100" value="100" disabled>
+                                        <div class="text-end">
+                                            <span id="filterIntensityValue">100%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Watermark</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Watermark Type</label>
+                                        <select class="form-select" id="watermarkType">
+                                            <option value="none">None</option>
+                                            <option value="text">Text</option>
+                                            <option value="image">Image</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Position</label>
+                                        <select class="form-select" id="watermarkPosition" disabled>
+                                            <option value="center">Center</option>
+                                            <option value="top-left">Top Left</option>
+                                            <option value="top-right">Top Right</option>
+                                            <option value="bottom-left">Bottom Left</option>
+                                            <option value="bottom-right">Bottom Right</option>
+                                            <option value="tile">Tile</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Text Watermark Settings -->
+                            <div id="textWatermarkSettings" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Text</label>
+                                            <input type="text" class="form-control" id="watermarkText" placeholder="© Your Name">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Font</label>
+                                            <select class="form-select" id="watermarkFont">
+                                                <option value="Arial">Arial</option>
+                                                <option value="Times New Roman">Times New Roman</option>
+                                                <option value="Georgia">Georgia</option>
+                                                <option value="Verdana">Verdana</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Size</label>
+                                            <input type="number" class="form-control" id="watermarkSize" value="24">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Color</label>
+                                            <input type="color" class="form-control form-control-color" id="watermarkColor" value="#ffffff">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Opacity</label>
+                                            <input type="range" class="form-range" id="watermarkOpacity" min="0" max="100" value="50">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Image Watermark Settings -->
+                            <div id="imageWatermarkSettings" style="display: none;">
+                                <div class="mb-3">
+                                    <label class="form-label">Watermark Image</label>
+                                    <input type="file" class="form-control" id="watermarkImage" accept="image/*">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Size (%)</label>
+                                            <input type="number" class="form-control" id="watermarkImageSize" value="30" min="1" max="100">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Opacity</label>
+                                            <input type="range" class="form-range" id="watermarkImageOpacity" min="0" max="100" value="50">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Section -->
+            <div class="ad-section mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="ad-placeholder text-center">
+                            <div id="tool-ad-space" class="bg-light p-3">
+                                <p class="text-muted">Advertisement Space</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/components.js"></script>
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const previewResized = document.getElementById('previewResized');
+        const previewContainer = document.getElementById('previewContainer');
+        const convertBtn = document.getElementById('convertBtn');
+        const previewBtn = document.getElementById('previewBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const originalInfo = document.getElementById('originalInfo');
+        const previewInfo = document.getElementById('previewInfo');
+
+        let currentFile = null;
+
+        // Effect controls
+        const brightnessInput = document.getElementById('brightness');
+        const contrastInput = document.getElementById('contrast');
+        const saturationInput = document.getElementById('saturation');
+        const sharpnessInput = document.getElementById('sharpness');
+        const imageFilter = document.getElementById('imageFilter');
+        const filterIntensity = document.getElementById('filterIntensity');
+
+        // Watermark controls
+        const watermarkType = document.getElementById('watermarkType');
+        const watermarkPosition = document.getElementById('watermarkPosition');
+        const textWatermarkSettings = document.getElementById('textWatermarkSettings');
+        const imageWatermarkSettings = document.getElementById('imageWatermarkSettings');
+
+        // Event Listeners
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 KB';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Handle file selection
+        function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Please select a valid image file.');
+                return;
+            }
+
+            currentFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.onload = () => {
+                    originalInfo.innerHTML = `Size: ${preview.naturalWidth} x ${preview.naturalHeight} pixels<br>File size: ${formatFileSize(file.size)}`;
+                    previewContainer.style.display = 'block';
+                    dropZone.style.display = 'none';
+                    updatePreview(); // Generate initial preview
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Update preview
+        async function updatePreview() {
+            if (!currentFile) return;
+            try {
+                const processedBlob = await processImage(currentFile);
+                const url = URL.createObjectURL(processedBlob);
+                previewResized.src = url;
+                previewResized.onload = () => {
+                    previewInfo.innerHTML = `Size: ${previewResized.naturalWidth} x ${previewResized.naturalHeight} pixels<br>Estimated size: ${formatFileSize(processedBlob.size)}`;
+                    URL.revokeObjectURL(url);
+                };
+            } catch (error) {
+                console.error('Preview error:', error);
+                alert('Error generating preview. Please try again.');
+            }
+        }
+
+        // Convert and download
+        async function convertToJPG() {
+            if (!currentFile) return;
+            try {
+                const processedBlob = await processImage(currentFile);
+                const url = URL.createObjectURL(processedBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${currentFile.name.split('.')[0]}_converted.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Conversion error:', error);
+                alert('Error converting image. Please try again.');
+            }
+        }
+
+        // Clear image and reset
+        function clearImage() {
+            preview.src = '';
+            previewResized.src = '';
+            previewContainer.style.display = 'none';
+            dropZone.style.display = 'block';
+            fileInput.value = '';
+            currentFile = null;
+            originalInfo.innerHTML = 'Size: 0 x 0 pixels<br>File size: 0 KB';
+            previewInfo.innerHTML = 'Size: 0 x 0 pixels<br>Estimated size: 0 KB';
+        }
+
+        // Event listeners for buttons
+        convertBtn.addEventListener('click', convertToJPG);
+        previewBtn.addEventListener('click', updatePreview);
+        clearBtn.addEventListener('click', clearImage);
+
+        // Add event listeners for live preview
+        ['brightness', 'contrast', 'saturation', 'sharpness'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updatePreview);
+        });
+
+        document.getElementById('imageFilter').addEventListener('change', updatePreview);
+        document.getElementById('filterIntensity').addEventListener('input', updatePreview);
+        document.getElementById('watermarkType').addEventListener('change', updatePreview);
+        document.getElementById('compressionMethod').addEventListener('change', updatePreview);
+        document.getElementById('chromaSubsampling').addEventListener('change', updatePreview);
+        document.getElementById('targetSize').addEventListener('input', updatePreview);
+
+        // Update value displays
+        function updateValueDisplay(input, valueSpan) {
+            document.getElementById(valueSpan).textContent = input.value;
+        }
+
+        brightnessInput.addEventListener('input', () => updateValueDisplay(brightnessInput, 'brightnessValue'));
+        contrastInput.addEventListener('input', () => updateValueDisplay(contrastInput, 'contrastValue'));
+        saturationInput.addEventListener('input', () => updateValueDisplay(saturationInput, 'saturationValue'));
+        sharpnessInput.addEventListener('input', () => updateValueDisplay(sharpnessInput, 'sharpnessValue'));
+        filterIntensity.addEventListener('input', () => updateValueDisplay(filterIntensity, 'filterIntensityValue'));
+
+        // Enable/disable filter intensity based on filter selection
+        imageFilter.addEventListener('change', () => {
+            filterIntensity.disabled = imageFilter.value === 'none';
+        });
+
+        // Toggle watermark settings
+        watermarkType.addEventListener('change', () => {
+            const type = watermarkType.value;
+            watermarkPosition.disabled = type === 'none';
+            textWatermarkSettings.style.display = type === 'text' ? 'block' : 'none';
+            imageWatermarkSettings.style.display = type === 'image' ? 'block' : 'none';
+        });
+
+        // Enhanced image processing
+        async function processImage(file) {
+            try {
+                // Create a new image and load the file
+                const img = new Image();
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = URL.createObjectURL(file);
+                });
+
+                // Create canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Set canvas dimensions
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+
+                // Enable image smoothing
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+
+                // Draw original image
+                ctx.drawImage(img, 0, 0);
+
+                // Check if any modifications are needed
+                const hasEffects = brightnessInput.value !== '0' || contrastInput.value !== '0' || 
+                                 saturationInput.value !== '0' || sharpnessInput.value !== '0';
+                const hasFilter = imageFilter.value !== 'none';
+                const hasWatermark = watermarkType.value !== 'none';
+                const hasTargetSize = document.getElementById('targetSize').value !== '';
+                const compressionMethod = document.getElementById('compressionMethod').value;
+                const isDefaultCompression = compressionMethod === 'standard';
+
+                // If no modifications are needed, return original file if it's already a JPEG
+                if (!hasEffects && !hasFilter && !hasWatermark && !hasTargetSize && isDefaultCompression && 
+                    file.type === 'image/jpeg') {
+                    return file;
+                }
+
+                // Apply effects if any are set
+                if (hasEffects) {
+                    applyImageEffects(ctx, canvas.width, canvas.height);
+                }
+
+                // Apply filter if selected
+                if (hasFilter) {
+                    applyImageFilter(ctx, canvas.width, canvas.height);
+                }
+
+                // Apply watermark if enabled
+                if (hasWatermark) {
+                    await applyWatermark(ctx, canvas.width, canvas.height);
+                }
+
+                // Get target size and compression settings
+                const targetSize = document.getElementById('targetSize').value;
+                const targetBytes = targetSize ? targetSize * 1024 : null;
+
+                // Function to create blob with specific quality
+                const createBlob = (quality) => {
+                    return new Promise(resolve => {
+                        canvas.toBlob(resolve, 'image/jpeg', quality);
+                    });
+                };
+
+                if (targetBytes) {
+                    // Binary search for target size
+                    let minQuality = 0.1;
+                    let maxQuality = 1.0;
+                    let bestBlob = null;
+                    let bestDiff = Infinity;
+                    let attempts = 0;
+
+                    while (attempts < 10 && (maxQuality - minQuality) > 0.01) {
+                        const quality = (minQuality + maxQuality) / 2;
+                        const blob = await createBlob(quality);
+                        const diff = Math.abs(blob.size - targetBytes);
+
+                        if (diff < bestDiff) {
+                            bestBlob = blob;
+                            bestDiff = diff;
+                        }
+
+                        if (diff <= Math.min(targetBytes * 0.01, 1024)) {
+                            return blob;
+                        }
+
+                        if (blob.size > targetBytes) {
+                            maxQuality = quality;
+                        } else {
+                            minQuality = quality;
+                        }
+                        attempts++;
+                    }
+
+                    return bestBlob;
+                } else {
+                    // Use compression method settings
+                    let quality = 1.0; // Start with maximum quality
+                    
+                    switch (compressionMethod) {
+                        case 'optimized':
+                            quality = 0.85;
+                            break;
+                        case 'progressive':
+                            quality = 0.75;
+                            break;
+                        case 'standard':
+                        default:
+                            // For standard compression, try to match original file size
+                            if (file.type === 'image/jpeg') {
+                                const originalBlob = await createBlob(1.0);
+                                if (originalBlob.size <= file.size) {
+                                    return originalBlob;
+                                }
+                                // If the size is larger, use 0.92 quality
+                                quality = 0.92;
+                            } else {
+                                quality = 0.92;
+                            }
+                            break;
+                    }
+
+                    // Adjust quality based on chroma subsampling
+                    const chromaSubsampling = document.getElementById('chromaSubsampling').value;
+                    switch (chromaSubsampling) {
+                        case '4:4:4':
+                            quality = Math.min(1.0, quality * 1.1); // Increase quality
+                            break;
+                        case '4:2:0':
+                            quality = Math.max(0.1, quality * 0.9); // Decrease quality
+                            break;
+                    }
+
+                    return createBlob(quality);
+                }
+            } catch (error) {
+                console.error('Error processing image:', error);
+                throw error;
+            }
+        }
+
+        // Apply image effects
+        function applyImageEffects(ctx, width, height) {
+            const brightness = parseInt(brightnessInput.value) * 2.55; // Convert to 0-255 range
+            const contrast = parseInt(contrastInput.value) * 2;
+            const saturation = parseInt(saturationInput.value) / 100;
+            const sharpness = parseInt(sharpnessInput.value) / 100;
+
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i];
+                let g = data[i + 1];
+                let b = data[i + 2];
+
+                // Apply brightness
+                r = Math.min(255, Math.max(0, r + brightness));
+                g = Math.min(255, Math.max(0, g + brightness));
+                b = Math.min(255, Math.max(0, b + brightness));
+
+                // Apply contrast
+                const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+                r = Math.min(255, Math.max(0, factor * (r - 128) + 128));
+                g = Math.min(255, Math.max(0, factor * (g - 128) + 128));
+                b = Math.min(255, Math.max(0, factor * (b - 128) + 128));
+
+                // Apply saturation
+                const gray = 0.2989 * r + 0.5870 * g + 0.1140 * b;
+                r = Math.min(255, Math.max(0, gray + (r - gray) * (1 + saturation)));
+                g = Math.min(255, Math.max(0, gray + (g - gray) * (1 + saturation)));
+                b = Math.min(255, Math.max(0, gray + (b - gray) * (1 + saturation)));
+
+                data[i] = r;
+                data[i + 1] = g;
+                data[i + 2] = b;
+            }
+
+            // Apply sharpness if needed
+            if (sharpness > 0) {
+                const weights = [
+                    0, -1 * sharpness, 0,
+                    -1 * sharpness, 1 + 4 * sharpness, -1 * sharpness,
+                    0, -1 * sharpness, 0
+                ];
+                applyConvolution(imageData, weights);
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Apply image filter
+        function applyImageFilter(ctx, width, height) {
+            const filter = imageFilter.value;
+            const intensity = filterIntensity.value / 100;
+
+            if (filter === 'none') return;
+
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+
+            switch (filter) {
+                case 'grayscale':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const gray = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+                        const mix = intensity;
+                        data[i] = gray * mix + data[i] * (1 - mix);
+                        data[i + 1] = gray * mix + data[i + 1] * (1 - mix);
+                        data[i + 2] = gray * mix + data[i + 2] * (1 - mix);
+                    }
+                    break;
+                case 'sepia':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+                        const mix = intensity;
+                        data[i] = Math.min(255, (r * (1 - 0.607 * mix) + (r * 0.769 + g * 0.686 + b * 0.534) * mix));
+                        data[i + 1] = Math.min(255, (g * (1 - 0.523 * mix) + (r * 0.676 + g * 0.732 + b * 0.433) * mix));
+                        data[i + 2] = Math.min(255, (b * (1 - 0.436 * mix) + (r * 0.545 + g * 0.558 + b * 0.378) * mix));
+                    }
+                    break;
+                case 'blur':
+                    const weights = Array(9).fill(1/9);
+                    for (let i = 0; i < Math.ceil(intensity * 3); i++) {
+                        applyConvolution(imageData, weights);
+                    }
+                    break;
+                case 'vintage':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+                        const mix = intensity;
+                        data[i] = Math.min(255, (r * (1 - 0.4 * mix) + (r * 1.2 + g * 0.1 + b * 0.1) * mix));
+                        data[i + 1] = Math.min(255, (g * (1 - 0.3 * mix) + (r * 0.1 + g * 1.1 + b * 0.1) * mix));
+                        data[i + 2] = Math.min(255, (b * (1 - 0.3 * mix) + (r * 0.1 + g * 0.1 + b * 0.9) * mix));
+                    }
+                    break;
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Helper function for convolution operations (used in sharpness and blur)
+        function applyConvolution(imageData, weights) {
+            const side = Math.round(Math.sqrt(weights.length));
+            const halfSide = Math.floor(side/2);
+            const src = imageData.data;
+            const sw = imageData.width;
+            const sh = imageData.height;
+            const w = sw;
+            const h = sh;
+            const output = new Uint8ClampedArray(src.length);
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const sy = y;
+                    const sx = x;
+                    const dstOff = (y * w + x) * 4;
+                    let r = 0, g = 0, b = 0;
+
+                    for (let cy = 0; cy < side; cy++) {
+                        for (let cx = 0; cx < side; cx++) {
+                            const scy = sy + cy - halfSide;
+                            const scx = sx + cx - halfSide;
+
+                            if (scy >= 0 && scy < sh && scx >= 0 && scx < sw) {
+                                const srcOff = (scy * sw + scx) * 4;
+                                const wt = weights[cy * side + cx];
+                                r += src[srcOff] * wt;
+                                g += src[srcOff + 1] * wt;
+                                b += src[srcOff + 2] * wt;
+                            }
+                        }
+                    }
+
+                    output[dstOff] = r;
+                    output[dstOff + 1] = g;
+                    output[dstOff + 2] = b;
+                    output[dstOff + 3] = src[dstOff + 3];
+                }
+            }
+
+            for (let i = 0; i < output.length; i++) {
+                imageData.data[i] = output[i];
+            }
+        }
+
+        // Apply watermark
+        async function applyWatermark(ctx, width, height) {
+            const position = watermarkPosition.value;
+            const type = watermarkType.value;
+            
+            if (type === 'text') {
+                const text = document.getElementById('watermarkText').value;
+                const font = document.getElementById('watermarkFont').value;
+                const size = document.getElementById('watermarkSize').value;
+                const color = document.getElementById('watermarkColor').value;
+                const opacity = document.getElementById('watermarkOpacity').value / 100;
+                
+                ctx.font = `${size}px ${font}`;
+                ctx.fillStyle = color;
+                ctx.globalAlpha = opacity;
+                
+                const metrics = ctx.measureText(text);
+                const textWidth = metrics.width;
+                const textHeight = parseInt(size);
+                
+                let x, y;
+                switch (position) {
+                    case 'center':
+                        x = (width - textWidth) / 2;
+                        y = (height + textHeight) / 2;
+                        break;
+                    case 'top-left':
+                        x = 10;
+                        y = textHeight + 10;
+                        break;
+                    case 'top-right':
+                        x = width - textWidth - 10;
+                        y = textHeight + 10;
+                        break;
+                    case 'bottom-left':
+                        x = 10;
+                        y = height - 10;
+                        break;
+                    case 'bottom-right':
+                        x = width - textWidth - 10;
+                        y = height - 10;
+                        break;
+                    case 'tile':
+                        const spacing = textWidth + 20;
+                        for (let tileY = textHeight; tileY < height; tileY += spacing) {
+                            for (let tileX = 10; tileX < width; tileX += spacing) {
+                                ctx.fillText(text, tileX, tileY);
+                            }
+                        }
+                        return;
+                }
+                
+                ctx.fillText(text, x, y);
+                
+            } else if (type === 'image') {
+                const watermarkFile = document.getElementById('watermarkImage').files[0];
+                if (!watermarkFile) return;
+                
+                const watermarkImg = await createImageBitmap(watermarkFile);
+                const size = document.getElementById('watermarkImageSize').value / 100;
+                const opacity = document.getElementById('watermarkImageOpacity').value / 100;
+                
+                const watermarkWidth = width * size;
+                const watermarkHeight = (watermarkWidth / watermarkImg.width) * watermarkImg.height;
+                
+                ctx.globalAlpha = opacity;
+                
+                let x, y;
+                switch (position) {
+                    case 'center':
+                        x = (width - watermarkWidth) / 2;
+                        y = (height - watermarkHeight) / 2;
+                        break;
+                    case 'top-left':
+                        x = 10;
+                        y = 10;
+                        break;
+                    case 'top-right':
+                        x = width - watermarkWidth - 10;
+                        y = 10;
+                        break;
+                    case 'bottom-left':
+                        x = 10;
+                        y = height - watermarkHeight - 10;
+                        break;
+                    case 'bottom-right':
+                        x = width - watermarkWidth - 10;
+                        y = height - watermarkHeight - 10;
+                        break;
+                    case 'tile':
+                        const spacing = watermarkWidth + 20;
+                        for (let tileY = 0; tileY < height; tileY += spacing) {
+                            for (let tileX = 0; tileX < width; tileX += spacing) {
+                                ctx.drawImage(watermarkImg, tileX, tileY, watermarkWidth, watermarkHeight);
+                            }
+                        }
+                        return;
+                }
+                
+                ctx.drawImage(watermarkImg, x, y, watermarkWidth, watermarkHeight);
+            }
+            
+            ctx.globalAlpha = 1;
+        }
+    </script>
+</body>
+</html> 

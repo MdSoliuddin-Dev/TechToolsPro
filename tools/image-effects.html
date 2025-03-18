@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Effects - Multi-Tools</title>
+    <meta name="description" content="Apply various filters and effects to your images. Adjust brightness, contrast, saturation, and more with real-time preview.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: all var(--transition-speed);
+            background: var(--background-color);
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .drop-zone.dragover {
+            background: rgba(var(--primary-rgb), 0.1);
+            border-color: var(--secondary-color);
+        }
+
+        .image-preview {
+            background: white;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--border-radius);
+        }
+
+        .effects-container {
+            background: var(--background-color);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+        }
+
+        .effect-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .effect-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .effect-slider {
+            margin-bottom: 1rem;
+        }
+
+        .effect-slider label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .effect-slider input[type="range"] {
+            width: 100%;
+        }
+
+        .preset-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .preset-filter {
+            text-align: center;
+            cursor: pointer;
+            transition: transform var(--transition-speed);
+        }
+
+        .preset-filter:hover {
+            transform: translateY(-2px);
+        }
+
+        .preset-filter img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+        }
+
+        .preset-filter.active {
+            position: relative;
+        }
+
+        .preset-filter.active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            pointer-events: none;
+        }
+
+        .preset-filter-name {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .canvas-container {
+            display: none;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--border-radius);
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-magic me-2"></i>
+                            Image Effects
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Upload Zone -->
+                        <div class="drop-zone" id="dropZone">
+                            <i class="fas fa-image fa-3x mb-3"></i>
+                            <h3 class="h5">Drag & Drop image here</h3>
+                            <p class="text-muted">or click to select file</p>
+                            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                        </div>
+
+                        <!-- Image Preview -->
+                        <div class="image-preview" id="imagePreview" style="display: none;">
+                            <img id="previewImage" alt="Preview">
+                            <div class="loading-overlay" id="loadingOverlay">
+                                <div class="spinner-border text-primary loading-spinner" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Effects Controls -->
+                        <div class="effects-container" id="effectsContainer" style="display: none;">
+                            <!-- Preset Filters -->
+                            <div class="effect-group">
+                                <h6 class="mb-3">Preset Filters</h6>
+                                <div class="preset-filters" id="presetFilters">
+                                    <div class="preset-filter active" data-filter="none">
+                                        <img id="originalPreset" alt="Original">
+                                        <div class="preset-filter-name">Original</div>
+                                    </div>
+                                    <div class="preset-filter" data-filter="grayscale">
+                                        <img id="grayscalePreset" alt="Grayscale">
+                                        <div class="preset-filter-name">Grayscale</div>
+                                    </div>
+                                    <div class="preset-filter" data-filter="sepia">
+                                        <img id="sepiaPreset" alt="Sepia">
+                                        <div class="preset-filter-name">Sepia</div>
+                                    </div>
+                                    <div class="preset-filter" data-filter="vintage">
+                                        <img id="vintagePreset" alt="Vintage">
+                                        <div class="preset-filter-name">Vintage</div>
+                                    </div>
+                                    <div class="preset-filter" data-filter="cool">
+                                        <img id="coolPreset" alt="Cool">
+                                        <div class="preset-filter-name">Cool</div>
+                                    </div>
+                                    <div class="preset-filter" data-filter="warm">
+                                        <img id="warmPreset" alt="Warm">
+                                        <div class="preset-filter-name">Warm</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Basic Adjustments -->
+                            <div class="effect-group">
+                                <h6 class="mb-3">Basic Adjustments</h6>
+                                <div class="effect-slider">
+                                    <label>
+                                        Brightness
+                                        <span id="brightnessValue">100%</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="brightnessSlider" min="0" max="200" value="100">
+                                </div>
+                                <div class="effect-slider">
+                                    <label>
+                                        Contrast
+                                        <span id="contrastValue">100%</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="contrastSlider" min="0" max="200" value="100">
+                                </div>
+                                <div class="effect-slider">
+                                    <label>
+                                        Saturation
+                                        <span id="saturationValue">100%</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="saturationSlider" min="0" max="200" value="100">
+                                </div>
+                            </div>
+
+                            <!-- Color Effects -->
+                            <div class="effect-group">
+                                <h6 class="mb-3">Color Effects</h6>
+                                <div class="effect-slider">
+                                    <label>
+                                        Hue Rotate
+                                        <span id="hueValue">0°</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="hueSlider" min="0" max="360" value="0">
+                                </div>
+                                <div class="effect-slider">
+                                    <label>
+                                        Sepia
+                                        <span id="sepiaValue">0%</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="sepiaSlider" min="0" max="100" value="0">
+                                </div>
+                                <div class="effect-slider">
+                                    <label>
+                                        Grayscale
+                                        <span id="grayscaleValue">0%</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="grayscaleSlider" min="0" max="100" value="0">
+                                </div>
+                            </div>
+
+                            <!-- Blur & Sharpen -->
+                            <div class="effect-group">
+                                <h6 class="mb-3">Blur & Sharpen</h6>
+                                <div class="effect-slider">
+                                    <label>
+                                        Blur
+                                        <span id="blurValue">0px</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="blurSlider" min="0" max="10" step="0.1" value="0">
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" id="resetBtn">
+                                    <i class="fas fa-undo me-2"></i>Reset
+                                </button>
+                                <button class="btn btn-success" id="downloadBtn">
+                                    <i class="fas fa-download me-2"></i>Download
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hidden Canvas -->
+                        <div class="canvas-container">
+                            <canvas id="imageCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Image Effects</h2>
+                        <p>Apply various filters and effects to your images. Perfect for enhancing photos, creating artistic effects, or preparing images for social media.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Preset filters (Grayscale, Sepia, Vintage, etc.)</li>
+                            <li>Basic adjustments (Brightness, Contrast, Saturation)</li>
+                            <li>Color effects (Hue rotation, Sepia, Grayscale)</li>
+                            <li>Blur effects</li>
+                            <li>Real-time preview</li>
+                            <li>High-quality output</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            For best results, use high-quality images. The tool preserves the original image quality while applying effects.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewImage = document.getElementById('previewImage');
+            const effectsContainer = document.getElementById('effectsContainer');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const canvas = document.getElementById('imageCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Sliders
+            const brightnessSlider = document.getElementById('brightnessSlider');
+            const contrastSlider = document.getElementById('contrastSlider');
+            const saturationSlider = document.getElementById('saturationSlider');
+            const hueSlider = document.getElementById('hueSlider');
+            const sepiaSlider = document.getElementById('sepiaSlider');
+            const grayscaleSlider = document.getElementById('grayscaleSlider');
+            const blurSlider = document.getElementById('blurSlider');
+
+            // Values
+            const brightnessValue = document.getElementById('brightnessValue');
+            const contrastValue = document.getElementById('contrastValue');
+            const saturationValue = document.getElementById('saturationValue');
+            const hueValue = document.getElementById('hueValue');
+            const sepiaValue = document.getElementById('sepiaValue');
+            const grayscaleValue = document.getElementById('grayscaleValue');
+            const blurValue = document.getElementById('blurValue');
+
+            // Buttons
+            const resetBtn = document.getElementById('resetBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            let originalImage = null;
+
+            // Drag and drop handlers
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function highlight() {
+                dropZone.classList.add('dragover');
+            }
+
+            function unhighlight() {
+                dropZone.classList.remove('dragover');
+            }
+
+            // Handle file selection
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFiles);
+            dropZone.addEventListener('drop', e => {
+                const dt = e.dataTransfer;
+                handleFiles({ target: { files: dt.files } });
+            });
+
+            function handleFiles(e) {
+                const file = e.target.files[0];
+                if (!file || !file.type.startsWith('image/')) {
+                    alert('Please select a valid image file.');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = e => {
+                    originalImage = new Image();
+                    originalImage.onload = () => {
+                        // Show preview and controls
+                        imagePreview.style.display = 'block';
+                        effectsContainer.style.display = 'block';
+                        
+                        // Set canvas size
+                        canvas.width = originalImage.width;
+                        canvas.height = originalImage.height;
+                        
+                        // Initialize preview
+                        previewImage.src = originalImage.src;
+                        
+                        // Create preset previews
+                        createPresetPreviews();
+                        
+                        // Apply initial effects
+                        applyEffects();
+                    };
+                    originalImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // Create preset previews
+            function createPresetPreviews() {
+                const presets = {
+                    originalPreset: {},
+                    grayscalePreset: { grayscale: 100 },
+                    sepiaPreset: { sepia: 100 },
+                    vintagePreset: { sepia: 50, contrast: 120, brightness: 90 },
+                    coolPreset: { hue: 180, saturation: 110 },
+                    warmPreset: { hue: 30, saturation: 110, brightness: 110 }
+                };
+
+                Object.entries(presets).forEach(([id, effects]) => {
+                    const img = document.getElementById(id);
+                    if (img) {
+                        applyPresetPreview(img, effects);
+                    }
+                });
+            }
+
+            // Apply preset preview
+            function applyPresetPreview(img, effects) {
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Set small size for previews
+                const scale = 100 / Math.max(originalImage.width, originalImage.height);
+                tempCanvas.width = originalImage.width * scale;
+                tempCanvas.height = originalImage.height * scale;
+                
+                tempCtx.filter = createFilterString(effects);
+                tempCtx.drawImage(originalImage, 0, 0, tempCanvas.width, tempCanvas.height);
+                img.src = tempCanvas.toDataURL();
+            }
+
+            // Create CSS filter string
+            function createFilterString(effects = getCurrentEffects()) {
+                return `
+                    brightness(${effects.brightness ?? 100}%)
+                    contrast(${effects.contrast ?? 100}%)
+                    saturate(${effects.saturation ?? 100}%)
+                    hue-rotate(${effects.hue ?? 0}deg)
+                    sepia(${effects.sepia ?? 0}%)
+                    grayscale(${effects.grayscale ?? 0}%)
+                    blur(${effects.blur ?? 0}px)
+                `;
+            }
+
+            // Get current effects values
+            function getCurrentEffects() {
+                return {
+                    brightness: parseInt(brightnessSlider.value),
+                    contrast: parseInt(contrastSlider.value),
+                    saturation: parseInt(saturationSlider.value),
+                    hue: parseInt(hueSlider.value),
+                    sepia: parseInt(sepiaSlider.value),
+                    grayscale: parseInt(grayscaleSlider.value),
+                    blur: parseFloat(blurSlider.value)
+                };
+            }
+
+            // Apply effects to preview
+            function applyEffects() {
+                if (!originalImage) return;
+                
+                loadingOverlay.style.display = 'flex';
+                
+                // Use requestAnimationFrame to ensure smooth UI
+                requestAnimationFrame(() => {
+                    const effects = getCurrentEffects();
+                    previewImage.style.filter = createFilterString(effects);
+                    loadingOverlay.style.display = 'none';
+                });
+            }
+
+            // Reset effects
+            function resetEffects() {
+                brightnessSlider.value = 100;
+                contrastSlider.value = 100;
+                saturationSlider.value = 100;
+                hueSlider.value = 0;
+                sepiaSlider.value = 0;
+                grayscaleSlider.value = 0;
+                blurSlider.value = 0;
+
+                brightnessValue.textContent = '100%';
+                contrastValue.textContent = '100%';
+                saturationValue.textContent = '100%';
+                hueValue.textContent = '0°';
+                sepiaValue.textContent = '0%';
+                grayscaleValue.textContent = '0%';
+                blurValue.textContent = '0px';
+
+                applyEffects();
+            }
+
+            // Download image
+            function downloadImage() {
+                if (!originalImage) return;
+
+                loadingOverlay.style.display = 'flex';
+
+                // Use requestAnimationFrame to ensure smooth UI
+                requestAnimationFrame(() => {
+                    const effects = getCurrentEffects();
+                    ctx.filter = createFilterString(effects);
+                    ctx.drawImage(originalImage, 0, 0);
+
+                    const link = document.createElement('a');
+                    link.download = `edited_image_${Date.now()}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+
+                    loadingOverlay.style.display = 'none';
+                });
+            }
+
+            // Event listeners for sliders
+            brightnessSlider.addEventListener('input', e => {
+                brightnessValue.textContent = `${e.target.value}%`;
+                applyEffects();
+            });
+
+            contrastSlider.addEventListener('input', e => {
+                contrastValue.textContent = `${e.target.value}%`;
+                applyEffects();
+            });
+
+            saturationSlider.addEventListener('input', e => {
+                saturationValue.textContent = `${e.target.value}%`;
+                applyEffects();
+            });
+
+            hueSlider.addEventListener('input', e => {
+                hueValue.textContent = `${e.target.value}°`;
+                applyEffects();
+            });
+
+            sepiaSlider.addEventListener('input', e => {
+                sepiaValue.textContent = `${e.target.value}%`;
+                applyEffects();
+            });
+
+            grayscaleSlider.addEventListener('input', e => {
+                grayscaleValue.textContent = `${e.target.value}%`;
+                applyEffects();
+            });
+
+            blurSlider.addEventListener('input', e => {
+                blurValue.textContent = `${e.target.value}px`;
+                applyEffects();
+            });
+
+            // Preset filters
+            document.querySelectorAll('.preset-filter').forEach(preset => {
+                preset.addEventListener('click', () => {
+                    document.querySelector('.preset-filter.active').classList.remove('active');
+                    preset.classList.add('active');
+
+                    const filter = preset.dataset.filter;
+                    switch (filter) {
+                        case 'none':
+                            resetEffects();
+                            break;
+                        case 'grayscale':
+                            resetEffects();
+                            grayscaleSlider.value = 100;
+                            grayscaleValue.textContent = '100%';
+                            break;
+                        case 'sepia':
+                            resetEffects();
+                            sepiaSlider.value = 100;
+                            sepiaValue.textContent = '100%';
+                            break;
+                        case 'vintage':
+                            resetEffects();
+                            sepiaSlider.value = 50;
+                            sepiaValue.textContent = '50%';
+                            contrastSlider.value = 120;
+                            contrastValue.textContent = '120%';
+                            brightnessSlider.value = 90;
+                            brightnessValue.textContent = '90%';
+                            break;
+                        case 'cool':
+                            resetEffects();
+                            hueSlider.value = 180;
+                            hueValue.textContent = '180°';
+                            saturationSlider.value = 110;
+                            saturationValue.textContent = '110%';
+                            break;
+                        case 'warm':
+                            resetEffects();
+                            hueSlider.value = 30;
+                            hueValue.textContent = '30°';
+                            saturationSlider.value = 110;
+                            saturationValue.textContent = '110%';
+                            brightnessSlider.value = 110;
+                            brightnessValue.textContent = '110%';
+                            break;
+                    }
+                    applyEffects();
+                });
+            });
+
+            // Button handlers
+            resetBtn.addEventListener('click', resetEffects);
+            downloadBtn.addEventListener('click', downloadImage);
+        });
+    </script>
+</body>
+</html> 

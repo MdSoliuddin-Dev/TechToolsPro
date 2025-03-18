@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to PNG Converter - Multi-Tools</title>
+    <meta name="description" content="Convert any image format to PNG online. Free, fast, and easy to use.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .drop-zone {
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+        }
+        .drop-zone:hover {
+            background-color: #f8f9fa;
+        }
+        .preview-container {
+            margin-top: 2rem;
+            display: none;
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        .preview-item {
+            text-align: center;
+            padding: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        .preview-item img {
+            max-width: 100%;
+            max-height: 300px;
+            margin-bottom: 1rem;
+        }
+        .image-info {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-content {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div>Converting image...</div>
+        </div>
+    </div>
+
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1><i class="fas fa-image me-2"></i>Image to PNG Converter</h1>
+                <p>Convert your images to PNG format with just a few clicks.</p>
+            </div>
+
+            <!-- Tool Content -->
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                        <h4>Drag & Drop your image here</h4>
+                        <p>or</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose File
+                        </button>
+                        <input type="file" id="fileInput" hidden accept="image/*">
+                    </div>
+
+                    <div class="preview-container" id="previewContainer">
+                        <div class="preview-grid">
+                            <div class="preview-item">
+                                <h5>Original Image</h5>
+                                <img id="originalPreview" alt="Original">
+                                <div class="image-info" id="originalInfo"></div>
+                            </div>
+                            <div class="preview-item">
+                                <h5>PNG Preview</h5>
+                                <img id="pngPreview" alt="PNG Preview">
+                                <div class="image-info" id="pngInfo"></div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button class="btn btn-success" id="downloadBtn">
+                                <i class="fas fa-download me-2"></i>Download PNG
+                            </button>
+                            <button class="btn btn-danger ms-3" id="clearBtn">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/components.js"></script>
+    <script>
+        // Core elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const originalPreview = document.getElementById('originalPreview');
+        const pngPreview = document.getElementById('pngPreview');
+        const previewContainer = document.getElementById('previewContainer');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const originalInfo = document.getElementById('originalInfo');
+        const pngInfo = document.getElementById('pngInfo');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        let currentFile = null;
+        let convertedDataUrl = null;
+
+        // Show/hide loading overlay
+        function setLoading(show) {
+            loadingOverlay.style.display = show ? 'flex' : 'none';
+        }
+
+        // File handling
+        async function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Please select a valid image file.');
+                return;
+            }
+
+            // Clear previous data
+            clearAll();
+            currentFile = file;
+
+            try {
+                // Show loading
+                setLoading(true);
+
+                // Show original preview
+                const originalUrl = URL.createObjectURL(file);
+                originalPreview.src = originalUrl;
+                originalPreview.onload = () => {
+                    originalInfo.textContent = `${originalPreview.naturalWidth} × ${originalPreview.naturalHeight}px, ${formatSize(file.size)}`;
+                };
+
+                // If already PNG, use as is
+                if (file.type === 'image/png') {
+                    pngPreview.src = originalUrl;
+                    pngPreview.onload = () => {
+                        pngInfo.textContent = `${pngPreview.naturalWidth} × ${pngPreview.naturalHeight}px, ${formatSize(file.size)}`;
+                    };
+                    convertedDataUrl = originalUrl;
+                } else {
+                    // Convert using server
+                    const formData = new FormData();
+                    formData.append('image', file);
+
+                    const response = await fetch('http://localhost:3000/convert', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Conversion failed');
+                    }
+
+                    const result = await response.json();
+                    
+                    // Show converted preview
+                    pngPreview.src = result.data;
+                    pngPreview.onload = () => {
+                        pngInfo.textContent = `${result.width} × ${result.height}px, ${formatSize(result.convertedSize)}`;
+                    };
+                    convertedDataUrl = result.data;
+                }
+
+                // Show preview container
+                previewContainer.style.display = 'block';
+                dropZone.style.display = 'none';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error converting image. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Download function
+        function downloadPNG() {
+            if (!convertedDataUrl) return;
+            
+            try {
+                const a = document.createElement('a');
+                a.href = convertedDataUrl;
+                const originalName = currentFile.name;
+                const newName = originalName.substring(0, originalName.lastIndexOf('.')) + '.png';
+                a.download = newName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Error downloading file. Please try again.');
+            }
+        }
+
+        // Clear function
+        function clearAll() {
+            if (originalPreview.src) URL.revokeObjectURL(originalPreview.src);
+            if (pngPreview.src && !pngPreview.src.startsWith('data:')) {
+                URL.revokeObjectURL(pngPreview.src);
+            }
+            
+            originalPreview.src = '';
+            pngPreview.src = '';
+            originalInfo.textContent = '';
+            pngInfo.textContent = '';
+            
+            previewContainer.style.display = 'none';
+            dropZone.style.display = 'block';
+            fileInput.value = '';
+            currentFile = null;
+            convertedDataUrl = null;
+        }
+
+        // Helper function
+        function formatSize(bytes) {
+            const sizes = ['B', 'KB', 'MB'];
+            if (bytes === 0) return '0 B';
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+        }
+
+        // Event listeners
+        dropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '#f8f9fa';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.backgroundColor = '';
+        });
+
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '';
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+        downloadBtn.addEventListener('click', downloadPNG);
+        clearBtn.addEventListener('click', clearAll);
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screenshot to PDF Converter - Multi-Tools</title>
+    <meta name="description" content="Convert screenshots and images to PDF format. Combine multiple images into a single PDF document.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <!-- Download.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+    <!-- Add Sortable.js library after Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+    <style>
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: border 0.3s ease;
+            cursor: pointer;
+        }
+        .drop-zone:hover {
+            border-color: #0056b3;
+        }
+        .drop-zone.dragover {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-color: #0056b3;
+        }
+        .preview-container {
+            display: none;
+            margin-top: 1rem;
+        }
+        .images-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+            min-height: 200px;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            border: 2px dashed #dee2e6;
+        }
+        .images-container.dragover {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-color: #0056b3;
+        }
+        .image-item {
+            position: relative;
+            border: 1px solid #dee2e6;
+            border-radius: var(--border-radius);
+            padding: 0.5rem;
+            background: white;
+            cursor: move;
+        }
+        .image-item.dragging {
+            opacity: 0.5;
+        }
+        .image-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            border-radius: calc(var(--border-radius) - 2px);
+        }
+        .image-controls {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .image-controls button {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #dee2e6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .image-info {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .image-number {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #0d6efd;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .image-placeholder {
+            border: 2px dashed #dee2e6;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+        .batch-controls {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+        .batch-controls .btn-group {
+            margin-bottom: 0.5rem;
+        }
+        .image-dimensions {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+            display: none;
+        }
+        .empty-state.show {
+            display: block;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        .progress-container {
+            display: none;
+            margin: 1rem 0;
+        }
+        .image-editor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1050;
+            display: none;
+            padding: 2rem;
+        }
+        .image-editor.show {
+            display: flex;
+            flex-direction: column;
+        }
+        .image-editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            margin-bottom: 1rem;
+        }
+        .image-editor-content {
+            flex: 1;
+            display: flex;
+            gap: 1rem;
+            overflow: hidden;
+        }
+        .image-editor-canvas {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #222;
+            border-radius: var(--border-radius);
+            overflow: auto;
+        }
+        .image-editor-controls {
+            width: 300px;
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .watermark-preview {
+            width: 100%;
+            height: 100px;
+            border: 1px solid #dee2e6;
+            border-radius: var(--border-radius);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        .advanced-settings {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #dee2e6;
+        }
+        .advanced-settings.show {
+            display: block;
+        }
+        .color-preview {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 0.5rem;
+            border: 1px solid #dee2e6;
+        }
+        .filter-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .filter-option {
+            text-align: center;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            border: 2px solid transparent;
+        }
+        .filter-option:hover {
+            background: #f8f9fa;
+        }
+        .filter-option.active {
+            border-color: var(--primary-color);
+        }
+        .filter-option img {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            border-radius: calc(var(--border-radius) - 2px);
+            margin-bottom: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1><i class="fas fa-file-pdf me-2"></i>Screenshot to PDF Converter</h1>
+                <p class="tool-description">Convert your screenshots and images into a professional PDF document. Perfect for creating documentation, reports, and presentations.</p>
+            </div>
+
+            <!-- Tool Content -->
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-images fa-3x mb-3"></i>
+                        <h4>Drag & Drop images here</h4>
+                        <p>or</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose Files
+                        </button>
+                        <input type="file" id="fileInput" hidden accept="image/*" multiple>
+                        <p class="text-muted mt-2">Supported formats: PNG, JPG, JPEG, WebP</p>
+                    </div>
+
+                    <div class="preview-container" id="previewContainer">
+                        <!-- Batch Controls -->
+                        <div class="batch-controls">
+                            <div class="btn-group">
+                                <button class="btn btn-outline-primary btn-sm" id="selectAllBtn">
+                                    <i class="fas fa-check-square me-1"></i>Select All
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" id="removeSelectedBtn" disabled>
+                                    <i class="fas fa-trash me-1"></i>Remove Selected
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" id="addMoreBtn">
+                                    <i class="fas fa-plus me-1"></i>Add More Images
+                                </button>
+                            </div>
+                            <div class="btn-group ms-2">
+                                <button class="btn btn-outline-secondary btn-sm" id="sortNameBtn">
+                                    <i class="fas fa-sort-alpha-down me-1"></i>Sort by Name
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" id="sortSizeBtn">
+                                    <i class="fas fa-sort-amount-down me-1"></i>Sort by Size
+                                </button>
+                            </div>
+                            <div class="btn-group ms-2">
+                                <button class="btn btn-outline-secondary btn-sm" id="rotateLeftBtn">
+                                    <i class="fas fa-undo me-1"></i>Rotate Left
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" id="rotateRightBtn">
+                                    <i class="fas fa-redo me-1"></i>Rotate Right
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                Drag and drop images to reorder them in the PDF
+                            </small>
+                        </div>
+
+                        <!-- Images Container -->
+                        <div class="images-container" id="imagesContainer">
+                            <div class="empty-state show" id="emptyState">
+                                <i class="fas fa-images"></i>
+                                <h5>No Images Added</h5>
+                                <p class="text-muted">Drag and drop images here or use the upload button above</p>
+                            </div>
+                        </div>
+
+                        <!-- PDF Settings -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="card-title mb-0">PDF Settings</h5>
+                                    <button class="btn btn-link" id="toggleAdvanced">
+                                        Advanced Settings
+                                    </button>
+                                </div>
+                                
+                                <!-- Basic Settings -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="pageSize" class="form-label">Page Size</label>
+                                            <select class="form-select" id="pageSize">
+                                                <option value="A4">A4</option>
+                                                <option value="Letter">Letter</option>
+                                                <option value="Legal">Legal</option>
+                                                <option value="auto">Auto (Match Image Size)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="orientation" class="form-label">Orientation</label>
+                                            <select class="form-select" id="orientation">
+                                                <option value="auto">Auto (Based on Image)</option>
+                                                <option value="portrait">Portrait</option>
+                                                <option value="landscape">Landscape</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="margin" class="form-label">Margin (mm)</label>
+                                            <input type="number" class="form-control" id="margin" value="10" min="0" max="50">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="quality" class="form-label">Image Quality</label>
+                                            <input type="range" class="form-range" id="quality" min="1" max="100" value="90">
+                                            <div class="text-end">
+                                                <span id="qualityValue">90%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="fitToPage" checked>
+                                    <label class="form-check-label" for="fitToPage">
+                                        Fit Images to Page
+                                    </label>
+                                </div>
+
+                                <!-- Add this right after the Basic Settings section, before Advanced Settings -->
+                                <div class="more-options mb-3" id="moreOptions" style="display: none;">
+                                    <h6 class="mb-3">Layout Options</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Images per Page</label>
+                                                <select class="form-select" id="imagesPerPage">
+                                                    <option value="1">1 (Default)</option>
+                                                    <option value="2">2 Images</option>
+                                                    <option value="4">4 Images</option>
+                                                    <option value="6">6 Images</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Layout Direction</label>
+                                                <select class="form-select" id="layoutDirection">
+                                                    <option value="vertical">Vertical</option>
+                                                    <option value="horizontal">Horizontal</option>
+                                                    <option value="grid">Grid</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="mb-3">Image Optimization</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Compression Level</label>
+                                                <select class="form-select" id="compressionLevel">
+                                                    <option value="none">None (Best Quality)</option>
+                                                    <option value="low">Low Compression</option>
+                                                    <option value="medium">Medium Compression</option>
+                                                    <option value="high">High Compression</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Max Resolution</label>
+                                                <select class="form-select" id="maxResolution">
+                                                    <option value="none">Original Size</option>
+                                                    <option value="2k">2K (2048px)</option>
+                                                    <option value="1080p">1080p (1920px)</option>
+                                                    <option value="720p">720p (1280px)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="mb-3">Page Options</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" id="addPageNumbers">
+                                                <label class="form-check-label" for="addPageNumbers">
+                                                    Add Page Numbers
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" id="addBorder">
+                                                <label class="form-check-label" for="addBorder">
+                                                    Add Border to Images
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row" id="pageNumberOptions" style="display: none;">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Number Position</label>
+                                                <select class="form-select" id="pageNumberPosition">
+                                                    <option value="bottom-right">Bottom Right</option>
+                                                    <option value="bottom-center">Bottom Center</option>
+                                                    <option value="bottom-left">Bottom Left</option>
+                                                    <option value="top-right">Top Right</option>
+                                                    <option value="top-center">Top Center</option>
+                                                    <option value="top-left">Top Left</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Starting Number</label>
+                                                <input type="number" class="form-control" id="startingNumber" value="1" min="1">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Add a More Options button after the Fit Images checkbox -->
+                                <div class="mb-3">
+                                    <button class="btn btn-outline-primary" id="toggleMoreOptions">
+                                        <i class="fas fa-cog me-2"></i>More Options
+                                    </button>
+                                </div>
+
+                                <!-- Advanced Settings -->
+                                <div class="advanced-settings" id="advancedSettings">
+                                    <h6 class="mb-3">Document Properties</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Title</label>
+                                                <input type="text" class="form-control" id="pdfTitle">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Author</label>
+                                                <input type="text" class="form-control" id="pdfAuthor">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Subject</label>
+                                                <input type="text" class="form-control" id="pdfSubject">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Keywords</label>
+                                                <input type="text" class="form-control" id="pdfKeywords">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="mb-3">Security</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" id="enablePassword">
+                                                <label class="form-check-label" for="enablePassword">
+                                                    Password Protection
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <input type="password" class="form-control" id="pdfPassword" placeholder="Enter password" disabled>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="mb-3">Watermark</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Text</label>
+                                                <input type="text" class="form-control" id="watermarkText" placeholder="Confidential">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Opacity</label>
+                                                <input type="range" class="form-range" id="watermarkOpacity" min="0" max="1" step="0.1" value="0.3">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Color</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text p-1">
+                                                        <span class="color-preview" id="watermarkColorPreview"></span>
+                                                    </span>
+                                                    <input type="color" class="form-control form-control-color" id="watermarkColor" value="#000000">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Position</label>
+                                                <select class="form-select" id="watermarkPosition">
+                                                    <option value="center">Center</option>
+                                                    <option value="top-left">Top Left</option>
+                                                    <option value="top-right">Top Right</option>
+                                                    <option value="bottom-left">Bottom Left</option>
+                                                    <option value="bottom-right">Bottom Right</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="watermark-preview" id="watermarkPreview">
+                                        Preview
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress -->
+                        <div class="progress-container" id="progressContainer">
+                            <div class="progress">
+                                <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <p class="text-center mt-2" id="progressText">Creating PDF...</p>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="text-center">
+                            <button class="btn btn-success" id="createPdfBtn">
+                                <i class="fas fa-file-pdf me-2"></i>Create PDF
+                            </button>
+                            <button class="btn btn-danger ms-2" id="clearBtn">
+                                <i class="fas fa-times me-2"></i>Clear All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Section -->
+            <div class="ad-section mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="ad-placeholder text-center">
+                            <div id="tool-ad-space" class="bg-light p-3">
+                                <p class="text-muted">Advertisement Space</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Add the Image Editor Modal right before the footer -->
+    <div class="image-editor" id="imageEditor">
+        <div class="image-editor-header">
+            <h5>Image Editor</h5>
+            <button class="btn btn-light" id="closeEditor">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="image-editor-content">
+            <div class="image-editor-canvas">
+                <canvas id="editorCanvas"></canvas>
+            </div>
+            <div class="image-editor-controls">
+                <h6>Adjustments</h6>
+                <div class="mb-3">
+                    <label class="form-label d-flex justify-content-between">
+                        Brightness
+                        <span id="brightnessValue">0</span>
+                    </label>
+                    <input type="range" class="form-range" id="brightness" min="-100" max="100" value="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label d-flex justify-content-between">
+                        Contrast
+                        <span id="contrastValue">0</span>
+                    </label>
+                    <input type="range" class="form-range" id="contrast" min="-100" max="100" value="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label d-flex justify-content-between">
+                        Saturation
+                        <span id="saturationValue">0</span>
+                    </label>
+                    <input type="range" class="form-range" id="saturation" min="-100" max="100" value="0">
+                </div>
+
+                <h6 class="mt-4">Filters</h6>
+                <div class="filter-preview">
+                    <div class="filter-option active" data-filter="none">
+                        <img src="" alt="Original">
+                        <small>Original</small>
+                    </div>
+                    <div class="filter-option" data-filter="grayscale">
+                        <img src="" alt="Grayscale">
+                        <small>Grayscale</small>
+                    </div>
+                    <div class="filter-option" data-filter="sepia">
+                        <img src="" alt="Sepia">
+                        <small>Sepia</small>
+                    </div>
+                    <div class="filter-option" data-filter="blur">
+                        <img src="" alt="Blur">
+                        <small>Blur</small>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button class="btn btn-primary w-100" id="applyEdit">
+                        Apply Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/components.js"></script>
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagesContainer = document.getElementById('imagesContainer');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const createPdfBtn = document.getElementById('createPdfBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const quality = document.getElementById('quality');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const removeSelectedBtn = document.getElementById('removeSelectedBtn');
+        const sortNameBtn = document.getElementById('sortNameBtn');
+        const sortSizeBtn = document.getElementById('sortSizeBtn');
+        const rotateLeftBtn = document.getElementById('rotateLeftBtn');
+        const rotateRightBtn = document.getElementById('rotateRightBtn');
+        const emptyState = document.getElementById('emptyState');
+        const imageEditor = document.getElementById('imageEditor');
+        const editorCanvas = document.getElementById('editorCanvas');
+        const closeEditor = document.getElementById('closeEditor');
+        const applyEdit = document.getElementById('applyEdit');
+        const toggleAdvanced = document.getElementById('toggleAdvanced');
+        const advancedSettings = document.getElementById('advancedSettings');
+        const enablePassword = document.getElementById('enablePassword');
+        const pdfPassword = document.getElementById('pdfPassword');
+        const watermarkText = document.getElementById('watermarkText');
+        const watermarkOpacity = document.getElementById('watermarkOpacity');
+        const watermarkColor = document.getElementById('watermarkColor');
+        const watermarkPosition = document.getElementById('watermarkPosition');
+        const watermarkPreview = document.getElementById('watermarkPreview');
+        const watermarkColorPreview = document.getElementById('watermarkColorPreview');
+        const brightness = document.getElementById('brightness');
+        const contrast = document.getElementById('contrast');
+        const saturation = document.getElementById('saturation');
+        const brightnessValue = document.getElementById('brightnessValue');
+        const contrastValue = document.getElementById('contrastValue');
+        const saturationValue = document.getElementById('saturationValue');
+        const filterOptions = document.querySelectorAll('.filter-option');
+        const toggleMoreOptions = document.getElementById('toggleMoreOptions');
+        const moreOptions = document.getElementById('moreOptions');
+        const addPageNumbers = document.getElementById('addPageNumbers');
+        const pageNumberOptions = document.getElementById('pageNumberOptions');
+        const imagesPerPage = document.getElementById('imagesPerPage');
+        const layoutDirection = document.getElementById('layoutDirection');
+        const compressionLevel = document.getElementById('compressionLevel');
+        const maxResolution = document.getElementById('maxResolution');
+        const addBorder = document.getElementById('addBorder');
+        const pageNumberPosition = document.getElementById('pageNumberPosition');
+        const startingNumber = document.getElementById('startingNumber');
+        const addMoreBtn = document.getElementById('addMoreBtn');
+
+        let images = [];
+        let selectedImages = new Set();
+        let currentEditingIndex = -1;
+        let ctx = editorCanvas.getContext('2d');
+        let originalImage = null;
+
+        // Initialize Sortable with error handling
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                if (typeof Sortable === 'undefined') {
+                    console.error('Sortable library not loaded. Loading it now...');
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js';
+                    script.onload = initializeSortable;
+                    document.head.appendChild(script);
+                } else {
+                    initializeSortable();
+                }
+            } catch (error) {
+                console.error('Error initializing drag and drop:', error);
+            }
+        });
+
+        function initializeSortable() {
+            new Sortable(imagesContainer, {
+                animation: 150,
+                ghostClass: 'image-placeholder',
+                draggable: '.image-item',
+                onStart: (evt) => {
+                    evt.item.classList.add('dragging');
+                },
+                onEnd: (evt) => {
+                    evt.item.classList.remove('dragging');
+                    // Update the images array to match the new order
+                    const newOrder = Array.from(imagesContainer.children)
+                        .filter(el => el.classList.contains('image-item'))
+                        .map(el => parseInt(el.dataset.index));
+                    const reorderedImages = newOrder.map(index => images[index]);
+                    images = reorderedImages;
+                    updateImageNumbers();
+                }
+            });
+        }
+
+        // Event Listeners
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        quality.addEventListener('input', (e) => {
+            document.getElementById('qualityValue').textContent = `${e.target.value}%`;
+        });
+
+        createPdfBtn.addEventListener('click', createPDF);
+        clearBtn.addEventListener('click', clearAll);
+
+        // Make images container also a drop zone
+        imagesContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imagesContainer.classList.add('dragover');
+        });
+
+        imagesContainer.addEventListener('dragleave', () => {
+            imagesContainer.classList.remove('dragover');
+        });
+
+        imagesContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imagesContainer.classList.remove('dragover');
+            handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        // Add More Images button handler
+        addMoreBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Update handleFiles function to keep existing images
+        function handleFiles(files) {
+            const imageFiles = files.filter(file => file.type.startsWith('image/'));
+            if (imageFiles.length === 0) {
+                alert('Please select valid image files.');
+                return;
+            }
+
+            // Show preview container and hide drop zone if this is the first upload
+            if (images.length === 0) {
+                previewContainer.style.display = 'block';
+                dropZone.style.display = 'none';
+            }
+
+            // Process each file
+            Promise.all(imageFiles.map(file => loadImage(file)))
+                .then(loadedImages => {
+                    loadedImages.forEach(img => {
+                        const image = {
+                            file: img.file,
+                            dataUrl: img.dataUrl,
+                            width: img.width,
+                            height: img.height,
+                            rotation: 0
+                        };
+                        images.push(image);
+                        addImageToContainer(image, images.length - 1);
+                    });
+
+                    updateEmptyState();
+                })
+                .catch(error => {
+                    console.error('Error loading images:', error);
+                    alert('An error occurred while loading the images. Please try again.');
+                });
+        }
+
+        // Load image with dimensions
+        function loadImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        resolve({
+                            file: file,
+                            dataUrl: e.target.result,
+                            width: img.width,
+                            height: img.height
+                        });
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Add image to container
+        function addImageToContainer(image, index) {
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'image-item';
+            imageDiv.dataset.index = index;
+            imageDiv.innerHTML = `
+                <span class="image-number">${index + 1}</span>
+                <img src="${image.dataUrl}" alt="Image ${index + 1}" style="transform: rotate(${image.rotation}deg)">
+                <div class="image-controls">
+                    <button class="btn btn-sm btn-light edit-btn" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light select-btn" title="Select">
+                        <i class="far fa-square"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger remove-btn" title="Remove">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="image-info">
+                    <div>
+                        <div>${image.file.name}</div>
+                        <div class="image-dimensions">${image.width} × ${image.height}</div>
+                    </div>
+                    <small>${formatBytes(image.file.size)}</small>
+                </div>
+            `;
+
+            // Add event listeners
+            const editBtn = imageDiv.querySelector('.edit-btn');
+            const selectBtn = imageDiv.querySelector('.select-btn');
+            const removeBtn = imageDiv.querySelector('.remove-btn');
+
+            editBtn.addEventListener('click', () => openImageEditor(index));
+            selectBtn.addEventListener('click', () => {
+                const isSelected = selectBtn.classList.toggle('active');
+                selectBtn.querySelector('i').className = isSelected ? 'fas fa-check-square' : 'far fa-square';
+                if (isSelected) {
+                    selectedImages.add(index);
+                } else {
+                    selectedImages.delete(index);
+                }
+                updateRemoveSelectedButton();
+            });
+            removeBtn.addEventListener('click', () => removeImage(index));
+
+            imagesContainer.appendChild(imageDiv);
+        }
+
+        // Remove image
+        function removeImage(index) {
+            images.splice(index, 1);
+            refreshImagesContainer();
+        }
+
+        // Update image numbers
+        function updateImageNumbers() {
+            const items = imagesContainer.querySelectorAll('.image-item');
+            items.forEach((item, index) => {
+                item.querySelector('.image-number').textContent = index + 1;
+                item.dataset.index = index;
+            });
+        }
+
+        // Update empty state
+        function updateEmptyState() {
+            emptyState.classList.toggle('show', images.length === 0);
+        }
+
+        // Batch operations
+        selectAllBtn.addEventListener('click', () => {
+            const isSelectAll = selectAllBtn.classList.toggle('active');
+            document.querySelectorAll('.select-btn').forEach((btn, index) => {
+                btn.classList.toggle('active', isSelectAll);
+                btn.querySelector('i').className = isSelectAll ? 'fas fa-check-square' : 'far fa-square';
+                if (isSelectAll) {
+                    selectedImages.add(index);
+                } else {
+                    selectedImages.delete(index);
+                }
+            });
+            updateRemoveSelectedButton();
+        });
+
+        removeSelectedBtn.addEventListener('click', () => {
+            const indices = Array.from(selectedImages).sort((a, b) => b - a);
+            indices.forEach(index => {
+                images.splice(index, 1);
+            });
+            selectedImages.clear();
+            refreshImagesContainer();
+        });
+
+        sortNameBtn.addEventListener('click', () => {
+            images.sort((a, b) => a.file.name.localeCompare(b.file.name));
+            refreshImagesContainer();
+        });
+
+        sortSizeBtn.addEventListener('click', () => {
+            images.sort((a, b) => b.file.size - a.file.size);
+            refreshImagesContainer();
+        });
+
+        rotateLeftBtn.addEventListener('click', () => rotateSelected(-90));
+        rotateRightBtn.addEventListener('click', () => rotateSelected(90));
+
+        function rotateSelected(degrees) {
+            selectedImages.forEach(index => {
+                images[index].rotation = (images[index].rotation + degrees) % 360;
+                const img = document.querySelector(`.image-item[data-index="${index}"] img`);
+                img.style.transform = `rotate(${images[index].rotation}deg)`;
+            });
+        }
+
+        function updateRemoveSelectedButton() {
+            removeSelectedBtn.disabled = selectedImages.size === 0;
+        }
+
+        // Refresh images container
+        function refreshImagesContainer() {
+            imagesContainer.innerHTML = '';
+            if (images.length === 0) {
+                emptyState.classList.add('show');
+            } else {
+                emptyState.classList.remove('show');
+                images.forEach((image, index) => {
+                    addImageToContainer(image, index);
+                });
+            }
+            updateRemoveSelectedButton();
+        }
+
+        // Image Editor Functions
+        function openImageEditor(index) {
+            currentEditingIndex = index;
+            const image = images[index];
+            
+            // Set up canvas
+            const img = new Image();
+            img.onload = () => {
+                editorCanvas.width = img.width;
+                editorCanvas.height = img.height;
+                
+                // Store original image
+                originalImage = img;
+                
+                // Initial draw
+                ctx.drawImage(img, 0, 0);
+                
+                // Set up filter previews
+                setupFilterPreviews(img);
+                
+                // Reset adjustments
+                brightness.value = 0;
+                contrast.value = 0;
+                saturation.value = 0;
+                updateAdjustmentValues();
+                
+                // Show editor
+                imageEditor.classList.add('show');
+            };
+            img.src = image.dataUrl;
+        }
+
+        function setupFilterPreviews(img) {
+            filterOptions.forEach(option => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 100;
+                canvas.height = 60;
+                
+                // Calculate aspect ratio
+                const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+                const w = img.width * scale;
+                const h = img.height * scale;
+                const x = (canvas.width - w) / 2;
+                const y = (canvas.height - h) / 2;
+                
+                // Draw scaled version for preview
+                ctx.drawImage(img, x, y, w, h);
+                
+                const filter = option.dataset.filter;
+                if (filter !== 'none') {
+                    applyFilter(ctx, filter);
+                }
+                
+                option.querySelector('img').src = canvas.toDataURL();
+            });
+        }
+
+        function applyFilter(context, filter) {
+            const imageData = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+            const data = imageData.data;
+            
+            switch (filter) {
+                case 'grayscale':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                        data[i] = avg;
+                        data[i + 1] = avg;
+                        data[i + 2] = avg;
+                    }
+                    break;
+                case 'sepia':
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+                        data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189));
+                        data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168));
+                        data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131));
+                    }
+                    break;
+                case 'blur':
+                    // Simple box blur
+                    const width = context.canvas.width;
+                    const height = context.canvas.height;
+                    const radius = 5;
+                    const size = radius * 2 + 1;
+                    const copy = new Uint8ClampedArray(data);
+                    
+                    for (let y = 0; y < height; y++) {
+                        for (let x = 0; x < width; x++) {
+                            let r = 0, g = 0, b = 0, a = 0, count = 0;
+                            
+                            for (let dy = -radius; dy <= radius; dy++) {
+                                for (let dx = -radius; dx <= radius; dx++) {
+                                    const px = x + dx;
+                                    const py = y + dy;
+                                    if (px >= 0 && px < width && py >= 0 && py < height) {
+                                        const i = (py * width + px) * 4;
+                                        r += copy[i];
+                                        g += copy[i + 1];
+                                        b += copy[i + 2];
+                                        a += copy[i + 3];
+                                        count++;
+                                    }
+                                }
+                            }
+                            
+                            const i = (y * width + x) * 4;
+                            data[i] = r / count;
+                            data[i + 1] = g / count;
+                            data[i + 2] = b / count;
+                            data[i + 3] = a / count;
+                        }
+                    }
+                    break;
+            }
+            
+            context.putImageData(imageData, 0, 0);
+        }
+
+        function updateAdjustmentValues() {
+            brightnessValue.textContent = brightness.value;
+            contrastValue.textContent = contrast.value;
+            saturationValue.textContent = saturation.value;
+        }
+
+        function applyAdjustments() {
+            if (!originalImage) return;
+            
+            // Reset canvas
+            ctx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+            ctx.drawImage(originalImage, 0, 0);
+            
+            // Get adjustment values
+            const brightnessVal = parseInt(brightness.value);
+            const contrastVal = parseInt(contrast.value);
+            const saturationVal = parseInt(saturation.value);
+            
+            // Apply adjustments
+            const imageData = ctx.getImageData(0, 0, editorCanvas.width, editorCanvas.height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                // Brightness
+                data[i] = Math.min(255, Math.max(0, data[i] + brightnessVal));
+                data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + brightnessVal));
+                data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + brightnessVal));
+                
+                // Contrast
+                if (contrastVal !== 0) {
+                    const factor = (259 * (contrastVal + 255)) / (255 * (259 - contrastVal));
+                    data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));
+                    data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128));
+                    data[i + 2] = Math.min(255, Math.max(0, factor * (data[i + 2] - 128) + 128));
+                }
+                
+                // Saturation
+                if (saturationVal !== 0) {
+                    const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                    const satFactor = 1 + (saturationVal / 100);
+                    data[i] = Math.min(255, Math.max(0, gray + (data[i] - gray) * satFactor));
+                    data[i + 1] = Math.min(255, Math.max(0, gray + (data[i + 1] - gray) * satFactor));
+                    data[i + 2] = Math.min(255, Math.max(0, gray + (data[i + 2] - gray) * satFactor));
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Event Listeners for Image Editor
+        closeEditor.addEventListener('click', () => {
+            imageEditor.classList.remove('show');
+            currentEditingIndex = -1;
+            originalImage = null;
+        });
+
+        applyEdit.addEventListener('click', () => {
+            if (currentEditingIndex === -1) return;
+            
+            const image = images[currentEditingIndex];
+            image.dataUrl = editorCanvas.toDataURL('image/jpeg', 0.9);
+            
+            // Update preview
+            const img = document.querySelector(`.image-item[data-index="${currentEditingIndex}"] img`);
+            img.src = image.dataUrl;
+            
+            imageEditor.classList.remove('show');
+            currentEditingIndex = -1;
+            originalImage = null;
+        });
+
+        // Advanced Settings
+        toggleAdvanced.addEventListener('click', () => {
+            advancedSettings.classList.toggle('show');
+        });
+
+        enablePassword.addEventListener('change', (e) => {
+            pdfPassword.disabled = !e.target.checked;
+        });
+
+        // Watermark Preview
+        function updateWatermarkPreview() {
+            const text = watermarkText.value || 'Preview';
+            const opacity = watermarkOpacity.value;
+            const color = watermarkColor.value;
+            
+            watermarkPreview.style.color = color;
+            watermarkPreview.style.opacity = opacity;
+            watermarkPreview.textContent = text;
+            watermarkColorPreview.style.backgroundColor = color;
+        }
+
+        watermarkText.addEventListener('input', updateWatermarkPreview);
+        watermarkOpacity.addEventListener('input', updateWatermarkPreview);
+        watermarkColor.addEventListener('input', updateWatermarkPreview);
+        watermarkPosition.addEventListener('change', updateWatermarkPreview);
+
+        // Toggle More Options
+        toggleMoreOptions.addEventListener('click', () => {
+            moreOptions.style.display = moreOptions.style.display === 'none' ? 'block' : 'none';
+            toggleMoreOptions.innerHTML = moreOptions.style.display === 'none' ? 
+                '<i class="fas fa-cog me-2"></i>More Options' : 
+                '<i class="fas fa-chevron-up me-2"></i>Hide Options';
+        });
+
+        // Toggle Page Number Options
+        addPageNumbers.addEventListener('change', () => {
+            pageNumberOptions.style.display = addPageNumbers.checked ? 'flex' : 'none';
+        });
+
+        // Create PDF
+        async function createPDF() {
+            if (images.length === 0) {
+                alert('Please add at least one image.');
+                return;
+            }
+
+            // Show progress
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressText.textContent = 'Creating PDF...';
+
+            try {
+                if (typeof PDFLib === 'undefined') {
+                    throw new Error('PDF library not loaded. Please refresh the page and try again.');
+                }
+
+                const pdf = await PDFLib.PDFDocument.create();
+                const currentQuality = parseInt(quality.value || '90') / 100;
+
+                // Set document properties
+                const title = document.getElementById('pdfTitle').value;
+                const author = document.getElementById('pdfAuthor').value;
+                const subject = document.getElementById('pdfSubject').value;
+                const keywords = document.getElementById('pdfKeywords').value;
+
+                if (title) pdf.setTitle(title);
+                if (author) pdf.setAuthor(author);
+                if (subject) pdf.setSubject(subject);
+                if (keywords) pdf.setKeywords(keywords.split(',').map(k => k.trim()));
+
+                // Get settings
+                const pageSize = document.getElementById('pageSize').value;
+                const orientation = document.getElementById('orientation').value;
+                const marginMm = parseFloat(document.getElementById('margin').value) || 10;
+                const fitToPage = document.getElementById('fitToPage').checked;
+
+                // Get additional settings
+                const imagesPerPageValue = parseInt(imagesPerPage.value);
+                const layoutDirectionValue = layoutDirection.value;
+                const compressionLevelValue = compressionLevel.value;
+                const maxResolutionValue = maxResolution.value;
+                const addBorderValue = addBorder.checked;
+                const addPageNumbersValue = addPageNumbers.checked;
+                const pageNumberPositionValue = pageNumberPosition.value;
+                const startingNumberValue = parseInt(startingNumber.value);
+
+                // Determine page size and orientation
+                let pageWidth, pageHeight;
+                if (pageSize === 'auto') {
+                    pageWidth = images[0].width;
+                    pageHeight = images[0].height;
+                } else {
+                    const sizes = {
+                        'A4': { width: 595, height: 842 },
+                        'Letter': { width: 612, height: 792 },
+                        'Legal': { width: 612, height: 1008 }
+                    };
+                    
+                    if (orientation === 'auto') {
+                        const isLandscape = images[0].width > images[0].height;
+                        pageWidth = isLandscape ? sizes[pageSize].height : sizes[pageSize].width;
+                        pageHeight = isLandscape ? sizes[pageSize].width : sizes[pageSize].height;
+                    } else {
+                        pageWidth = orientation === 'landscape' ? sizes[pageSize].height : sizes[pageSize].width;
+                        pageHeight = orientation === 'landscape' ? sizes[pageSize].width : sizes[pageSize].height;
+                    }
+                }
+
+                // Process images in batches based on imagesPerPage
+                const imageGroups = [];
+                for (let i = 0; i < images.length; i += imagesPerPageValue) {
+                    imageGroups.push(images.slice(i, i + imagesPerPageValue));
+                }
+
+                // Process each group of images
+                for (let i = 0; i < imageGroups.length; i++) {
+                    const group = imageGroups[i];
+                    const page = pdf.addPage([pageWidth, pageHeight]);
+                    
+                    // Calculate layout based on number of images and direction
+                    const layout = calculateLayout(group.length, layoutDirectionValue, pageWidth, pageHeight, marginMm);
+                    
+                    // Process each image in the group
+                    for (let j = 0; j < group.length; j++) {
+                        const image = group[j];
+                        const position = layout[j];
+                        
+                        // Process and draw image
+                        const processedImage = await processImage(image, compressionLevelValue, maxResolutionValue);
+                        const embeddedImage = await pdf.embedJpg(processedImage);
+                        
+                        // Draw image with optional border
+                        if (addBorderValue) {
+                            page.drawRectangle({
+                                x: position.x - 1,
+                                y: position.y - 1,
+                                width: position.width + 2,
+                                height: position.height + 2,
+                                borderColor: PDFLib.rgb(0, 0, 0),
+                                borderWidth: 1
+                            });
+                        }
+                        
+                        page.drawImage(embeddedImage, position);
+                    }
+                    
+                    // Add page number if enabled
+                    if (addPageNumbersValue) {
+                        const pageNum = startingNumberValue + i;
+                        const fontSize = 12;
+                        const text = `${pageNum}`;
+                        
+                        let x = pageWidth / 2;
+                        let y = marginMm * (72 / 25.4);
+                        
+                        switch (pageNumberPositionValue) {
+                            case 'bottom-right':
+                                x = pageWidth - marginMm;
+                                y = marginMm;
+                                break;
+                            case 'bottom-left':
+                                x = marginMm;
+                                y = marginMm;
+                                break;
+                            case 'top-right':
+                                x = pageWidth - marginMm;
+                                y = pageHeight - marginMm;
+                                break;
+                            case 'top-center':
+                                x = pageWidth / 2;
+                                y = pageHeight - marginMm;
+                                break;
+                            case 'top-left':
+                                x = marginMm;
+                                y = pageHeight - marginMm;
+                                break;
+                        }
+                        
+                        page.drawText(text, {
+                            x,
+                            y,
+                            size: fontSize,
+                            color: PDFLib.rgb(0, 0, 0)
+                        });
+                    }
+                }
+
+                // Save PDF with password if enabled
+                const password = enablePassword.checked ? pdfPassword.value : undefined;
+                const pdfBytes = await pdf.save({
+                    password
+                });
+                
+                download(pdfBytes, 'converted-images.pdf', 'application/pdf');
+
+                // Hide progress
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+
+            } catch (error) {
+                console.error('Error creating PDF:', error);
+                alert(error.message || 'An error occurred while creating the PDF. Please try again.');
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+            }
+        }
+
+        // Helper function to calculate layout positions
+        function calculateLayout(count, direction, pageWidth, pageHeight, margin) {
+            const positions = [];
+            const usableWidth = pageWidth - (margin * 2);
+            const usableHeight = pageHeight - (margin * 2);
+            
+            if (direction === 'grid') {
+                const cols = count <= 2 ? count : 2;
+                const rows = Math.ceil(count / cols);
+                const itemWidth = usableWidth / cols;
+                const itemHeight = usableHeight / rows;
+                
+                for (let i = 0; i < count; i++) {
+                    const row = Math.floor(i / cols);
+                    const col = i % cols;
+                    positions.push({
+                        x: margin + (col * itemWidth),
+                        y: margin + (row * itemHeight),
+                        width: itemWidth,
+                        height: itemHeight
+                    });
+                }
+            } else if (direction === 'horizontal') {
+                const itemWidth = usableWidth / count;
+                for (let i = 0; i < count; i++) {
+                    positions.push({
+                        x: margin + (i * itemWidth),
+                        y: margin,
+                        width: itemWidth,
+                        height: usableHeight
+                    });
+                }
+            } else { // vertical
+                const itemHeight = usableHeight / count;
+                for (let i = 0; i < count; i++) {
+                    positions.push({
+                        x: margin,
+                        y: margin + (i * itemHeight),
+                        width: usableWidth,
+                        height: itemHeight
+                    });
+                }
+            }
+            
+            return positions;
+        }
+
+        // Helper function to process image based on compression and resolution settings
+        async function processImage(image, compression, maxRes) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = await createImageBitmap(await fetch(image.dataUrl).then(r => r.blob()));
+            
+            // Apply resolution limit if specified
+            let width = img.width;
+            let height = img.height;
+            if (maxRes !== 'none') {
+                const maxSize = {
+                    '2k': 2048,
+                    '1080p': 1920,
+                    '720p': 1280
+                }[maxRes];
+                
+                if (width > maxSize || height > maxSize) {
+                    const ratio = Math.min(maxSize / width, maxSize / height);
+                    width *= ratio;
+                    height *= ratio;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and rotate image if needed
+            ctx.save();
+            if (image.rotation) {
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate((image.rotation * Math.PI) / 180);
+                ctx.drawImage(img, -width / 2, -height / 2, width, height);
+            } else {
+                ctx.drawImage(img, 0, 0, width, height);
+            }
+            ctx.restore();
+            
+            // Apply compression
+            const quality = {
+                'none': 1.0,
+                'low': 0.8,
+                'medium': 0.6,
+                'high': 0.4
+            }[compression];
+            
+            const jpegUrl = canvas.toDataURL('image/jpeg', quality);
+            return fetch(jpegUrl).then(res => res.arrayBuffer());
+        }
+
+        // Clear all
+        function clearAll() {
+            images = [];
+            selectedImages.clear();
+            refreshImagesContainer();
+            previewContainer.style.display = 'none';
+            dropZone.style.display = 'block';
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+            fileInput.value = '';
+            updateRemoveSelectedButton();
+        }
+
+        // Format bytes to human readable size
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        // Helper function to convert hex color to RGB
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? [
+                parseInt(result[1], 16) / 255,
+                parseInt(result[2], 16) / 255,
+                parseInt(result[3], 16) / 255
+            ] : [0, 0, 0];
+        }
+
+        // Add event listeners for image adjustments
+        brightness.addEventListener('input', () => {
+            updateAdjustmentValues();
+            applyAdjustments();
+        });
+
+        contrast.addEventListener('input', () => {
+            updateAdjustmentValues();
+            applyAdjustments();
+        });
+
+        saturation.addEventListener('input', () => {
+            updateAdjustmentValues();
+            applyAdjustments();
+        });
+
+        // Add event listeners for filters
+        filterOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                filterOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                
+                ctx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+                ctx.drawImage(originalImage, 0, 0);
+                
+                const filter = option.dataset.filter;
+                if (filter !== 'none') {
+                    applyFilter(ctx, filter);
+                }
+                
+                applyAdjustments();
+            });
+        });
+
+        // Initialize watermark preview
+        updateWatermarkPreview();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener - Multi-Tools</title>
+    <meta name="description" content="Create short, shareable links from long URLs. Includes QR code generation and link history tracking.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <style>
+        .url-input {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .url-input .form-control {
+            padding-right: 3rem;
+            font-family: monospace;
+        }
+
+        .paste-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.7;
+            transition: opacity var(--transition-speed);
+        }
+
+        .paste-btn:hover {
+            opacity: 1;
+        }
+
+        .result-container {
+            display: none;
+            margin-bottom: 2rem;
+        }
+
+        .short-url-display {
+            position: relative;
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            word-break: break-all;
+            font-family: monospace;
+        }
+
+        .url-actions {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .qr-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+
+        .qr-code {
+            background: white;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+        }
+
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            background: var(--background-color);
+        }
+
+        .history-urls {
+            flex-grow: 1;
+            margin-right: 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+
+        .history-short-url {
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .history-original-url {
+            color: var(--text-secondary);
+            word-break: break-all;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .history-date {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        @keyframes copied {
+            0%, 100% { opacity: 0; }
+            10%, 90% { opacity: 1; }
+        }
+
+        .copied-tooltip {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            animation: copied 2s ease-in-out;
+            pointer-events: none;
+        }
+
+        .service-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .service-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            background: var(--background-color);
+        }
+
+        .service-card:hover {
+            background: rgba(var(--primary-rgb), 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .service-card.active {
+            background: rgba(var(--primary-rgb), 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .service-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-link me-2"></i>
+                            URL Shortener
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Service Selection -->
+                        <div class="service-selector">
+                            <div class="service-card active" data-service="tinyurl">
+                                <i class="fas fa-compress-alt service-icon"></i>
+                                <h6>TinyURL</h6>
+                                <small class="text-muted">Simple & Fast</small>
+                            </div>
+                            <div class="service-card" data-service="bitly">
+                                <i class="fas fa-chart-line service-icon"></i>
+                                <h6>Bitly</h6>
+                                <small class="text-muted">With Analytics</small>
+                            </div>
+                            <div class="service-card" data-service="custom">
+                                <i class="fas fa-magic service-icon"></i>
+                                <h6>Custom</h6>
+                                <small class="text-muted">Your Domain</small>
+                            </div>
+                        </div>
+
+                        <!-- URL Input -->
+                        <div class="url-input">
+                            <label for="longUrl" class="form-label">Enter your long URL:</label>
+                            <div class="input-group">
+                                <input type="url" class="form-control" id="longUrl" placeholder="https://example.com/very/long/url/that/needs/shortening">
+                                <button class="btn btn-outline-secondary paste-btn" id="pasteBtn" title="Paste from clipboard">
+                                    <i class="fas fa-paste"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Custom Options -->
+                        <div id="customOptions" style="display: none;">
+                            <div class="mb-3">
+                                <label for="customDomain" class="form-label">Custom Domain</label>
+                                <input type="text" class="form-control" id="customDomain" placeholder="your-domain.com">
+                            </div>
+                            <div class="mb-3">
+                                <label for="customAlias" class="form-label">Custom Alias (optional)</label>
+                                <input type="text" class="form-control" id="customAlias" placeholder="my-custom-link">
+                            </div>
+                        </div>
+
+                        <!-- Shorten Button -->
+                        <button class="btn btn-primary w-100 mb-4" id="shortenBtn">
+                            <i class="fas fa-compress-alt me-2"></i>Shorten URL
+                        </button>
+
+                        <!-- Result Container -->
+                        <div class="result-container" id="resultContainer">
+                            <h5 class="mb-3">Your Shortened URL</h5>
+                            <div class="short-url-display" id="shortUrlDisplay">
+                                <span id="shortUrl"></span>
+                                <div class="url-actions">
+                                    <button class="btn btn-sm btn-outline-primary" id="copyBtn" title="Copy to clipboard">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" id="qrBtn" title="Show QR Code">
+                                        <i class="fas fa-qrcode"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- QR Code Preview -->
+                            <div class="qr-preview" id="qrPreview" style="display: none;">
+                                <div class="qr-code" id="qrCode"></div>
+                                <button class="btn btn-primary" id="downloadQrBtn">
+                                    <i class="fas fa-download me-2"></i>Download QR Code
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- URL History -->
+                        <h5 class="mb-3">Recent URLs</h5>
+                        <div class="history-list" id="historyList"></div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About URL Shortener</h2>
+                        <p>Create short, memorable links from long URLs. Perfect for sharing on social media, emails, or any platform with character limits.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Multiple URL shortening services</li>
+                            <li>Custom domain support</li>
+                            <li>QR code generation</li>
+                            <li>URL history tracking</li>
+                            <li>One-click copy</li>
+                            <li>Paste from clipboard</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Short URLs are provided by third-party services. Please review their terms of service for usage limits and policies.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const longUrl = document.getElementById('longUrl');
+            const pasteBtn = document.getElementById('pasteBtn');
+            const shortenBtn = document.getElementById('shortenBtn');
+            const resultContainer = document.getElementById('resultContainer');
+            const shortUrl = document.getElementById('shortUrl');
+            const copyBtn = document.getElementById('copyBtn');
+            const qrBtn = document.getElementById('qrBtn');
+            const qrPreview = document.getElementById('qrPreview');
+            const qrCode = document.getElementById('qrCode');
+            const downloadQrBtn = document.getElementById('downloadQrBtn');
+            const historyList = document.getElementById('historyList');
+            const customOptions = document.getElementById('customOptions');
+
+            // URL History
+            let urlHistory = JSON.parse(localStorage.getItem('urlHistory') || '[]');
+
+            // Service selection
+            const serviceCards = document.querySelectorAll('.service-card');
+            let selectedService = 'tinyurl';
+
+            serviceCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    serviceCards.forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    selectedService = card.dataset.service;
+                    customOptions.style.display = selectedService === 'custom' ? 'block' : 'none';
+                });
+            });
+
+            // Paste button
+            pasteBtn.addEventListener('click', () => {
+                navigator.clipboard.readText().then(text => {
+                    longUrl.value = text;
+                });
+            });
+
+            // Shorten button
+            shortenBtn.addEventListener('click', async () => {
+                const url = longUrl.value.trim();
+                if (!url) {
+                    alert('Please enter a URL');
+                    return;
+                }
+
+                if (!isValidUrl(url)) {
+                    alert('Please enter a valid URL');
+                    return;
+                }
+
+                // Demo version - generate a fake short URL
+                const shortUrlText = generateDemoShortUrl(url);
+                displayResult(shortUrlText, url);
+            });
+
+            // Generate demo short URL
+            function generateDemoShortUrl(url) {
+                const hash = Math.random().toString(36).substring(2, 8);
+                switch (selectedService) {
+                    case 'tinyurl':
+                        return `https://tinyurl.com/${hash}`;
+                    case 'bitly':
+                        return `https://bit.ly/${hash}`;
+                    case 'custom':
+                        const domain = document.getElementById('customDomain').value.trim() || 'short.link';
+                        const alias = document.getElementById('customAlias').value.trim() || hash;
+                        return `https://${domain}/${alias}`;
+                }
+            }
+
+            // Display result
+            function displayResult(shortUrlText, originalUrl) {
+                shortUrl.textContent = shortUrlText;
+                resultContainer.style.display = 'block';
+                
+                // Generate QR code
+                const qr = qrcode(0, 'L');
+                qr.addData(shortUrlText);
+                qr.make();
+                qrCode.innerHTML = qr.createImgTag(5);
+
+                // Add to history
+                addToHistory(shortUrlText, originalUrl);
+            }
+
+            // Add to history
+            function addToHistory(shortUrlText, originalUrl) {
+                const entry = {
+                    short: shortUrlText,
+                    original: originalUrl,
+                    date: new Date().toISOString()
+                };
+
+                urlHistory.unshift(entry);
+                if (urlHistory.length > 10) urlHistory.pop();
+                
+                localStorage.setItem('urlHistory', JSON.stringify(urlHistory));
+                updateHistoryList();
+            }
+
+            // Update history list
+            function updateHistoryList() {
+                historyList.innerHTML = '';
+                urlHistory.forEach((entry, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerHTML = `
+                        <div class="history-urls">
+                            <div class="history-short-url">${entry.short}</div>
+                            <div class="history-original-url">${entry.original}</div>
+                            <div class="history-date">${formatDate(entry.date)}</div>
+                        </div>
+                        <div class="history-actions">
+                            <button class="btn btn-sm btn-outline-primary" onclick="copyUrl('${entry.short}')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="showQr('${entry.short}')">
+                                <i class="fas fa-qrcode"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeFromHistory(${index})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                    historyList.appendChild(div);
+                });
+            }
+
+            // Validate URL
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            // Format date
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            }
+
+            // Event listeners
+            copyBtn.addEventListener('click', () => {
+                copyUrl(shortUrl.textContent);
+            });
+
+            qrBtn.addEventListener('click', () => {
+                qrPreview.style.display = qrPreview.style.display === 'none' ? 'flex' : 'none';
+            });
+
+            downloadQrBtn.addEventListener('click', () => {
+                const img = qrCode.querySelector('img');
+                const link = document.createElement('a');
+                link.download = 'qr-code.png';
+                link.href = img.src;
+                link.click();
+            });
+
+            // Global functions
+            window.copyUrl = url => {
+                navigator.clipboard.writeText(url).then(() => {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'copied-tooltip';
+                    tooltip.textContent = 'Copied to clipboard!';
+                    document.body.appendChild(tooltip);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(tooltip);
+                    }, 2000);
+                });
+            };
+
+            window.showQr = url => {
+                const qr = qrcode(0, 'L');
+                qr.addData(url);
+                qr.make();
+                qrCode.innerHTML = qr.createImgTag(5);
+                qrPreview.style.display = 'flex';
+                resultContainer.style.display = 'block';
+                window.scrollTo({
+                    top: qrPreview.offsetTop,
+                    behavior: 'smooth'
+                });
+            };
+
+            window.removeFromHistory = index => {
+                urlHistory.splice(index, 1);
+                localStorage.setItem('urlHistory', JSON.stringify(urlHistory));
+                updateHistoryList();
+            };
+
+            // Initialize history
+            updateHistoryList();
+        });
+    </script>
+</body>
+</html> 

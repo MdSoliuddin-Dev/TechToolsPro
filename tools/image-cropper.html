@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Cropper - Multi-Tools</title>
+    <meta name="description" content="Crop and resize images with precision. Features aspect ratio control, rotation, and multiple output formats.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Cropper.js CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: border 0.3s ease;
+            cursor: pointer;
+        }
+        .drop-zone:hover {
+            border-color: #0056b3;
+        }
+        .drop-zone.dragover {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-color: #0056b3;
+        }
+        .preview-container {
+            display: none;
+            margin-top: 1rem;
+        }
+        .img-container {
+            max-height: 500px;
+            margin-bottom: 1rem;
+        }
+        .cropper-container {
+            width: 100%;
+            max-width: 100%;
+        }
+        .preview-box {
+            overflow: hidden;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            border: 1px solid #dee2e6;
+            border-radius: var(--border-radius);
+            background-color: transparent;
+            background-image: 
+                linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+                linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+                linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        .preview-box img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            margin: auto;
+        }
+        .aspect-ratio-button {
+            margin: 0.25rem;
+        }
+        .btn-group-vertical > .btn {
+            margin-bottom: 0.25rem;
+        }
+        .progress-container {
+            margin-top: 1rem;
+            display: none;
+        }
+        .optimization-tips {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+        .cropper-view-box,
+        .cropper-face {
+            border-radius: 0;
+        }
+        .docs-buttons {
+            margin-bottom: 1rem;
+        }
+        .docs-buttons .btn {
+            margin: 0.25rem;
+        }
+        .dimension-inputs {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 1rem;
+        }
+        
+        .dimension-inputs .input-group {
+            max-width: 200px;
+        }
+        
+        .zoom-slider {
+            width: 100%;
+            margin: 1rem 0;
+        }
+        
+        .zoom-value {
+            min-width: 60px;
+            text-align: right;
+        }
+        
+        .custom-ratio-inputs {
+            display: none;
+            margin-top: 0.5rem;
+        }
+        
+        .custom-ratio-inputs.show {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .custom-ratio-inputs input {
+            width: 80px;
+        }
+        
+        .image-info {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+        
+        .preset-sizes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .preset-sizes button {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .advanced-options {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .cropper-view-box {
+            outline: 2px solid var(--primary-color);
+            outline-color: var(--primary-color);
+        }
+        
+        .preview-box-container {
+            position: relative;
+            background-color: var(--preview-bg-color, transparent);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        
+        .preview-dimensions {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+        
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            display: none;
+        }
+        
+        .grid-overlay.show {
+            display: block;
+        }
+        
+        .grid-line {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1><i class="fas fa-crop me-2"></i>Image Cropper</h1>
+                <p class="tool-description">Crop and resize images with precision. Perfect for profile pictures, thumbnails, and social media images.</p>
+            </div>
+
+            <!-- Tool Content -->
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-crop-alt fa-3x mb-3"></i>
+                        <h4>Drag & Drop your image here</h4>
+                        <p>or</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose File
+                        </button>
+                        <input type="file" id="fileInput" hidden accept="image/*">
+                        <p class="mt-2 text-muted">Supports: JPG, PNG, WebP, GIF</p>
+                    </div>
+
+                    <div class="preview-container" id="previewContainer">
+                        <!-- Main Image Container -->
+                        <div class="img-container">
+                            <img id="image" src="" alt="Source Image">
+                        </div>
+
+                        <!-- Controls -->
+                        <div class="row">
+                            <div class="col-md-9">
+                                <!-- Cropping Controls -->
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Cropping Controls</h5>
+                                        
+                                        <!-- Aspect Ratio Buttons -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Aspect Ratio</label>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-outline-primary aspect-ratio-button" data-ratio="NaN">Free</button>
+                                                <button type="button" class="btn btn-outline-primary aspect-ratio-button" data-ratio="1">1:1</button>
+                                                <button type="button" class="btn btn-outline-primary aspect-ratio-button" data-ratio="1.5">3:2</button>
+                                                <button type="button" class="btn btn-outline-primary aspect-ratio-button" data-ratio="1.7778">16:9</button>
+                                                <button type="button" class="btn btn-outline-primary aspect-ratio-button" data-ratio="0.5625">9:16</button>
+                                                <button type="button" class="btn btn-outline-primary aspect-ratio-button" data-ratio="custom">Custom</button>
+                                            </div>
+                                            
+                                            <!-- Custom Ratio Inputs -->
+                                            <div class="custom-ratio-inputs" id="customRatioInputs">
+                                                <input type="number" class="form-control" id="customRatioWidth" placeholder="Width" min="1">
+                                                <span>:</span>
+                                                <input type="number" class="form-control" id="customRatioHeight" placeholder="Height" min="1">
+                                                <button class="btn btn-primary btn-sm" id="applyCustomRatio">Apply</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Transform Controls -->
+                                        <div class="docs-buttons">
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-outline-secondary" data-method="setDragMode" data-option="move" title="Move">
+                                                    <i class="fas fa-arrows-alt"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" data-method="setDragMode" data-option="crop" title="Crop">
+                                                    <i class="fas fa-crop-alt"></i>
+                                                </button>
+                                            </div>
+
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-outline-secondary" data-method="zoom" data-option="0.1" title="Zoom In">
+                                                    <i class="fas fa-search-plus"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" data-method="zoom" data-option="-0.1" title="Zoom Out">
+                                                    <i class="fas fa-search-minus"></i>
+                                                </button>
+                                            </div>
+
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-outline-secondary" data-method="rotate" data-option="-45" title="Rotate Left">
+                                                    <i class="fas fa-undo"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" data-method="rotate" data-option="45" title="Rotate Right">
+                                                    <i class="fas fa-redo"></i>
+                                                </button>
+                                            </div>
+
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-outline-secondary" data-method="scaleX" data-option="-1" title="Flip Horizontal">
+                                                    <i class="fas fa-arrows-alt-h"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" data-method="scaleY" data-option="-1" title="Flip Vertical">
+                                                    <i class="fas fa-arrows-alt-v"></i>
+                                                </button>
+                                            </div>
+
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-outline-secondary" data-method="reset" title="Reset">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </button>
+                                            </div>
+
+                                            <!-- Add Grid Toggle -->
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-outline-secondary" id="toggleGrid" title="Toggle Grid">
+                                                    <i class="fas fa-th"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Zoom Control -->
+                                        <div class="d-flex align-items-center zoom-slider">
+                                            <i class="fas fa-search-minus me-2"></i>
+                                            <input type="range" class="form-range flex-grow-1" id="zoomSlider" min="0.1" max="3" step="0.1" value="1">
+                                            <i class="fas fa-search-plus ms-2"></i>
+                                            <span class="zoom-value ms-2" id="zoomValue">100%</span>
+                                        </div>
+
+                                        <!-- Dimension Controls -->
+                                        <div class="dimension-inputs">
+                                            <div class="input-group">
+                                                <span class="input-group-text">W</span>
+                                                <input type="number" class="form-control" id="cropWidth" min="1">
+                                                <span class="input-group-text">px</span>
+                                            </div>
+                                            <div class="input-group">
+                                                <span class="input-group-text">H</span>
+                                                <input type="number" class="form-control" id="cropHeight" min="1">
+                                                <span class="input-group-text">px</span>
+                                            </div>
+                                            <button class="btn btn-outline-primary" id="applyDimensions">Apply</button>
+                                        </div>
+
+                                        <!-- Preset Sizes -->
+                                        <div class="preset-sizes">
+                                            <button class="btn btn-outline-secondary btn-sm" data-width="1200" data-height="630">Facebook Cover (1200×630)</button>
+                                            <button class="btn btn-outline-secondary btn-sm" data-width="1080" data-height="1080">Instagram Post (1080×1080)</button>
+                                            <button class="btn btn-outline-secondary btn-sm" data-width="1080" data-height="1920">Instagram Story (1080×1920)</button>
+                                            <button class="btn btn-outline-secondary btn-sm" data-width="1500" data-height="500">Twitter Header (1500×500)</button>
+                                            <button class="btn btn-outline-secondary btn-sm" data-width="400" data-height="400">Profile Picture (400×400)</button>
+                                        </div>
+
+                                        <!-- Output Settings -->
+                                        <div class="advanced-options">
+                                            <h6>Output Settings</h6>
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Format</label>
+                                                    <select class="form-select" id="outputFormat">
+                                                        <option value="png">PNG</option>
+                                                        <option value="jpeg">JPEG</option>
+                                                        <option value="webp">WebP</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Quality</label>
+                                                    <input type="range" class="form-range" id="quality" min="0" max="1" step="0.1" value="0.9">
+                                                    <div class="text-end">
+                                                        <small id="qualityValue">90%</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Background</label>
+                                                    <input type="color" class="form-control form-control-color w-100" id="backgroundColor" value="#ffffff">
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Advanced Options -->
+                                            <div class="form-check mt-2">
+                                                <input class="form-check-input" type="checkbox" id="preserveExif">
+                                                <label class="form-check-label" for="preserveExif">
+                                                    Preserve EXIF data
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="smoothing" checked>
+                                                <label class="form-check-label" for="smoothing">
+                                                    Enable image smoothing
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <!-- Preview Box -->
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Preview</h5>
+                                        <div class="preview-box-container">
+                                            <div class="preview-box"></div>
+                                            <div class="preview-dimensions" id="previewDimensions"></div>
+                                            <div class="grid-overlay" id="gridOverlay">
+                                                <!-- Grid lines will be added dynamically -->
+                                            </div>
+                                        </div>
+                                        <div class="text-center mt-2">
+                                            <small class="text-muted">Live Preview</small>
+                                        </div>
+                                        <div class="image-info" id="imageInfo"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="progress-container">
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="text-center mt-3">
+                            <button class="btn btn-success" id="cropBtn">
+                                <i class="fas fa-crop me-2"></i>Crop & Download
+                            </button>
+                            <button class="btn btn-danger ms-2" id="clearBtn">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </button>
+                        </div>
+
+                        <!-- Optimization Tips -->
+                        <div class="optimization-tips">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Tips</h6>
+                            <ul class="mb-0">
+                                <li>Use PNG for images with transparency or text</li>
+                                <li>Use JPEG with 80-90% quality for photos</li>
+                                <li>WebP offers the best compression for web use</li>
+                                <li>Common aspect ratios: 1:1 for profile pictures, 16:9 for landscape, 9:16 for stories</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Section -->
+            <div class="ad-section mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="ad-placeholder text-center">
+                            <div id="tool-ad-space" class="bg-light p-3">
+                                <p class="text-muted">Advertisement Space</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Cropper.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/components.js"></script>
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const image = document.getElementById('image');
+        const cropBtn = document.getElementById('cropBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const quality = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        const outputFormat = document.getElementById('outputFormat');
+
+        let cropper = null;
+
+        // Event Listeners
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        quality.addEventListener('input', (e) => {
+            qualityValue.textContent = `${Math.round(e.target.value * 100)}%`;
+        });
+
+        // Handle file selection
+        function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Please select a valid image file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Show image info
+                    document.getElementById('imageInfo').innerHTML = `
+                        Original Size: ${img.width} × ${img.height}<br>
+                        File Size: ${formatFileSize(file.size)}<br>
+                        Type: ${file.type}
+                    `;
+                    
+                    image.src = img.src;
+                    previewContainer.style.display = 'block';
+                    dropZone.style.display = 'none';
+                    
+                    initCropper(image);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Aspect Ratio Buttons
+        document.querySelectorAll('.aspect-ratio-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const ratio = parseFloat(button.dataset.ratio);
+                cropper.setAspectRatio(ratio);
+                
+                // Update active state
+                document.querySelectorAll('.aspect-ratio-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                button.classList.add('active');
+            });
+        });
+
+        // Transform Controls
+        document.querySelector('.docs-buttons').addEventListener('click', (e) => {
+            const target = e.target.closest('[data-method]');
+            if (!target) return;
+
+            const method = target.dataset.method;
+            const option = target.dataset.option;
+            let result;
+
+            if (!cropper || !method) return;
+
+            if (method === 'rotate') {
+                result = cropper[method](parseFloat(option));
+            } else if (method === 'scaleX' || method === 'scaleY') {
+                const scale = target.dataset.scale = target.dataset.scale === '-1' ? '1' : '-1';
+                result = cropper[method](parseFloat(scale));
+            } else if (method === 'zoom') {
+                result = cropper[method](parseFloat(option));
+            } else {
+                result = cropper[method](option);
+            }
+
+            if (method === 'reset') {
+                document.querySelectorAll('.aspect-ratio-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector('[data-ratio="NaN"]').classList.add('active');
+            }
+        });
+
+        // Custom Ratio Controls
+        const customRatioInputs = document.getElementById('customRatioInputs');
+        const customRatioWidth = document.getElementById('customRatioWidth');
+        const customRatioHeight = document.getElementById('customRatioHeight');
+        const applyCustomRatio = document.getElementById('applyCustomRatio');
+
+        document.querySelector('[data-ratio="custom"]').addEventListener('click', () => {
+            customRatioInputs.classList.add('show');
+        });
+
+        applyCustomRatio.addEventListener('click', () => {
+            const width = parseFloat(customRatioWidth.value);
+            const height = parseFloat(customRatioHeight.value);
+            if (width && height) {
+                cropper.setAspectRatio(width / height);
+            }
+        });
+
+        // Zoom Controls
+        const zoomSlider = document.getElementById('zoomSlider');
+        const zoomValue = document.getElementById('zoomValue');
+
+        zoomSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            cropper.zoomTo(value);
+            zoomValue.textContent = `${Math.round(value * 100)}%`;
+        });
+
+        // Dimension Controls
+        const cropWidth = document.getElementById('cropWidth');
+        const cropHeight = document.getElementById('cropHeight');
+        const applyDimensions = document.getElementById('applyDimensions');
+
+        applyDimensions.addEventListener('click', () => {
+            const width = parseInt(cropWidth.value);
+            const height = parseInt(cropHeight.value);
+            if (width && height) {
+                cropper.setData({ width, height });
+            }
+        });
+
+        // Preset Sizes
+        document.querySelectorAll('.preset-sizes button').forEach(button => {
+            button.addEventListener('click', () => {
+                const width = parseInt(button.dataset.width);
+                const height = parseInt(button.dataset.height);
+                cropWidth.value = width;
+                cropHeight.value = height;
+                cropper.setData({ width, height });
+            });
+        });
+
+        // Grid Toggle
+        const toggleGrid = document.getElementById('toggleGrid');
+        const gridOverlay = document.getElementById('gridOverlay');
+        let isGridVisible = false;
+
+        toggleGrid.addEventListener('click', () => {
+            isGridVisible = !isGridVisible;
+            gridOverlay.classList.toggle('show', isGridVisible);
+            toggleGrid.classList.toggle('active', isGridVisible);
+        });
+
+        // Update background color
+        document.getElementById('backgroundColor').addEventListener('input', (e) => {
+            document.documentElement.style.setProperty('--preview-bg-color', e.target.value);
+            if (cropper) {
+                cropper.options.background = true;
+                cropper.options.backgroundColor = e.target.value;
+                cropper.clear();
+                cropper.crop();
+            }
+        });
+
+        // Initialize cropper
+        function initCropper(image) {
+            if (cropper) {
+                cropper.destroy();
+            }
+
+            const bgColor = document.getElementById('backgroundColor').value;
+            document.documentElement.style.setProperty('--preview-bg-color', bgColor);
+
+            cropper = new Cropper(image, {
+                aspectRatio: NaN,
+                preview: '.preview-box',
+                viewMode: 2,
+                minContainerWidth: 300,
+                minContainerHeight: 300,
+                background: true,
+                backgroundColor: bgColor,
+                modal: true,
+                guides: true,
+                center: true,
+                highlight: true,
+                autoCrop: true,
+                autoCropArea: 0.8,
+                responsive: true,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: true,
+                ready() {
+                    // Initialize grid
+                    createGrid();
+                    // Update preview dimensions
+                    updatePreviewDimensions();
+                },
+                crop(event) {
+                    const data = event.detail;
+                    // Update dimension inputs
+                    cropWidth.value = Math.round(data.width);
+                    cropHeight.value = Math.round(data.height);
+                    // Update preview dimensions
+                    updatePreviewDimensions();
+                }
+            });
+        }
+
+        // Update preview dimensions
+        function updatePreviewDimensions() {
+            const data = cropper.getData();
+            const previewBox = document.querySelector('.preview-box');
+            const scale = Math.min(
+                previewBox.offsetWidth / data.width,
+                previewBox.offsetHeight / data.height
+            );
+            const previewWidth = Math.round(data.width * scale);
+            const previewHeight = Math.round(data.height * scale);
+            
+            document.getElementById('previewDimensions').innerHTML = `
+                <div>Original: ${Math.round(data.width)} × ${Math.round(data.height)}</div>
+                <div>Preview: ${previewWidth} × ${previewHeight}</div>
+            `;
+        }
+
+        // Create grid overlay
+        function createGrid() {
+            const gridOverlay = document.getElementById('gridOverlay');
+            gridOverlay.innerHTML = '';
+            
+            // Create vertical lines
+            for (let i = 1; i < 3; i++) {
+                const line = document.createElement('div');
+                line.className = 'grid-line';
+                line.style.width = '1px';
+                line.style.height = '100%';
+                line.style.left = `${(i * 100) / 3}%`;
+                gridOverlay.appendChild(line);
+            }
+            
+            // Create horizontal lines
+            for (let i = 1; i < 3; i++) {
+                const line = document.createElement('div');
+                line.className = 'grid-line';
+                line.style.height = '1px';
+                line.style.width = '100%';
+                line.style.top = `${(i * 100) / 3}%`;
+                gridOverlay.appendChild(line);
+            }
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Crop and Download
+        cropBtn.addEventListener('click', () => {
+            if (!cropper) return;
+
+            const format = outputFormat.value;
+            const options = {
+                maxWidth: 4096,
+                maxHeight: 4096,
+                fillColor: document.getElementById('backgroundColor').value,
+                imageSmoothingEnabled: document.getElementById('smoothing').checked,
+                imageSmoothingQuality: 'high'
+            };
+
+            if (format === 'jpeg' || format === 'webp') {
+                options.quality = parseFloat(quality.value);
+            }
+
+            const result = cropper.getCroppedCanvas(options);
+            
+            if (!result) {
+                alert('Failed to crop image. Please try again.');
+                return;
+            }
+
+            // Show progress
+            const progressContainer = document.querySelector('.progress-container');
+            progressContainer.style.display = 'block';
+
+            result.toBlob(
+                (blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `cropped.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    // Hide progress
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                    }, 500);
+                },
+                `image/${format}`,
+                format === 'png' ? undefined : parseFloat(quality.value)
+            );
+        });
+
+        // Clear
+        clearBtn.addEventListener('click', () => {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            image.src = '';
+            previewContainer.style.display = 'none';
+            dropZone.style.display = 'block';
+            fileInput.value = '';
+            document.querySelectorAll('.aspect-ratio-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('[data-ratio="NaN"]').classList.add('active');
+        });
+
+        // Set initial active aspect ratio button
+        document.querySelector('[data-ratio="NaN"]').classList.add('active');
+    </script>
+</body>
+</html> 

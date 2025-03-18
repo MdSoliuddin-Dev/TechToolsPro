@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Editor - Multi-Tools</title>
+    <meta name="description" content="Write and preview Markdown with real-time rendering, syntax highlighting, and common shortcuts.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Highlight.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css" rel="stylesheet">
+    <style>
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 992px) {
+            .editor-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--background-color);
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .editor-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .editor-content {
+            position: relative;
+            flex-grow: 1;
+            min-height: 500px;
+        }
+
+        .markdown-input {
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+            padding: 1rem;
+            border: none;
+            background: transparent;
+            font-family: monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            resize: none;
+            color: var(--text-primary);
+            tab-size: 4;
+        }
+
+        .markdown-input:focus {
+            outline: none;
+        }
+
+        .markdown-preview {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            padding: 1rem;
+        }
+
+        .markdown-preview img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .markdown-preview pre {
+            background: rgba(0, 0, 0, 0.03);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            overflow: auto;
+        }
+
+        .markdown-preview code {
+            font-family: monospace;
+            font-size: 0.875rem;
+            padding: 0.2rem 0.4rem;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: var(--border-radius);
+        }
+
+        .markdown-preview pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .markdown-preview blockquote {
+            border-left: 4px solid var(--primary-color);
+            margin: 1rem 0;
+            padding: 0.5rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .markdown-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .markdown-preview th,
+        .markdown-preview td {
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+        }
+
+        .markdown-preview th {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .toolbar-separator {
+            width: 1px;
+            background: var(--border-color);
+            margin: 0 0.5rem;
+        }
+
+        .word-count {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .cheatsheet {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .cheatsheet-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            background: var(--background-color);
+        }
+
+        .cheatsheet-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .cheatsheet-icon {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+        .cheatsheet-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.875rem;
+        }
+
+        .cheatsheet-item:last-child {
+            border-bottom: none;
+        }
+
+        .cheatsheet-syntax {
+            font-family: monospace;
+            color: var(--text-secondary);
+        }
+
+        @keyframes copied {
+            0%, 100% { opacity: 0; }
+            10%, 90% { opacity: 1; }
+        }
+
+        .copied-tooltip {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            animation: copied 2s ease-in-out;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fab fa-markdown me-2"></i>
+                            Markdown Editor
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Markdown Cheatsheet -->
+                        <div class="cheatsheet">
+                            <!-- Basic Syntax -->
+                            <div class="cheatsheet-card">
+                                <div class="cheatsheet-header">
+                                    <i class="fas fa-font cheatsheet-icon"></i>
+                                    <h6 class="mb-0">Basic Syntax</h6>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Bold</span>
+                                    <code class="cheatsheet-syntax">**bold**</code>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Italic</span>
+                                    <code class="cheatsheet-syntax">*italic*</code>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Heading</span>
+                                    <code class="cheatsheet-syntax"># H1</code>
+                                </div>
+                            </div>
+
+                            <!-- Lists -->
+                            <div class="cheatsheet-card">
+                                <div class="cheatsheet-header">
+                                    <i class="fas fa-list cheatsheet-icon"></i>
+                                    <h6 class="mb-0">Lists</h6>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Unordered</span>
+                                    <code class="cheatsheet-syntax">- item</code>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Ordered</span>
+                                    <code class="cheatsheet-syntax">1. item</code>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Task</span>
+                                    <code class="cheatsheet-syntax">- [ ] task</code>
+                                </div>
+                            </div>
+
+                            <!-- Links & Images -->
+                            <div class="cheatsheet-card">
+                                <div class="cheatsheet-header">
+                                    <i class="fas fa-link cheatsheet-icon"></i>
+                                    <h6 class="mb-0">Links & Images</h6>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Link</span>
+                                    <code class="cheatsheet-syntax">[text](url)</code>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Image</span>
+                                    <code class="cheatsheet-syntax">![alt](url)</code>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Reference</span>
+                                    <code class="cheatsheet-syntax">[text][ref]</code>
+                                </div>
+                            </div>
+
+                            <!-- Code -->
+                            <div class="cheatsheet-card">
+                                <div class="cheatsheet-header">
+                                    <i class="fas fa-code cheatsheet-icon"></i>
+                                    <h6 class="mb-0">Code</h6>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Inline</span>
+                                    <code class="cheatsheet-syntax">`code`</code>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Block</span>
+                                    <code class="cheatsheet-syntax">```lang</code>
+                                </div>
+                                <div class="cheatsheet-item">
+                                    <span>Indent</span>
+                                    <code class="cheatsheet-syntax">    code</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Editor Container -->
+                        <div class="editor-container">
+                            <!-- Input Panel -->
+                            <div class="editor-panel">
+                                <div class="editor-header">
+                                    <h6 class="editor-title">Markdown</h6>
+                                    <div class="editor-actions">
+                                        <button class="btn btn-sm btn-outline-secondary" id="pasteBtn" title="Paste from clipboard">
+                                            <i class="fas fa-paste"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" id="clearBtn" title="Clear input">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="toolbar">
+                                    <div class="toolbar-group">
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="bold" title="Bold">
+                                            <i class="fas fa-bold"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="italic" title="Italic">
+                                            <i class="fas fa-italic"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="strike" title="Strikethrough">
+                                            <i class="fas fa-strikethrough"></i>
+                                        </button>
+                                    </div>
+                                    <div class="toolbar-separator"></div>
+                                    <div class="toolbar-group">
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="h1" title="Heading 1">H1</button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="h2" title="Heading 2">H2</button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="h3" title="Heading 3">H3</button>
+                                    </div>
+                                    <div class="toolbar-separator"></div>
+                                    <div class="toolbar-group">
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="ul" title="Unordered List">
+                                            <i class="fas fa-list-ul"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="ol" title="Ordered List">
+                                            <i class="fas fa-list-ol"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="task" title="Task List">
+                                            <i class="fas fa-tasks"></i>
+                                        </button>
+                                    </div>
+                                    <div class="toolbar-separator"></div>
+                                    <div class="toolbar-group">
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="link" title="Link">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="image" title="Image">
+                                            <i class="fas fa-image"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="code" title="Code">
+                                            <i class="fas fa-code"></i>
+                                        </button>
+                                    </div>
+                                    <div class="toolbar-separator"></div>
+                                    <div class="toolbar-group">
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="quote" title="Quote">
+                                            <i class="fas fa-quote-right"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="table" title="Table">
+                                            <i class="fas fa-table"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-format="hr" title="Horizontal Rule">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="word-count">
+                                        <span>Words: <span id="wordCount">0</span></span>
+                                        <span>Characters: <span id="charCount">0</span></span>
+                                    </div>
+                                </div>
+                                <div class="editor-content">
+                                    <textarea class="markdown-input" id="markdownInput" placeholder="Write your markdown here..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Preview Panel -->
+                            <div class="editor-panel">
+                                <div class="editor-header">
+                                    <h6 class="editor-title">Preview</h6>
+                                    <div class="editor-actions">
+                                        <button class="btn btn-sm btn-outline-primary" id="copyBtn" title="Copy HTML">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="downloadBtn" title="Download Markdown">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="editor-content">
+                                    <div class="markdown-preview" id="markdownPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Markdown Editor</h2>
+                        <p>Write and preview Markdown with real-time rendering, syntax highlighting, and common shortcuts. Perfect for creating formatted text for documentation, README files, and more.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Real-time preview with syntax highlighting</li>
+                            <li>Common markdown shortcuts and toolbar</li>
+                            <li>Word and character count</li>
+                            <li>Copy HTML and download markdown</li>
+                            <li>Support for tables and task lists</li>
+                            <li>Code block syntax highlighting</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All processing is done locally in your browser. Your content is never sent to any server.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- DOMPurify for sanitizing HTML -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.1/purify.min.js"></script>
+    <!-- Highlight.js for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const markdownInput = document.getElementById('markdownInput');
+            const markdownPreview = document.getElementById('markdownPreview');
+            const wordCount = document.getElementById('wordCount');
+            const charCount = document.getElementById('charCount');
+            const pasteBtn = document.getElementById('pasteBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const toolbarButtons = document.querySelectorAll('.toolbar button');
+
+            // Configure Marked.js
+            marked.setOptions({
+                gfm: true,
+                breaks: true,
+                highlight: function(code, lang) {
+                    if (lang && hljs.getLanguage(lang)) {
+                        return hljs.highlight(code, { language: lang }).value;
+                    }
+                    return code;
+                }
+            });
+
+            // Update preview
+            function updatePreview() {
+                const markdown = markdownInput.value;
+                const html = marked(markdown);
+                markdownPreview.innerHTML = DOMPurify.sanitize(html);
+                
+                // Highlight code blocks
+                markdownPreview.querySelectorAll('pre code').forEach(block => {
+                    hljs.highlightElement(block);
+                });
+
+                // Update word and character count
+                const words = markdown.trim().split(/\s+/).filter(word => word.length > 0);
+                wordCount.textContent = words.length;
+                charCount.textContent = markdown.length;
+            }
+
+            // Format selection
+            function formatText(format) {
+                const start = markdownInput.selectionStart;
+                const end = markdownInput.selectionEnd;
+                const text = markdownInput.value;
+                const selection = text.substring(start, end);
+                let replacement = '';
+
+                switch (format) {
+                    case 'bold':
+                        replacement = `**${selection}**`;
+                        break;
+                    case 'italic':
+                        replacement = `*${selection}*`;
+                        break;
+                    case 'strike':
+                        replacement = `~~${selection}~~`;
+                        break;
+                    case 'h1':
+                        replacement = `# ${selection}`;
+                        break;
+                    case 'h2':
+                        replacement = `## ${selection}`;
+                        break;
+                    case 'h3':
+                        replacement = `### ${selection}`;
+                        break;
+                    case 'ul':
+                        replacement = selection.split('\n').map(line => `- ${line}`).join('\n');
+                        break;
+                    case 'ol':
+                        replacement = selection.split('\n').map((line, i) => `${i + 1}. ${line}`).join('\n');
+                        break;
+                    case 'task':
+                        replacement = selection.split('\n').map(line => `- [ ] ${line}`).join('\n');
+                        break;
+                    case 'link':
+                        replacement = selection ? `[${selection}](url)` : `[text](url)`;
+                        break;
+                    case 'image':
+                        replacement = `![${selection || 'alt text'}](image-url)`;
+                        break;
+                    case 'code':
+                        replacement = selection.includes('\n') ? 
+                            `\`\`\`\n${selection}\n\`\`\`` : 
+                            `\`${selection}\``;
+                        break;
+                    case 'quote':
+                        replacement = selection.split('\n').map(line => `> ${line}`).join('\n');
+                        break;
+                    case 'table':
+                        replacement = `| Header | Header |\n|---------|----------|\n| Cell | Cell |`;
+                        break;
+                    case 'hr':
+                        replacement = `\n---\n`;
+                        break;
+                }
+
+                markdownInput.value = text.substring(0, start) + replacement + text.substring(end);
+                markdownInput.focus();
+                if (format !== 'table' && format !== 'hr') {
+                    markdownInput.setSelectionRange(
+                        start + replacement.length,
+                        start + replacement.length
+                    );
+                }
+                updatePreview();
+            }
+
+            // Event listeners
+            markdownInput.addEventListener('input', updatePreview);
+
+            toolbarButtons.forEach(button => {
+                const format = button.dataset.format;
+                if (format) {
+                    button.addEventListener('click', () => formatText(format));
+                }
+            });
+
+            pasteBtn.addEventListener('click', () => {
+                navigator.clipboard.readText().then(text => {
+                    markdownInput.value = text;
+                    updatePreview();
+                });
+            });
+
+            clearBtn.addEventListener('click', () => {
+                markdownInput.value = '';
+                updatePreview();
+            });
+
+            copyBtn.addEventListener('click', () => {
+                const html = markdownPreview.innerHTML;
+                navigator.clipboard.writeText(html).then(() => {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'copied-tooltip';
+                    tooltip.textContent = 'Copied to clipboard!';
+                    document.body.appendChild(tooltip);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(tooltip);
+                    }, 2000);
+                });
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                const text = markdownInput.value;
+                const blob = new Blob([text], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'document.md';
+                link.click();
+                URL.revokeObjectURL(url);
+            });
+
+            // Initialize
+            updatePreview();
+        });
+    </script>
+</body>
+</html> 

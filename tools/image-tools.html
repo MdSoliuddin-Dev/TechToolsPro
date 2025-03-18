@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Tools - Multi-Tools</title>
+    <meta name="description" content="Image tools including resizer, format converter, and metadata viewer.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- ExifReader -->
+    <script src="https://cdn.jsdelivr.net/npm/exifreader/dist/exifreader.min.js"></script>
+    <style>
+        .image-preview {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            background: var(--background-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+        }
+
+        .image-preview.dragging {
+            border-style: dashed;
+            background-color: var(--primary-light);
+        }
+
+        .image-preview .placeholder {
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .image-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-item {
+            padding: 0.5rem;
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+
+        .info-label {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metadata-section {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+        }
+
+        .metadata-title {
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .metadata-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .metadata-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .metadata-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .metadata-key {
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .metadata-value {
+            text-align: right;
+            color: var(--text-secondary);
+            word-break: break-all;
+        }
+
+        .resize-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .format-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .quality-slider {
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        .error-message {
+            color: var(--danger);
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .success-message {
+            color: var(--success);
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .image-preview {
+                min-height: 150px;
+            }
+
+            .image-preview img {
+                max-height: 300px;
+            }
+
+            .metadata-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-image me-2"></i>
+                            Image Tools
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tool Sections -->
+                        <ul class="nav nav-tabs mb-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#resizer" type="button">
+                                    <i class="fas fa-expand-arrows-alt me-2"></i>Image Resizer
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#converter" type="button">
+                                    <i class="fas fa-exchange-alt me-2"></i>Format Converter
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#metadata" type="button">
+                                    <i class="fas fa-info-circle me-2"></i>Metadata Viewer
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Image Resizer Section -->
+                            <div class="tab-pane fade show active" id="resizer" role="tabpanel">
+                                <div class="image-preview" id="resizerPreview">
+                                    <div class="placeholder">
+                                        <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                        <div>Drag and drop an image here or click to upload</div>
+                                        <small class="text-muted">Supports: JPG, PNG, GIF, WebP</small>
+                                    </div>
+                                </div>
+
+                                <div class="resize-controls">
+                                    <div>
+                                        <label class="form-label">Width (px)</label>
+                                        <input type="number" class="form-control" id="resizeWidth" min="1">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Height (px)</label>
+                                        <input type="number" class="form-control" id="resizeHeight" min="1">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Method</label>
+                                        <select class="form-select" id="resizeMethod">
+                                            <option value="dimensions">Custom Dimensions</option>
+                                            <option value="scale">Scale by Percentage</option>
+                                            <option value="width">Fit to Width</option>
+                                            <option value="height">Fit to Height</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="maintainAspectRatio" checked>
+                                    <label class="form-check-label" for="maintainAspectRatio">
+                                        Maintain aspect ratio
+                                    </label>
+                                </div>
+
+                                <button class="btn btn-primary" onclick="resizeImage()" disabled id="resizeButton">
+                                    <i class="fas fa-compress-arrows-alt me-2"></i>Resize Image
+                                </button>
+                            </div>
+
+                            <!-- Format Converter Section -->
+                            <div class="tab-pane fade" id="converter" role="tabpanel">
+                                <div class="image-preview" id="converterPreview">
+                                    <div class="placeholder">
+                                        <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                        <div>Drag and drop an image here or click to upload</div>
+                                        <small class="text-muted">Supports: JPG, PNG, GIF, WebP</small>
+                                    </div>
+                                </div>
+
+                                <div class="format-options">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="format" id="formatJPG" value="image/jpeg" checked>
+                                        <label class="form-check-label" for="formatJPG">
+                                            JPEG
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="format" id="formatPNG" value="image/png">
+                                        <label class="form-check-label" for="formatPNG">
+                                            PNG
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="format" id="formatWEBP" value="image/webp">
+                                        <label class="form-check-label" for="formatWEBP">
+                                            WebP
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div id="qualityControl">
+                                    <label class="form-label">Quality</label>
+                                    <input type="range" class="quality-slider form-range" id="quality" min="0" max="100" value="90">
+                                    <div class="text-muted text-center">
+                                        <span id="qualityValue">90</span>%
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary" onclick="convertFormat()" disabled id="convertButton">
+                                    <i class="fas fa-sync-alt me-2"></i>Convert Format
+                                </button>
+                            </div>
+
+                            <!-- Metadata Viewer Section -->
+                            <div class="tab-pane fade" id="metadata" role="tabpanel">
+                                <div class="image-preview" id="metadataPreview">
+                                    <div class="placeholder">
+                                        <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                        <div>Drag and drop an image here or click to upload</div>
+                                        <small class="text-muted">Supports: JPG, PNG, GIF, WebP</small>
+                                    </div>
+                                </div>
+
+                                <div class="image-info">
+                                    <div class="info-item">
+                                        <div class="info-label">Dimensions</div>
+                                        <div class="info-value" id="imageDimensions">-</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">File Size</div>
+                                        <div class="info-value" id="imageSize">-</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">File Type</div>
+                                        <div class="info-value" id="imageType">-</div>
+                                    </div>
+                                </div>
+
+                                <div class="metadata-grid" id="metadataGrid">
+                                    <div class="metadata-section">
+                                        <div class="metadata-title">No metadata available</div>
+                                        <div class="text-muted">Upload an image to view its metadata</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Image Tools</h2>
+                        <p>A comprehensive set of tools for working with images including resizing, format conversion, and metadata viewing.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Resize images with multiple methods</li>
+                            <li>Convert between different image formats</li>
+                            <li>View detailed image metadata</li>
+                            <li>Maintain image quality</li>
+                            <li>Process images locally</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All operations are performed locally in your browser for privacy.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Image Preview Elements
+            const resizerPreview = document.getElementById('resizerPreview');
+            const converterPreview = document.getElementById('converterPreview');
+            const metadataPreview = document.getElementById('metadataPreview');
+
+            // Resizer Elements
+            const resizeWidth = document.getElementById('resizeWidth');
+            const resizeHeight = document.getElementById('resizeHeight');
+            const resizeMethod = document.getElementById('resizeMethod');
+            const maintainAspectRatio = document.getElementById('maintainAspectRatio');
+            const resizeButton = document.getElementById('resizeButton');
+
+            // Converter Elements
+            const quality = document.getElementById('quality');
+            const qualityValue = document.getElementById('qualityValue');
+            const convertButton = document.getElementById('convertButton');
+
+            // Metadata Elements
+            const imageDimensions = document.getElementById('imageDimensions');
+            const imageSize = document.getElementById('imageSize');
+            const imageType = document.getElementById('imageType');
+            const metadataGrid = document.getElementById('metadataGrid');
+
+            // Current Image Data
+            let currentImage = null;
+            let originalWidth = 0;
+            let originalHeight = 0;
+
+            // Setup drag and drop for all preview areas
+            [resizerPreview, converterPreview, metadataPreview].forEach(preview => {
+                preview.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    preview.classList.add('dragging');
+                });
+
+                preview.addEventListener('dragleave', () => {
+                    preview.classList.remove('dragging');
+                });
+
+                preview.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    preview.classList.remove('dragging');
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        loadImage(file, preview);
+                    }
+                });
+
+                preview.addEventListener('click', () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            loadImage(file, preview);
+                        }
+                    };
+                    input.click();
+                });
+            });
+
+            // Load and display image
+            function loadImage(file, preview) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        currentImage = img;
+                        originalWidth = img.width;
+                        originalHeight = img.height;
+
+                        // Update all preview areas
+                        [resizerPreview, converterPreview, metadataPreview].forEach(area => {
+                            area.innerHTML = '';
+                            area.appendChild(img.cloneNode());
+                        });
+
+                        // Enable buttons
+                        resizeButton.disabled = false;
+                        convertButton.disabled = false;
+
+                        // Update dimension inputs
+                        resizeWidth.value = originalWidth;
+                        resizeHeight.value = originalHeight;
+
+                        // Update image info
+                        imageDimensions.textContent = `${originalWidth} × ${originalHeight}`;
+                        imageSize.textContent = formatFileSize(file.size);
+                        imageType.textContent = file.type;
+
+                        // Load metadata
+                        loadMetadata(file);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // Resize image
+            window.resizeImage = () => {
+                if (!currentImage) return;
+
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                let width = parseInt(resizeWidth.value);
+                let height = parseInt(resizeHeight.value);
+
+                switch (resizeMethod.value) {
+                    case 'scale':
+                        const scale = width / 100;
+                        width = Math.round(originalWidth * scale);
+                        height = Math.round(originalHeight * scale);
+                        break;
+                    case 'width':
+                        height = Math.round(width * (originalHeight / originalWidth));
+                        break;
+                    case 'height':
+                        width = Math.round(height * (originalWidth / originalHeight));
+                        break;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(currentImage, 0, 0, width, height);
+
+                downloadImage(canvas.toDataURL('image/png'), 'resized-image.png');
+            };
+
+            // Convert format
+            window.convertFormat = () => {
+                if (!currentImage) return;
+
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = currentImage.width;
+                canvas.height = currentImage.height;
+                ctx.drawImage(currentImage, 0, 0);
+
+                const format = document.querySelector('input[name="format"]:checked').value;
+                const qualityValue = parseInt(quality.value) / 100;
+                const dataUrl = canvas.toDataURL(format, qualityValue);
+
+                const extension = format.split('/')[1];
+                downloadImage(dataUrl, `converted-image.${extension}`);
+            };
+
+            // Load metadata
+            function loadMetadata(file) {
+                ExifReader.load(file).then(tags => {
+                    const sections = {
+                        'Camera Information': ['Make', 'Model', 'Software'],
+                        'Image Information': ['ImageWidth', 'ImageHeight', 'BitsPerSample', 'Compression'],
+                        'Capture Settings': ['FNumber', 'ExposureTime', 'ISOSpeedRatings', 'FocalLength'],
+                        'Date Information': ['DateTime', 'DateTimeOriginal', 'DateTimeDigitized'],
+                        'GPS Information': ['GPSLatitude', 'GPSLongitude', 'GPSAltitude']
+                    };
+
+                    let html = '';
+                    Object.entries(sections).forEach(([section, keys]) => {
+                        const sectionTags = keys.filter(key => tags[key]).map(key => ({
+                            key: key,
+                            value: formatExifValue(tags[key].description || tags[key].value)
+                        }));
+
+                        if (sectionTags.length > 0) {
+                            html += `
+                                <div class="metadata-section">
+                                    <div class="metadata-title">${section}</div>
+                                    <ul class="metadata-list">
+                                        ${sectionTags.map(tag => `
+                                            <li class="metadata-item">
+                                                <span class="metadata-key">${tag.key}</span>
+                                                <span class="metadata-value">${tag.value}</span>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    metadataGrid.innerHTML = html || `
+                        <div class="metadata-section">
+                            <div class="metadata-title">No metadata available</div>
+                            <div class="text-muted">This image does not contain any EXIF metadata</div>
+                        </div>
+                    `;
+                }).catch(error => {
+                    console.error('Error reading metadata:', error);
+                    metadataGrid.innerHTML = `
+                        <div class="metadata-section">
+                            <div class="metadata-title">Error reading metadata</div>
+                            <div class="text-muted">${error.message}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Helper Functions
+            function formatFileSize(bytes) {
+                const units = ['B', 'KB', 'MB', 'GB'];
+                let size = bytes;
+                let unitIndex = 0;
+                while (size >= 1024 && unitIndex < units.length - 1) {
+                    size /= 1024;
+                    unitIndex++;
+                }
+                return `${size.toFixed(1)} ${units[unitIndex]}`;
+            }
+
+            function formatExifValue(value) {
+                if (Array.isArray(value)) {
+                    return value.join(', ');
+                }
+                return value;
+            }
+
+            function downloadImage(dataUrl, filename) {
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = filename;
+                link.click();
+            }
+
+            // Event Listeners
+            quality.addEventListener('input', () => {
+                qualityValue.textContent = quality.value;
+            });
+
+            resizeMethod.addEventListener('change', () => {
+                const isScale = resizeMethod.value === 'scale';
+                resizeWidth.value = isScale ? '100' : originalWidth;
+                resizeHeight.value = isScale ? '100' : originalHeight;
+                maintainAspectRatio.disabled = isScale;
+            });
+
+            [resizeWidth, resizeHeight].forEach(input => {
+                input.addEventListener('input', () => {
+                    if (maintainAspectRatio.checked && !maintainAspectRatio.disabled) {
+                        if (input === resizeWidth) {
+                            resizeHeight.value = Math.round(input.value * (originalHeight / originalWidth));
+                        } else {
+                            resizeWidth.value = Math.round(input.value * (originalWidth / originalHeight));
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

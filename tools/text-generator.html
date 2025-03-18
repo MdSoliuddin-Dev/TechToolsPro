@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Generator - Multi-Tools</title>
+    <meta name="description" content="Generate fancy text styles, symbols, and special characters for social media, messaging, and creative purposes.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .text-input {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .style-preview {
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            transition: all var(--transition-speed);
+            background: var(--background-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .style-preview:hover {
+            background: rgba(var(--primary-rgb), 0.1);
+        }
+
+        .style-preview.active {
+            background: rgba(var(--primary-rgb), 0.2);
+            border: 1px solid var(--primary-color);
+        }
+
+        .output-container {
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            opacity: 0.7;
+            transition: opacity var(--transition-speed);
+        }
+
+        .copy-btn:hover {
+            opacity: 1;
+        }
+
+        .symbol-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .symbol-btn {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            transition: all var(--transition-speed);
+        }
+
+        .symbol-btn:hover {
+            background: rgba(var(--primary-rgb), 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .emoji-category {
+            margin-bottom: 1rem;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .emoji-btn {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-radius: var(--border-radius);
+            transition: all var(--transition-speed);
+        }
+
+        .emoji-btn:hover {
+            background: rgba(var(--primary-rgb), 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-color);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-text-height me-2"></i>
+                            Text Generator
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Input Section -->
+                        <div class="mb-4">
+                            <label for="inputText" class="form-label">Enter your text:</label>
+                            <textarea class="form-control text-input" id="inputText" rows="3" placeholder="Type or paste your text here..."></textarea>
+                        </div>
+
+                        <!-- Tabs Navigation -->
+                        <ul class="nav nav-tabs mb-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="styles-tab" data-bs-toggle="tab" data-bs-target="#styles" type="button" role="tab">
+                                    <i class="fas fa-font me-2"></i>Text Styles
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="symbols-tab" data-bs-toggle="tab" data-bs-target="#symbols" type="button" role="tab">
+                                    <i class="fas fa-symbols me-2"></i>Symbols
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="emojis-tab" data-bs-toggle="tab" data-bs-target="#emojis" type="button" role="tab">
+                                    <i class="far fa-smile me-2"></i>Emojis
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Tabs Content -->
+                        <div class="tab-content">
+                            <!-- Text Styles Tab -->
+                            <div class="tab-pane fade show active" id="styles" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div id="stylesList">
+                                            <!-- Styles will be added dynamically -->
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="output-container">
+                                            <label class="form-label">Output:</label>
+                                            <div class="form-control" id="outputText" style="min-height: 100px; white-space: pre-wrap;"></div>
+                                            <button class="btn btn-sm btn-outline-primary copy-btn" id="copyBtn">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Symbols Tab -->
+                            <div class="tab-pane fade" id="symbols" role="tabpanel">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" id="symbolSearch" placeholder="Search symbols...">
+                                </div>
+                                <div class="symbol-grid" id="symbolGrid">
+                                    <!-- Symbols will be added dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Emojis Tab -->
+                            <div class="tab-pane fade" id="emojis" role="tabpanel">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" id="emojiSearch" placeholder="Search emojis...">
+                                </div>
+                                <div id="emojiCategories">
+                                    <!-- Emoji categories will be added dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Text Generator</h2>
+                        <p>Create fancy text styles, add special symbols, and emojis for social media, messaging, or any creative purpose. Perfect for making your text stand out!</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Multiple fancy text styles</li>
+                            <li>Special symbols and characters</li>
+                            <li>Emoji categories</li>
+                            <li>Real-time preview</li>
+                            <li>Easy copy to clipboard</li>
+                            <li>Search functionality</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Note: Some fancy text styles may not be supported on all platforms or devices.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputText = document.getElementById('inputText');
+            const outputText = document.getElementById('outputText');
+            const copyBtn = document.getElementById('copyBtn');
+            const stylesList = document.getElementById('stylesList');
+            const symbolGrid = document.getElementById('symbolGrid');
+            const symbolSearch = document.getElementById('symbolSearch');
+            const emojiSearch = document.getElementById('emojiSearch');
+            const emojiCategories = document.getElementById('emojiCategories');
+
+            // Text styles mapping
+            const styles = {
+                'Normal': str => str,
+                '𝐁𝐨𝐥𝐝': str => str.split('').map(c => c.replace(/[A-Za-z]/g, char => String.fromCharCode(char.charCodeAt(0) + (char.toLowerCase() === char ? 119947 : 119939)))).join(''),
+                '𝘐𝘵𝘢𝘭𝘪𝘤': str => str.split('').map(c => c.replace(/[A-Za-z]/g, char => String.fromCharCode(char.charCodeAt(0) + (char.toLowerCase() === char ? 119899 : 119891)))).join(''),
+                '𝒮𝒸𝓇𝒾𝓅𝓉': str => str.split('').map(c => c.replace(/[A-Za-z]/g, char => String.fromCharCode(char.charCodeAt(0) + (char.toLowerCase() === char ? 119963 : 119955)))).join(''),
+                'ᴄᴀᴘs': str => str.split('').map(c => c.replace(/[A-Za-z]/g, char => String.fromCharCode(char.toLowerCase().charCodeAt(0) + 8272))).join(''),
+                'uʍop ǝpᴉsdn': str => str.split('').reverse().map(c => {
+                    const flipped = {
+                        'a': 'ɐ', 'b': 'q', 'c': 'ɔ', 'd': 'p', 'e': 'ǝ', 'f': 'ɟ', 'g': 'ƃ',
+                        'h': 'ɥ', 'i': 'ᴉ', 'j': 'ɾ', 'k': 'ʞ', 'l': 'l', 'm': 'ɯ', 'n': 'u',
+                        'o': 'o', 'p': 'd', 'q': 'b', 'r': 'ɹ', 's': 's', 't': 'ʇ', 'u': 'n',
+                        'v': 'ʌ', 'w': 'ʍ', 'x': 'x', 'y': 'ʎ', 'z': 'z'
+                    };
+                    return flipped[c.toLowerCase()] || c;
+                }).join(''),
+                'Bubble': str => str.split('').map(c => c.replace(/[A-Za-z]/g, char => String.fromCharCode(char.charCodeAt(0) + (char.toLowerCase() === char ? 9327 : 9398)))).join(''),
+                'Square': str => str.split('').map(c => c.replace(/[A-Za-z]/g, char => String.fromCharCode(char.charCodeAt(0) + (char.toLowerCase() === char ? 9397 : 9398)))).join(''),
+                'sᴘᴀᴄᴇᴅ': str => str.split('').join(' '),
+                'Strikethrough': str => str.split('').map(c => c + '\u0336').join(''),
+                'Underline': str => str.split('').map(c => c + '\u0332').join('')
+            };
+
+            // Special symbols
+            const symbols = [
+                '★', '☆', '✮', '✯', '❤', '♡', '♫', '♪', '☺', '☻',
+                '✿', '❀', '✾', '❁', '✦', '✧', '♔', '♕', '♚', '♛',
+                '☀', '☁', '☂', '☃', '☮', '☯', '⚡', '☎', '☏', '✈',
+                '♠', '♣', '♥', '♦', '⚜', '⚛', '☢', '☣', '✝', '☪',
+                '✓', '✔', '✗', '✘', '♲', '♻', '⚠', '⚡', '☄', '☼',
+                '↑', '↓', '←', '→', '↔', '↕', '⇄', '⇅', '⇆', '⇇'
+            ];
+
+            // Emoji categories
+            const emojis = {
+                'Smileys': ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😌', '😍', '🥰'],
+                'Animals': ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸'],
+                'Food': ['🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥'],
+                'Activities': ['⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🎱', '🏓', '🏸', '🏒', '🏑', '🥅'],
+                'Travel': ['✈️', '🚗', '🚕', '🚙', '🚌', '🚎', '🏎', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛'],
+                'Objects': ['💡', '📱', '💻', '⌨️', '🖥', '🖨', '🖱', '🖲', '📷', '📸', '📹', '🎥', '📽', '🎞']
+            };
+
+            // Initialize text styles
+            Object.entries(styles).forEach(([name, func]) => {
+                const div = document.createElement('div');
+                div.className = 'style-preview';
+                div.textContent = func('Preview Text');
+                div.onclick = () => {
+                    document.querySelectorAll('.style-preview').forEach(el => el.classList.remove('active'));
+                    div.classList.add('active');
+                    outputText.textContent = func(inputText.value);
+                };
+                stylesList.appendChild(div);
+            });
+
+            // Initialize symbols
+            symbols.forEach(symbol => {
+                const button = document.createElement('button');
+                button.className = 'symbol-btn';
+                button.textContent = symbol;
+                button.onclick = () => {
+                    const start = inputText.selectionStart;
+                    const end = inputText.selectionEnd;
+                    inputText.value = inputText.value.substring(0, start) + symbol + inputText.value.substring(end);
+                    inputText.focus();
+                    inputText.setSelectionRange(start + symbol.length, start + symbol.length);
+                    updateOutput();
+                };
+                symbolGrid.appendChild(button);
+            });
+
+            // Initialize emoji categories
+            Object.entries(emojis).forEach(([category, list]) => {
+                const div = document.createElement('div');
+                div.className = 'emoji-category';
+                div.innerHTML = `
+                    <h6 class="mb-2">${category}</h6>
+                    <div class="emoji-grid">
+                        ${list.map(emoji => `
+                            <button class="emoji-btn" onclick="document.getElementById('inputText').value += '${emoji}'; updateOutput();">
+                                ${emoji}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+                emojiCategories.appendChild(div);
+            });
+
+            // Input event handler
+            function updateOutput() {
+                const activeStyle = document.querySelector('.style-preview.active');
+                if (activeStyle) {
+                    const styleName = activeStyle.textContent.replace('Preview Text', '').trim();
+                    outputText.textContent = styles[Object.keys(styles).find(key => styles[key]('Preview Text') === activeStyle.textContent)](inputText.value);
+                }
+            }
+
+            inputText.addEventListener('input', updateOutput);
+
+            // Copy button handler
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(outputText.textContent).then(() => {
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                    }, 2000);
+                });
+            });
+
+            // Symbol search
+            symbolSearch.addEventListener('input', e => {
+                const query = e.target.value.toLowerCase();
+                Array.from(symbolGrid.children).forEach(btn => {
+                    btn.style.display = btn.textContent.toLowerCase().includes(query) ? '' : 'none';
+                });
+            });
+
+            // Emoji search
+            emojiSearch.addEventListener('input', e => {
+                const query = e.target.value.toLowerCase();
+                Array.from(emojiCategories.children).forEach(category => {
+                    const emojis = category.querySelectorAll('.emoji-btn');
+                    let hasVisible = false;
+                    emojis.forEach(btn => {
+                        const visible = btn.textContent.toLowerCase().includes(query);
+                        btn.style.display = visible ? '' : 'none';
+                        if (visible) hasVisible = true;
+                    });
+                    category.style.display = hasVisible ? '' : 'none';
+                });
+            });
+
+            // Set initial output
+            document.querySelector('.style-preview').click();
+        });
+
+        // Helper function for emoji button clicks (used in template string)
+        function updateOutput() {
+            const event = new Event('input');
+            document.getElementById('inputText').dispatchEvent(event);
+        }
+    </script>
+</body>
+</html> 

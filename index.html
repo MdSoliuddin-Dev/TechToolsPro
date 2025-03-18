@@ -1,0 +1,2226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="author" content="Md Soliuddin">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="description" content="Free online tools for developers and designers. Convert PDFs, compress images, format code, and more. No registration required. Fast, secure, and easy to use.">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#1a1a1a">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="keywords" content="online tools, PDF tools, image tools, code formatter, text tools, developer tools, designer tools, free tools, PDF converter, image compressor, code beautifier, text generator, unit converter, calculator tools, network tools, security tools">
+<meta name="google-play-app" content="app-id=com.techtoolspro.www">
+<meta property="og:site_name" content="TechTools Pro - Online tools for PDF">
+<meta property="og:title" content="TechTools Pro - Free Online Tools for Developers & Designers">
+<meta property="og:description" content="Free online tools for developers and designers. Convert PDFs, compress images, format code, and more. No registration required.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.techtoolspro.com/">
+<meta property="og:image" content="https://www.techtoolspro.com/assets/images/og-image.jpg">
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="https://www.techtoolspro.com/">
+<meta property="twitter:title" content="TechTools Pro - Free Online Tools for Developers & Designers">
+<meta property="twitter:description" content="Free online tools for developers and designers. Convert PDFs, compress images, format code, and more. No registration required.">
+<meta property="twitter:image" content="https://www.techtoolspro.com/assets/images/og-image.jpg">
+<meta name="csrf-param" content="_csrf-techtoolspro">
+<meta name="csrf-token" content="g5wlFG39xes5uiaRMZsJDNIQAe2GtxaSJDm-SoDmTbvs7xNVAMqup13IHuNu4X9YpCdX3bHZZvpRXeswtZAU9Q==">
+<link rel="canonical" href="https://www.techtoolspro.com/">
+<link rel="icon" type="image/png" href="assets/images/favicon.png">
+<link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+
+    <title>TechTools Pro</title>
+    <!-- Font Awesome for icons -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://use.fontawesome.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Google Fonts for Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Three.js is required for Vanta.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js" defer></script>
+    <!-- Vanta.js Birds Effect -->
+    <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.birds.min.js" defer></script>
+    <!-- Smooth Scroll polyfill for Safari and older browsers -->
+    <script src="https://cdn.jsdelivr.net/npm/smoothscroll-polyfill@0.4.4/dist/smoothscroll.min.js" defer></script>
+    <!-- Intersection Observer polyfill for older browsers -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=IntersectionObserver" defer></script>
+    
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Critical CSS for above-the-fold content */
+        :root {
+            --primary: #00ff88;
+            --secondary: #00ccff;
+            --background: #1a1a1a;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+        
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6rem 2rem 2rem;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(45deg, rgba(0, 255, 136, 0.1), rgba(0, 204, 255, 0.1));
+        }
+        
+        .hero-content {
+            max-width: 1200px;
+            text-align: center;
+            z-index: 1;
+        }
+        
+        .hero-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+        
+        /* Add size attributes to prevent layout shift */
+        img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: attr(width) / attr(height);
+        }
+        
+        /* Prevent CLS from font loading */
+        .font-loaded {
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="font-loading">
+    <!-- Header Section -->
+    <header>
+        <nav class="nav-container">
+            <a href="/" class="logo">TechTools Pro</a>
+            <ul class="nav-menu">
+                <li><a href="#">Home</a></li>
+                <li class="dropdown">
+                    <a href="javascript:void(0)" class="dropdown-trigger">Categories <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <div class="dropdown-grid">
+                            <a href="/tools" class="dropdown-item">
+                                <i class="fas fa-th-large"></i>
+                                <span>All Tools</span>
+                            </a>
+                            <a href="/tools/image" class="dropdown-item">
+                                <i class="fas fa-image"></i>
+                                <span>Image Tools</span>
+                            </a>
+                            <a href="/tools/text" class="dropdown-item">
+                                <i class="fas fa-font"></i>
+                                <span>Text Tools</span>
+                            </a>
+                            <a href="/tools/code" class="dropdown-item">
+                                <i class="fas fa-code"></i>
+                                <span>Code Tools</span>
+                            </a>
+                            <a href="/tools/conversion" class="dropdown-item">
+                                <i class="fas fa-exchange-alt"></i>
+                                <span>Conversion Tools</span>
+                            </a>
+                            <a href="/tools/calculator" class="dropdown-item">
+                                <i class="fas fa-calculator"></i>
+                                <span>Calculator Tools</span>
+                            </a>
+                            <a href="/tools/network" class="dropdown-item">
+                                <i class="fas fa-network-wired"></i>
+                                <span>Network Tools</span>
+                            </a>
+                            <a href="/tools/security" class="dropdown-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Security Tools</span>
+                            </a>
+                            <a href="/tools/audio" class="dropdown-item">
+                                <i class="fas fa-volume-up"></i>
+                                <span>Audio Tools</span>
+                            </a>
+                            <a href="/tools/video" class="dropdown-item">
+                                <i class="fas fa-video"></i>
+                                <span>Video Tools</span>
+                            </a>
+                            <a href="/tools/document" class="dropdown-item">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Document Tools</span>
+                            </a>
+                            <a href="/tools/data" class="dropdown-item">
+                                <i class="fas fa-database"></i>
+                                <span>Data Tools</span>
+                            </a>
+                            <a href="/tools/dev" class="dropdown-item">
+                                <i class="fas fa-plug"></i>
+                                <span>API Tools</span>
+                            </a>
+                            <a href="/tools/other" class="dropdown-item">
+                                <i class="fas fa-tools"></i>
+                                <span>Other Tools</span>
+                            </a>
+                        </div>
+                    </div>
+                </li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/contact">Contact</a></li>
+            </ul>
+            <div class="nav-right">
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Search tools...">
+                </div>
+                <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
+                    <span class="menu-icon">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Your Ultimate Tech Tools Platform</h1>
+            <p class="hero-subtitle">Every tool you need to work with PDFs in one place Every tool you need to use PDFs, at your fingertips. All are 100% FREE and easy to use! Merge, split, compress, convert, rotate, unlock and watermark PDFs with just a few clicks.</p>
+            <div class="hero-buttons">
+                <a href="/" class="hero-btn hero-btn-primary" id="explore-tools-btn">Explore Tools</a>
+                <a href="/categories" class="hero-btn hero-btn-secondary" id="view-categories-btn">View Categories</a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-number">100+</div>
+                    <div class="stat-label">Tools Available</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">50K+</div>
+                    <div class="stat-label">Daily Users</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Available</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="main-content">
+    <!-- Portfolio Section -->
+        <section class="portfolio" id="home">
+        <div class="portfolio-grid">
+            <!-- Tool cards will be dynamically generated here -->
+        </div>
+    </section>
+
+        <!-- About Section -->
+        <section class="about-section" id="about">
+            <div class="about-content">
+                <h2>About TechTools Pro</h2>
+                <p>TechTools Pro is your ultimate destination for a comprehensive collection of powerful online tools. We provide a wide range of utilities designed to help developers, designers, and tech enthusiasts work more efficiently.</p>
+                <div class="about-features">
+                    <div class="feature">
+                        <i class="fas fa-rocket"></i>
+                        <h3>Fast & Efficient</h3>
+                        <p>Lightning-fast tools that help you get the job done quickly</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Secure</h3>
+                        <p>Your data is processed locally and never stored on our servers</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-sync"></i>
+                        <h3>Regular Updates</h3>
+                        <p>We constantly add new tools and improve existing ones</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>TechTools Pro</h3>
+                <p>Your ultimate destination for powerful online tools. Making development and design easier, one tool at a time.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Connect With Us</h3>
+                <div class="social-links">
+                    <a href="#" class="social-link"><i class="fab fa-github"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="creator">
+                <span>Made with <i class="fas fa-heart"></i> by</span>
+                <div class="creator-name">MD SOLIUDDIN</div>
+            </div>
+            <p>&copy; 2024 TechTools Pro. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <a href="#" class="back-to-top" aria-label="Scroll back to top of the page">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Performance optimization for mobile devices
+            let isMobile = false;
+            let vantaEffect = null;
+            let resizeTimer;
+            let lastWindowWidth = window.innerWidth;
+            
+            // Store event listeners for potential cleanup
+            const eventListeners = [];
+            
+            // Helper function to add event listeners with tracking for cleanup
+            function addTrackedEventListener(element, event, handler, options) {
+                element.addEventListener(event, handler, options);
+                eventListeners.push({ element, event, handler, options });
+            }
+            
+            // Cleanup function to remove event listeners if needed
+            function cleanupEventListeners() {
+                eventListeners.forEach(({ element, event, handler, options }) => {
+                    element.removeEventListener(event, handler, options);
+                });
+                eventListeners.length = 0;
+            }
+            
+            // Check if device is mobile - more comprehensive detection
+            function checkMobile() {
+                isMobile = window.innerWidth <= 768 || 
+                           /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                return isMobile;
+            }
+            
+            // Initial check
+            checkMobile();
+            
+            // Feature detection for better cross-browser compatibility
+            const supportsPassiveEvents = (function() {
+                let supportsPassive = false;
+                try {
+                    // Test via a getter in the options object to see if the passive property is accessed
+                    const opts = Object.defineProperty({}, 'passive', {
+                        get: function() {
+                            supportsPassive = true;
+                            return true;
+                        }
+                    });
+                    window.addEventListener('testPassive', null, opts);
+                    window.removeEventListener('testPassive', null, opts);
+                } catch (e) {}
+                return supportsPassive;
+            })();
+            
+            // Passive event listener options
+            const passiveOption = supportsPassiveEvents ? { passive: true } : false;
+            
+            // Recheck on resize with debounce for better performance
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    // Only reinitialize if width changed (avoid unnecessary reflows on mobile when scrolling triggers resize)
+                    const currentWidth = window.innerWidth;
+                    if (currentWidth !== lastWindowWidth) {
+                        lastWindowWidth = currentWidth;
+                        const wasMobile = isMobile;
+                        const nowMobile = checkMobile();
+                        
+                        // Only reinitialize Vanta if device type changed
+                        if (wasMobile !== nowMobile) {
+                            safeInitVanta();
+                        }
+                    }
+                    updateReturnButtonPosition();
+                }, 250);
+            }, passiveOption);
+            
+            function checkVantaSupport() {
+                // Enhanced WebGL support detection
+                try {
+                    const canvas = document.createElement('canvas');
+                    return !!(
+                        window.WebGLRenderingContext && 
+                        (canvas.getContext('webgl') || 
+                         canvas.getContext('experimental-webgl') || 
+                         canvas.getContext('webgl2'))
+                    );
+                } catch(e) {
+                    console.log("WebGL not supported, using fallback");
+                    return false;
+                }
+            }
+            
+            function initVanta() {
+                if (vantaEffect) vantaEffect.destroy();
+                
+                // Adjust quality based on device for better performance
+                const quality = isMobile ? 'low' : 'high';
+                const quantity = isMobile ? 1 : 2;
+                const scale = isMobile ? 0.75 : 1.00;
+                const speedLimit = isMobile ? 4.00 : 5.00;
+                const birdSize = isMobile ? 1.20 : 1.50;
+                
+                try {
+                    vantaEffect = VANTA.BIRDS({
+                        el: "#hero",
+                        mouseControls: true,
+                        touchControls: true,
+                        gyroControls: false,
+                        minHeight: 200.00,
+                        minWidth: 200.00,
+                        scale: scale,
+                        scaleMobile: 0.75,
+                        backgroundColor: 0x1a1a1a,
+                        color1: 0x00ff88,
+                        color2: 0x00ccff,
+                        colorMode: "variance",
+                        birdSize: birdSize,
+                        wingSpan: 28.00,
+                        speedLimit: speedLimit,
+                        separation: 35.00,
+                        alignment: 40.00,
+                        cohesion: 30.00,
+                        quantity: quantity,
+                        backgroundAlpha: 0.0 // Transparent background for better layering
+                    });
+                } catch (e) {
+                    console.error("Error initializing Vanta effect:", e);
+                    applyFallbackBackground();
+                }
+            }
+            
+            // Apply fallback background when Vanta fails
+            function applyFallbackBackground() {
+                const heroSection = document.getElementById('hero');
+                if (heroSection) {
+                    heroSection.style.background = 'linear-gradient(45deg, rgba(0, 255, 136, 0.2), rgba(0, 204, 255, 0.2))';
+                    
+                    // Add subtle animation for fallback
+                    const fallbackAnimation = document.createElement('div');
+                    fallbackAnimation.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: radial-gradient(circle at 50% 50%, rgba(0, 255, 136, 0.1) 0%, rgba(0, 204, 255, 0.1) 100%);
+                        opacity: 0.7;
+                        z-index: 0;
+                    `;
+                    heroSection.appendChild(fallbackAnimation);
+                    
+                    // Add subtle pulse animation
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @keyframes pulse {
+                            0% { opacity: 0.5; }
+                            50% { opacity: 0.8; }
+                            100% { opacity: 0.5; }
+                        }
+                        .hero-section::before {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background: radial-gradient(circle at 50% 50%, rgba(0, 255, 136, 0.1) 0%, rgba(0, 204, 255, 0.1) 100%);
+                            animation: pulse 4s infinite ease-in-out;
+                            z-index: 0;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            }
+            
+            // Initialize Vanta only if WebGL is supported
+            function safeInitVanta() {
+                // Don't initialize Vanta on low-end devices or if reduced motion is preferred
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    applyFallbackBackground();
+                    return;
+                }
+                
+                // Check for WebGL support
+                if (checkVantaSupport()) {
+                    // Delay Vanta initialization slightly to ensure DOM is fully ready
+                    setTimeout(() => {
+                        try {
+                            initVanta();
+                        } catch (e) {
+                            console.error("Error initializing Vanta effect:", e);
+                            applyFallbackBackground();
+                        }
+                    }, 100);
+                } else {
+                    applyFallbackBackground();
+                }
+            }
+            
+            // Use the safe initialization when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', safeInitVanta);
+            } else {
+                safeInitVanta();
+            }
+
+            // Optimize for touch devices
+            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                document.body.classList.add('touch-device');
+                
+                // Add touch-specific styles
+                const touchStyles = document.createElement('style');
+                touchStyles.textContent = `
+                    .touch-device .tool-card {
+                        transform: none !important;
+                        transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    }
+                    .touch-device .tool-card:active {
+                        transform: scale(0.98) !important;
+                        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+                    }
+                    .touch-device .tool-card .tool-icon,
+                    .touch-device .tool-card h3,
+                    .touch-device .tool-card p,
+                    .touch-device .tool-card .btn {
+                        transform: none !important;
+                    }
+                    .touch-device .social-link:active {
+                        transform: scale(0.95);
+                        background: var(--primary);
+                    }
+                    .touch-device .feature:active {
+                        transform: scale(0.98);
+                    }
+                    .touch-device .back-to-top:active {
+                        transform: scale(0.95);
+                    }
+                    .touch-device a:active, 
+                    .touch-device button:active {
+                        opacity: 0.8;
+                    }
+                `;
+                document.head.appendChild(touchStyles);
+                
+                // Add touch feedback for better UX
+                document.querySelectorAll('.tool-card, .social-link, .feature, button, a.hero-btn').forEach(element => {
+                    element.addEventListener('touchstart', function() {
+                        this.classList.add('touch-active');
+                    }, passiveOption);
+                    
+                    element.addEventListener('touchend', function() {
+                        this.classList.remove('touch-active');
+                    }, passiveOption);
+                });
+            }
+
+            // Define possible icons for variety
+            const icons = {
+                image: 'fas fa-image',
+                text: 'fas fa-font',
+                code: 'fas fa-code',
+                calculator: 'fas fa-calculator',
+                color: 'fas fa-palette',
+                conversion: 'fas fa-exchange-alt',
+                network: 'fas fa-network-wired',
+                security: 'fas fa-shield-alt',
+                analysis: 'fas fa-chart-bar',
+                time: 'fas fa-clock',
+                file: 'fas fa-file',
+                data: 'fas fa-database',
+                audio: 'fas fa-volume-up',
+                video: 'fas fa-video',
+                document: 'fas fa-file-alt',
+                api: 'fas fa-plug'
+            };
+
+            // Define all tools with their details
+            const tools = [
+                // Image Tools
+                {
+                    icon: icons.image,
+                    title: 'Image Compressor',
+                    description: 'Compress your images while maintaining quality',
+                    link: 'tools/image-compressor.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'Image Cropper',
+                    description: 'Crop and resize your images online',
+                    link: 'tools/image-cropper.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'Image Resizer',
+                    description: 'Resize images to your desired dimensions',
+                    link: 'tools/image-resizer.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'Image to Base64',
+                    description: 'Convert images to Base64 format',
+                    link: 'tools/image-to-base64.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'Image to JPG',
+                    description: 'Convert images to JPG format',
+                    link: 'tools/image-to-jpg.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'Image to PNG',
+                    description: 'Convert images to PNG format',
+                    link: 'tools/image-to-png.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'WebP to PNG',
+                    description: 'Convert WebP images to PNG format',
+                    link: 'tools/webp-to-png.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'GIF Maker',
+                    description: 'Create animated GIFs from images',
+                    link: 'tools/gif-maker.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'Image Effects',
+                    description: 'Apply various effects to your images',
+                    link: 'tools/image-effects.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'Color Picker',
+                    description: 'Pick colors from images or create custom colors',
+                    link: 'tools/color-picker.html',
+                    category: 'image-tools'
+                },
+
+                // Text Tools
+                {
+                    icon: icons.text,
+                    title: 'Text Generator',
+                    description: 'Generate random text for various purposes',
+                    link: 'tools/text-generator.html',
+                    category: 'text-tools'
+                },
+                {
+                    icon: icons.text,
+                    title: 'Text to Speech',
+                    description: 'Convert text to speech',
+                    link: 'tools/text-to-speech.html',
+                    category: 'text-tools'
+                },
+                {
+                    icon: icons.text,
+                    title: 'Word Counter',
+                    description: 'Count words, characters, and sentences',
+                    link: 'tools/word-counter.html',
+                    category: 'text-tools'
+                },
+                {
+                    icon: icons.text,
+                    title: 'Text Analysis',
+                    description: 'Analyze text for various metrics',
+                    link: 'tools/text-analysis-tools.html',
+                    category: 'text-tools'
+                },
+                {
+                    icon: icons.text,
+                    title: 'Text Manipulation',
+                    description: 'Transform and manipulate text',
+                    link: 'tools/text-manipulation.html',
+                    category: 'text-tools'
+                },
+
+                // Code Tools
+                {
+                    icon: icons.code,
+                    title: 'Code Formatter',
+                    description: 'Format and beautify your code',
+                    link: 'tools/code-formatter.html',
+                    category: 'code-tools'
+                },
+                {
+                    icon: icons.code,
+                    title: 'Code Minifier',
+                    description: 'Minify your code for production',
+                    link: 'tools/code-minifier.html',
+                    category: 'code-tools'
+                },
+                {
+                    icon: icons.code,
+                    title: 'HTML to Markdown',
+                    description: 'Convert HTML to Markdown format',
+                    link: 'tools/html-markdown.html',
+                    category: 'code-tools'
+                },
+                {
+                    icon: icons.code,
+                    title: 'Markdown Editor',
+                    description: 'Edit and preview Markdown content',
+                    link: 'tools/markdown-editor.html',
+                    category: 'code-tools'
+                },
+                {
+                    icon: icons.code,
+                    title: 'JSON Tools',
+                    description: 'Format, validate, and transform JSON',
+                    link: 'tools/json-tools.html',
+                    category: 'code-tools'
+                },
+
+                // Conversion Tools
+                {
+                    icon: icons.conversion,
+                    title: 'Unit Converter',
+                    description: 'Convert between different units of measurement',
+                    link: 'tools/unit-converter.html',
+                    category: 'conversion-tools'
+                },
+                {
+                    icon: icons.conversion,
+                    title: 'Length Converter',
+                    description: 'Convert between different length units',
+                    link: 'tools/length-converter.html',
+                    category: 'conversion-tools'
+                },
+                {
+                    icon: icons.conversion,
+                    title: 'File Converter',
+                    description: 'Convert files between different formats',
+                    link: 'tools/file-converter.html',
+                    category: 'conversion-tools'
+                },
+                {
+                    icon: icons.conversion,
+                    title: 'Base64 Tools',
+                    description: 'Encode and decode Base64 strings',
+                    link: 'tools/base64-tools.html',
+                    category: 'conversion-tools'
+                },
+
+                // Calculator Tools
+                {
+                    icon: icons.calculator,
+                    title: 'Calculator Tools',
+                    description: 'Various calculation tools and utilities',
+                    link: 'tools/calculator-tools.html',
+                    category: 'calculator-tools'
+                },
+                {
+                    icon: icons.calculator,
+                    title: 'BMI Calculator',
+                    description: 'Calculate your Body Mass Index',
+                    link: 'tools/bmi-calculator.html',
+                    category: 'calculator-tools'
+                },
+                {
+                    icon: icons.calculator,
+                    title: 'Salary Calculator',
+                    description: 'Calculate salary and related metrics',
+                    link: 'tools/salary-calculator.html',
+                    category: 'calculator-tools'
+                },
+
+                // Network & Security Tools
+                {
+                    icon: icons.network,
+                    title: 'Network Tools',
+                    description: 'Various network utilities and tools',
+                    link: 'tools/network-tools.html',
+                    category: 'network-tools'
+                },
+                {
+                    icon: icons.security,
+                    title: 'Password Generator',
+                    description: 'Generate secure passwords',
+                    link: 'tools/password-generator.html',
+                    category: 'security-tools'
+                },
+                {
+                    icon: icons.security,
+                    title: 'Password Tools',
+                    description: 'Various password-related utilities',
+                    link: 'tools/password-tools.html',
+                    category: 'security-tools'
+                },
+                {
+                    icon: icons.network,
+                    title: 'URL Shortener',
+                    description: 'Shorten long URLs',
+                    link: 'tools/url-shortener.html',
+                    category: 'network-tools'
+                },
+
+                // Other Tools
+                {
+                    icon: icons.time,
+                    title: 'Time Tools',
+                    description: 'Various time-related utilities',
+                    link: 'tools/time-tools.html',
+                    category: 'other-tools'
+                },
+                {
+                    icon: icons.data,
+                    title: 'Data Tools',
+                    description: 'Data manipulation and analysis tools',
+                    link: 'tools/data-tools.html',
+                    category: 'other-tools'
+                },
+                {
+                    icon: icons.file,
+                    title: 'PDF Tools',
+                    description: 'PDF manipulation and conversion tools',
+                    link: 'tools/pdf-tools.html',
+                    category: 'other-tools'
+                },
+                {
+                    icon: icons.network,
+                    title: 'QR Code Generator',
+                    description: 'Generate QR codes from text or URLs',
+                    link: 'tools/qr-code-generator.html',
+                    category: 'network-tools'
+                },
+                {
+                    icon: icons.network,
+                    title: 'Meta Tags Generator',
+                    description: 'Generate meta tags for your website',
+                    link: 'tools/meta-tags-generator.html',
+                    category: 'network-tools'
+                },
+                {
+                    icon: icons.network,
+                    title: 'SEO Tools',
+                    description: 'Various SEO utilities and tools',
+                    link: 'tools/seo-tools.html',
+                    category: 'network-tools'
+                },
+                // Adding 10 more tools
+                {
+                    icon: icons.code,
+                    title: 'CSS Minifier',
+                    description: 'Minify your CSS code for faster loading',
+                    link: 'tools/css-minifier.html',
+                    category: 'code-tools'
+                },
+                {
+                    icon: icons.code,
+                    title: 'JavaScript Minifier',
+                    description: 'Minify your JavaScript code for production',
+                    link: 'tools/js-minifier.html',
+                    category: 'code-tools'
+                },
+                {
+                    icon: icons.code,
+                    title: 'SQL Formatter',
+                    description: 'Format and beautify SQL queries',
+                    link: 'tools/sql-formatter.html',
+                    category: 'code-tools'
+                },
+                {
+                    icon: icons.security,
+                    title: 'Hash Generator',
+                    description: 'Generate MD5, SHA-1, SHA-256 hashes',
+                    link: 'tools/hash-generator.html',
+                    category: 'security-tools'
+                },
+                {
+                    icon: icons.security,
+                    title: 'Encryption Tools',
+                    description: 'Encrypt and decrypt text with various algorithms',
+                    link: 'tools/encryption-tools.html',
+                    category: 'security-tools'
+                },
+                {
+                    icon: icons.calculator,
+                    title: 'Mortgage Calculator',
+                    description: 'Calculate mortgage payments and amortization',
+                    link: 'tools/mortgage-calculator.html',
+                    category: 'calculator-tools'
+                },
+                {
+                    icon: icons.calculator,
+                    title: 'Percentage Calculator',
+                    description: 'Calculate percentages, increases and decreases',
+                    link: 'tools/percentage-calculator.html',
+                    category: 'calculator-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'SVG Editor',
+                    description: 'Create and edit SVG graphics online',
+                    link: 'tools/svg-editor.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.text,
+                    title: 'Regex Tester',
+                    description: 'Test and debug regular expressions',
+                    link: 'tools/regex-tester.html',
+                    category: 'text-tools'
+                },
+                {
+                    icon: icons.conversion,
+                    title: 'CSV to JSON',
+                    description: 'Convert CSV data to JSON format',
+                    link: 'tools/csv-to-json.html',
+                    category: 'conversion-tools'
+                },
+                // Adding more tools
+                {
+                    icon: icons.data,
+                    title: 'JSON to CSV',
+                    description: 'Convert JSON data to CSV format',
+                    link: 'tools/json-to-csv.html',
+                    category: 'conversion-tools'
+                },
+                {
+                    icon: icons.file,
+                    title: 'PDF to Word',
+                    description: 'Convert PDF documents to Word format',
+                    link: 'tools/pdf-to-word.html',
+                    category: 'conversion-tools'
+                },
+                {
+                    icon: icons.file,
+                    title: 'Word to PDF',
+                    description: 'Convert Word documents to PDF format',
+                    link: 'tools/word-to-pdf.html',
+                    category: 'conversion-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'Image Watermark',
+                    description: 'Add watermarks to your images',
+                    link: 'tools/image-watermark.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'Background Remover',
+                    description: 'Remove backgrounds from images automatically',
+                    link: 'tools/background-remover.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.code,
+                    title: 'HTML Validator',
+                    description: 'Validate your HTML code for errors',
+                    link: 'tools/html-validator.html',
+                    category: 'code-tools'
+                },
+                {
+                    icon: icons.code,
+                    title: 'CSS Validator',
+                    description: 'Check your CSS code for errors',
+                    link: 'tools/css-validator.html',
+                    category: 'code-tools'
+                },
+                {
+                    icon: icons.network,
+                    title: 'DNS Lookup',
+                    description: 'Look up DNS records for a domain',
+                    link: 'tools/dns-lookup.html',
+                    category: 'network-tools'
+                },
+                {
+                    icon: icons.network,
+                    title: 'IP Lookup',
+                    description: 'Get information about an IP address',
+                    link: 'tools/ip-lookup.html',
+                    category: 'network-tools'
+                },
+                {
+                    icon: icons.security,
+                    title: 'SSL Checker',
+                    description: 'Check SSL certificate information',
+                    link: 'tools/ssl-checker.html',
+                    category: 'security-tools'
+                },
+                {
+                    icon: icons.time,
+                    title: 'World Clock',
+                    description: 'Check time across different time zones',
+                    link: 'tools/world-clock.html',
+                    category: 'other-tools'
+                },
+                {
+                    icon: icons.calculator,
+                    title: 'Age Calculator',
+                    description: 'Calculate age between two dates',
+                    link: 'tools/age-calculator.html',
+                    category: 'calculator-tools'
+                },
+                {
+                    icon: icons.calculator,
+                    title: 'Discount Calculator',
+                    description: 'Calculate discounts and final prices',
+                    link: 'tools/discount-calculator.html',
+                    category: 'calculator-tools'
+                },
+                {
+                    icon: icons.text,
+                    title: 'Case Converter',
+                    description: 'Convert text between different cases',
+                    link: 'tools/case-converter.html',
+                    category: 'text-tools'
+                },
+
+                // Audio Tools
+                {
+                    icon: icons.audio,
+                    title: 'Audio Converter',
+                    description: 'Convert audio files between different formats',
+                    link: 'tools/audio-converter.html',
+                    category: 'audio-tools'
+                },
+                {
+                    icon: icons.audio,
+                    title: 'Audio Trimmer',
+                    description: 'Cut and trim audio files',
+                    link: 'tools/audio-trimmer.html',
+                    category: 'audio-tools'
+                },
+                {
+                    icon: icons.audio,
+                    title: 'Audio Merger',
+                    description: 'Combine multiple audio files',
+                    link: 'tools/audio-merger.html',
+                    category: 'audio-tools'
+                },
+
+                // Video Tools
+                {
+                    icon: icons.video,
+                    title: 'Video Converter',
+                    description: 'Convert videos to different formats',
+                    link: 'tools/video-converter.html',
+                    category: 'video-tools'
+                },
+                {
+                    icon: icons.video,
+                    title: 'Video Compressor',
+                    description: 'Compress videos while maintaining quality',
+                    link: 'tools/video-compressor.html',
+                    category: 'video-tools'
+                },
+                {
+                    icon: icons.video,
+                    title: 'Video Trimmer',
+                    description: 'Cut and trim video files',
+                    link: 'tools/video-trimmer.html',
+                    category: 'video-tools'
+                },
+
+                // Document Tools
+                {
+                    icon: icons.document,
+                    title: 'Excel to PDF',
+                    description: 'Convert Excel spreadsheets to PDF',
+                    link: 'tools/excel-to-pdf.html',
+                    category: 'document-tools'
+                },
+                {
+                    icon: icons.document,
+                    title: 'PowerPoint to PDF',
+                    description: 'Convert PowerPoint presentations to PDF',
+                    link: 'tools/powerpoint-to-pdf.html',
+                    category: 'document-tools'
+                },
+                {
+                    icon: icons.document,
+                    title: 'EPUB Converter',
+                    description: 'Convert eBooks between formats',
+                    link: 'tools/epub-converter.html',
+                    category: 'document-tools'
+                },
+
+                // Advanced Image Tools
+                {
+                    icon: icons.image,
+                    title: 'AI Image Upscaler',
+                    description: 'Enhance image resolution using AI',
+                    link: 'tools/image-upscaler.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'Batch Image Processor',
+                    description: 'Process multiple images at once',
+                    link: 'tools/batch-image-processor.html',
+                    category: 'image-tools'
+                },
+                {
+                    icon: icons.image,
+                    title: 'Color Correction',
+                    description: 'Adjust image colors and tones',
+                    link: 'tools/color-correction.html',
+                    category: 'image-tools'
+                },
+
+                // API Development Tools
+                {
+                    icon: icons.api,
+                    title: 'API Tester',
+                    description: 'Test and document REST APIs',
+                    link: 'tools/api-tester.html',
+                    category: 'dev-tools'
+                },
+                {
+                    icon: icons.api,
+                    title: 'GraphQL Playground',
+                    description: 'Test and explore GraphQL APIs',
+                    link: 'tools/graphql-playground.html',
+                    category: 'dev-tools'
+                },
+                {
+                    icon: icons.api,
+                    title: 'WebSocket Tester',
+                    description: 'Test WebSocket connections',
+                    link: 'tools/websocket-tester.html',
+                    category: 'dev-tools'
+                },
+
+                // Data Analysis Tools
+                {
+                    icon: icons.data,
+                    title: 'CSV/Excel Viewer',
+                    description: 'View and analyze spreadsheet data',
+                    link: 'tools/spreadsheet-viewer.html',
+                    category: 'data-tools'
+                },
+                {
+                    icon: icons.data,
+                    title: 'JSON Schema Validator',
+                    description: 'Validate JSON against a schema',
+                    link: 'tools/json-schema-validator.html',
+                    category: 'data-tools'
+                },
+                {
+                    icon: icons.data,
+                    title: 'XML Tools',
+                    description: 'Format and validate XML documents',
+                    link: 'tools/xml-tools.html',
+                    category: 'data-tools'
+                },
+                {
+                    icon: icons.data,
+                    title: 'YAML Tools',
+                    description: 'Format and validate YAML files',
+                    link: 'tools/yaml-tools.html',
+                    category: 'data-tools'
+                }
+            ];
+
+            // Populate portfolio grid with tool cards - optimized for performance
+        const portfolioGrid = document.querySelector('.portfolio-grid');
+            const heroSection = document.querySelector('.hero-section');
+            const portfolioSection = document.querySelector('.portfolio');
+            const footerSection = document.querySelector('.footer');
+            const aboutSection = document.querySelector('.about-section');
+            const searchInput = document.getElementById('search-input');
+            
+            // Use DocumentFragment for better performance when adding multiple elements
+            function displayTools(toolsToShow) {
+                // Clear existing content
+                while (portfolioGrid.firstChild) {
+                    portfolioGrid.removeChild(portfolioGrid.firstChild);
+                }
+                
+                // Create a document fragment to batch DOM operations
+                const fragment = document.createDocumentFragment();
+                
+                // Use requestAnimationFrame for smoother rendering
+                requestAnimationFrame(() => {
+                    // Limit initial render to improve performance
+                    const initialBatchSize = 20;
+                    const renderBatch = (startIndex, endIndex) => {
+                        for (let i = startIndex; i < endIndex && i < toolsToShow.length; i++) {
+                            const tool = toolsToShow[i];
+            const card = document.createElement('a');
+            card.className = 'tool-card';
+            card.href = tool.link;
+                            card.setAttribute('data-category', tool.category);
+            card.innerHTML = `
+                <i class="${tool.icon} tool-icon"></i>
+                <h3>${tool.title}</h3>
+                <p>${tool.description}</p>
+                <div class="btn">Try Now</div>
+            `;
+                            
+                            // Add to fragment instead of directly to DOM
+                            fragment.appendChild(card);
+                        }
+                        
+                        // Add batch to DOM
+                        portfolioGrid.appendChild(fragment.cloneNode(true));
+                        
+                        // If there are more items to render, schedule next batch
+                        if (endIndex < toolsToShow.length) {
+                            setTimeout(() => {
+                                requestAnimationFrame(() => {
+                                    renderBatch(endIndex, endIndex + initialBatchSize);
+                                });
+                            }, 10);
+                        } else {
+                            // Apply 3D effects only if device supports hover
+                            if (window.matchMedia('(hover: hover)').matches && !('ontouchstart' in window)) {
+                                applyCardEffects();
+                            }
+                        }
+                    };
+                    
+                    // Start rendering first batch
+                    renderBatch(0, initialBatchSize);
+                });
+            }
+            
+            // Separate function for card effects to improve code organization
+            function applyCardEffects() {
+        document.querySelectorAll('.tool-card').forEach(card => {
+                    card.addEventListener('mousemove', handleCardMouseMove, passiveOption);
+                    card.addEventListener('mouseleave', handleCardMouseLeave, passiveOption);
+                });
+            }
+            
+            // Extracted event handlers for better performance and reusability
+            function handleCardMouseMove(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateY = (x - centerX) / 20;
+                const rotateX = (centerY - y) / 20;
+                
+                // Use transform property for better performance
+                this.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+            }
+            
+            function handleCardMouseLeave() {
+                this.style.transform = 'rotateX(0) rotateY(0) scale(1)';
+            }
+
+            // Initial display of all tools
+            displayTools(tools);
+
+            // Function to reset view to show all tools and all sections
+            function resetView() {
+                // Show all sections
+                heroSection.style.display = 'flex';
+                aboutSection.style.display = 'block';
+                footerSection.style.display = 'block';
+                portfolioSection.style.marginTop = '0';
+                portfolioSection.style.marginBottom = '0';
+                
+                // Hide return button
+                returnButton.style.display = 'none';
+                
+                // Reset search input
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+                
+                // Display all tools
+                displayTools(tools);
+                
+                // Close mobile menu if open
+                if (navMenu && navMenu.classList.contains('active')) {
+                    toggleMobileMenu();
+                }
+                
+                // Close any open dropdowns
+                document.querySelectorAll('.dropdown.active').forEach(dropdown => {
+                    dropdown.classList.remove('active');
+                    const content = dropdown.querySelector('.dropdown-content');
+                    if (content) {
+                        content.style.maxHeight = '0px';
+                    }
+                });
+                
+                // Smooth scroll to top with fallback
+                if ('scrollBehavior' in document.documentElement.style) {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                } else {
+                    smoothScrollTo(0, 500);
+                }
+            }
+
+            // Category filtering with optimized event delegation
+            document.querySelector('.dropdown-content').addEventListener('click', function(e) {
+                // Use event delegation instead of adding listeners to each link
+                if (e.target.tagName === 'A' || e.target.parentElement.tagName === 'A') {
+                    e.preventDefault();
+                    
+                    const link = e.target.tagName === 'A' ? e.target : e.target.parentElement;
+                    const href = link.getAttribute('href');
+                    const category = href.split('/').pop(); // Get the last part of the URL
+                    
+                    console.log('Selected category:', category); // Debug log
+                    
+                    if (category === 'tools') {
+                        resetView();
+                        return;
+                    }
+                    
+                    // Map URL categories to tool categories
+                    const categoryMap = {
+                        'image': 'image-tools',
+                        'text': 'text-tools',
+                        'code': 'code-tools',
+                        'conversion': 'conversion-tools',
+                        'calculator': 'calculator-tools',
+                        'network': 'network-tools',
+                        'security': 'security-tools',
+                        'audio': 'audio-tools',
+                        'video': 'video-tools',
+                        'document': 'document-tools',
+                        'data': 'data-tools',
+                        'dev': 'dev-tools',
+                        'other': 'other-tools'
+                    };
+                    
+                    const toolCategory = categoryMap[category];
+                    console.log('Mapped tool category:', toolCategory); // Debug log
+                    
+                    const filteredTools = tools.filter(tool => tool.category === toolCategory);
+                    console.log('Filtered tools:', filteredTools); // Debug log
+                    
+                    // Hide sections when filtering
+                    heroSection.style.display = 'none';
+                    aboutSection.style.display = 'none';
+                    footerSection.style.display = 'none';
+                    portfolioSection.style.marginTop = '70px';
+                    portfolioSection.style.marginBottom = '50px';
+                    returnButton.style.display = 'block';
+                    
+                    // Display filtered tools
+                    displayTools(filteredTools);
+                    
+                    // Scroll to portfolio section with fallback
+                    const headerOffset = 70;
+                    const portfolioPosition = portfolioSection.getBoundingClientRect().top + window.pageYOffset;
+                    const offsetPosition = portfolioPosition - headerOffset;
+                    
+                    if ('scrollBehavior' in document.documentElement.style) {
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth'
+                        });
+                    } else {
+                        window.scrollTo(0, offsetPosition);
+                    }
+                }
+            });
+
+            // Make logo and Home link restore hero section
+            document.querySelector('.logo').addEventListener('click', function(e) {
+                e.preventDefault();
+                resetView();
+            });
+
+            document.querySelector('.nav-menu a[href="#"]').addEventListener('click', function(e) {
+                e.preventDefault();
+                resetView();
+            });
+
+            // Search functionality with debounce for better performance
+            let searchDebounceTimer;
+            let lastSearchQuery = '';
+            
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(() => {
+                    const query = this.value.toLowerCase().trim();
+                    
+                    // Skip if query hasn't changed
+                    if (query === lastSearchQuery) return;
+                    lastSearchQuery = query;
+                    
+                    // Use more efficient filtering
+                    const filteredTools = query.length > 0 ? 
+                        tools.filter(tool => {
+                            const title = tool.title.toLowerCase();
+                            const description = tool.description.toLowerCase();
+                            const category = tool.category.toLowerCase();
+                            
+                            // Check if query is a direct match first (faster)
+                            if (title === query || category === query) return true;
+                            
+                            // Then check for includes (slower)
+                            return title.includes(query) || 
+                                   description.includes(query) || 
+                                   category.includes(query);
+                        }) : tools;
+
+                    // Show/hide sections based on search
+                    if (query.length > 0) {
+                        heroSection.style.display = 'none';
+                        aboutSection.style.display = 'none';
+                        footerSection.style.display = 'none';
+                        portfolioSection.style.marginTop = '70px';
+                        portfolioSection.style.marginBottom = '50px';
+                        returnButton.style.display = 'block';
+                } else {
+                        heroSection.style.display = 'flex';
+                        aboutSection.style.display = 'block';
+                        footerSection.style.display = 'block';
+                        portfolioSection.style.marginTop = '0';
+                        portfolioSection.style.marginBottom = '0';
+                        returnButton.style.display = 'none';
+                    }
+
+                    // Display filtered tools
+                    displayTools(filteredTools);
+                }, 300); // 300ms debounce
+            });
+
+            // Add mobile dropdown functionality with event delegation
+            document.addEventListener('click', function(e) {
+                // Handle dropdown toggles
+                if (window.innerWidth <= 768 && (e.target.closest('.dropdown') || e.target.parentElement.closest('.dropdown'))) {
+                    const dropdown = e.target.closest('.dropdown') || e.target.parentElement.closest('.dropdown');
+                    
+                    // Close any other open dropdowns
+                    document.querySelectorAll('.dropdown.active').forEach(activeDropdown => {
+                        if (activeDropdown !== dropdown) {
+                            activeDropdown.classList.remove('active');
+                        }
+                    });
+                    
+                    dropdown.classList.toggle('active');
+                    e.preventDefault();
+                } 
+                // Close dropdowns when clicking outside
+                else if (window.innerWidth <= 768 && !e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown.active').forEach(dropdown => {
+                        dropdown.classList.remove('active');
+                    });
+                }
+            }, passiveOption);
+
+            // Smooth scrolling for navigation links with better browser support
+            document.querySelectorAll('a[href^="/"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    // Don't interfere with dropdown functionality on mobile
+                    if (window.innerWidth <= 768 && this.parentNode.classList.contains('dropdown')) {
+                        return;
+                    }
+                    
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '/' || targetId === '/home') {
+                        return; // These are handled separately
+                    }
+                    
+                    const target = document.querySelector(targetId);
+                    if (target) {
+                        e.preventDefault();
+                        
+                        const headerOffset = 70;
+                        const elementPosition = target.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                        if ('scrollBehavior' in document.documentElement.style) {
+                            window.scrollTo({
+                                top: offsetPosition,
+                                behavior: 'smooth'
+                            });
+                        } else {
+                            // Fallback smooth scroll for browsers without native support
+                            smoothScrollTo(offsetPosition, 500);
+                        }
+                    }
+                });
+            });
+            
+            // Polyfill smooth scroll function for older browsers
+            function smoothScrollTo(to, duration) {
+                const start = window.pageYOffset;
+                const change = to - start;
+                const increment = 20;
+                let currentTime = 0;
+                
+                const animateScroll = function() {
+                    currentTime += increment;
+                    const val = easeInOutQuad(currentTime, start, change, duration);
+                    window.scrollTo(0, val);
+                    if (currentTime < duration) {
+                        setTimeout(animateScroll, increment);
+                    }
+                };
+                
+                animateScroll();
+            }
+            
+            // Easing function for smooth scrolling
+            function easeInOutQuad(t, b, c, d) {
+                t /= d / 2;
+                if (t < 1) return c / 2 * t * t + b;
+                t--;
+                return -c / 2 * (t * (t - 2) - 1) + b;
+            }
+
+            // Activate smooth scroll polyfill if available
+            if (typeof smoothscroll !== 'undefined') {
+                smoothscroll.polyfill();
+            }
+
+            // Back to Top Button Functionality with optimized event handling
+            const backToTopButton = document.querySelector('.back-to-top');
+            
+            // Fix for iOS Safari where fixed positioning can be problematic
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+                backToTopButton.style.position = 'absolute';
+                
+                // Update position on scroll for iOS
+                window.addEventListener('scroll', () => {
+                    requestAnimationFrame(() => {
+                        backToTopButton.style.top = (window.pageYOffset + window.innerHeight - 80) + 'px';
+                    });
+                }, passiveOption);
+            }
+            
+            // Function to check if user has reached the end of the homepage
+            function isNearPageEnd() {
+                const windowHeight = window.innerHeight;
+                const documentHeight = document.documentElement.scrollHeight;
+                const scrollPosition = window.scrollY + windowHeight;
+                const footerPosition = footerSection.offsetTop;
+                
+                // Show button when user is near the footer or has scrolled significantly
+                return scrollPosition >= footerPosition - 100 || window.pageYOffset > 300 || (documentHeight - scrollPosition) < 200;
+            }
+            
+            // Use Intersection Observer for better performance than scroll event
+            if ('IntersectionObserver' in window) {
+                try {
+                    const observerOptions = {
+                        root: null,
+                        rootMargin: '0px',
+                        threshold: 0.1
+                    };
+                    
+                    // Create observer for the footer
+                    const footerObserver = new IntersectionObserver((entries) => {
+                        // If footer is intersecting viewport or user has scrolled down significantly
+                        backToTopButton.classList.toggle('visible', isNearPageEnd());
+                    }, observerOptions);
+                    
+                    // Observe footer
+                    footerObserver.observe(footerSection);
+                    
+                    // Also check on scroll for more responsive behavior
+                    let scrollTicking = false;
+                    window.addEventListener('scroll', () => {
+                        if (!scrollTicking) {
+                            requestAnimationFrame(() => {
+                                backToTopButton.classList.toggle('visible', isNearPageEnd());
+                                scrollTicking = false;
+                            });
+                            scrollTicking = true;
+                        }
+                    }, passiveOption);
+                } catch (error) {
+                    console.log("Intersection Observer error, using fallback:", error);
+                    // Fallback to scroll event
+                    let scrollThrottleTimer;
+                    window.addEventListener('scroll', () => {
+                        if (!scrollThrottleTimer) {
+                            scrollThrottleTimer = setTimeout(() => {
+                                scrollThrottleTimer = null;
+                                backToTopButton.classList.toggle('visible', isNearPageEnd());
+                            }, 100);
+                        }
+                    }, passiveOption);
+                }
+            } else {
+                // Fallback to scroll event with throttling for older browsers
+                let scrollThrottleTimer;
+                window.addEventListener('scroll', () => {
+                    if (!scrollThrottleTimer) {
+                        scrollThrottleTimer = setTimeout(() => {
+                            scrollThrottleTimer = null;
+                            
+                            // Show button when user is near the end or has scrolled significantly
+                            backToTopButton.classList.toggle('visible', isNearPageEnd());
+                        }, 100);
+                    }
+                }, passiveOption);
+            }
+            
+            // Smooth scroll to top when button is clicked and restore hero section
+            backToTopButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // If we're in a filtered view (hero section is hidden), restore the full view
+                if (heroSection.style.display === 'none') {
+                    resetView();
+                } else {
+                    // Otherwise just scroll to top
+                    if ('scrollBehavior' in document.documentElement.style) {
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    } else {
+                        smoothScrollTo(0, 500);
+                    }
+                }
+            });
+            
+            // Add a "Return to Home" button that appears when hero section is hidden
+            const returnButton = document.createElement('button');
+            returnButton.className = 'return-home-btn';
+            returnButton.innerHTML = '<i class="fas fa-home"></i> Return to Home';
+            returnButton.setAttribute('aria-label', 'Return to Home');
+            document.body.appendChild(returnButton);
+            
+            // Function to update button position based on screen size
+            function updateReturnButtonPosition() {
+                if (window.innerWidth <= 768) {
+                    // For mobile devices
+                    const navHeight = document.querySelector('.nav-container').offsetHeight;
+                    if (navHeight > 80) {
+                        // If nav is expanded (on very small screens)
+                        returnButton.style.top = (navHeight + 10) + 'px';
+                    } else {
+                        returnButton.style.top = '80px';
+                    }
+                } else {
+                    // For desktops
+                    returnButton.style.top = '20px';
+                }
+            }
+            
+            // Initial position setup
+            updateReturnButtonPosition();
+            
+            // Add touch events for mobile with better touch handling
+            returnButton.addEventListener('touchstart', () => {
+                returnButton.style.transform = 'translateX(-50%) scale(0.95)';
+            }, passiveOption);
+            
+            returnButton.addEventListener('touchend', (e) => {
+                e.preventDefault(); // Prevent default to avoid double-firing with click
+                returnButton.style.transform = 'translateX(-50%)';
+                resetView();
+            });
+            
+            returnButton.addEventListener('click', () => {
+                resetView();
+            });
+
+            // Handle footer links with event delegation for better performance
+            document.querySelector('.footer').addEventListener('click', (e) => {
+                const link = e.target.closest('a');
+                if (!link) return;
+                
+                const href = link.getAttribute('href');
+                if (!href || !href.startsWith('/')) return;
+                
+                const targetId = href.substring(1);
+                
+                // If it's a category link, simulate category filtering
+                if (['image-tools', 'text-tools', 'code-tools', 'conversion-tools', 
+                     'calculator-tools', 'network-tools', 'security-tools', 'other-tools'].includes(targetId)) {
+                    e.preventDefault();
+                    
+                    const filteredTools = tools.filter(tool => tool.category === targetId);
+                    
+                    // Hide sections
+                    heroSection.style.display = 'none';
+                    aboutSection.style.display = 'none';
+                    footerSection.style.display = 'none';
+                    portfolioSection.style.marginTop = '70px';
+                    portfolioSection.style.marginBottom = '50px';
+                    returnButton.style.display = 'block';
+                    
+                    // Display filtered tools
+                    displayTools(filteredTools);
+                    
+                    // Scroll to portfolio section
+                    if ('scrollBehavior' in document.documentElement.style) {
+                        window.scrollTo({
+                            top: portfolioSection.offsetTop - 70,
+                            behavior: 'smooth'
+                        });
+                    } else {
+                        window.scrollTo(0, portfolioSection.offsetTop - 70);
+                    }
+                }
+            });
+
+            // Handle About link click to ensure proper display
+            document.querySelector('a[href="/about"]').addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Make sure all sections are visible
+                heroSection.style.display = 'flex';
+                aboutSection.style.display = 'block';
+                footerSection.style.display = 'block';
+                portfolioSection.style.marginTop = '0';
+                portfolioSection.style.marginBottom = '0';
+                returnButton.style.display = 'none';
+                
+                // Scroll to about section
+                const headerOffset = 70;
+                const aboutPosition = aboutSection.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = aboutPosition - headerOffset;
+                
+                if ('scrollBehavior' in document.documentElement.style) {
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                } else {
+                    smoothScrollTo(offsetPosition, 500);
+                }
+            });
+            
+            // Make Explore Tools button functional
+            document.getElementById('explore-tools-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Make sure all sections are visible
+                heroSection.style.display = 'flex';
+                aboutSection.style.display = 'block';
+                footerSection.style.display = 'block';
+                portfolioSection.style.marginTop = '0';
+                portfolioSection.style.marginBottom = '0';
+                returnButton.style.display = 'none';
+                
+                // Scroll to tools section
+                const headerOffset = 70;
+                const portfolioPosition = portfolioSection.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = portfolioPosition - headerOffset;
+                
+                if ('scrollBehavior' in document.documentElement.style) {
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                } else {
+                    smoothScrollTo(offsetPosition, 500);
+                }
+            });
+            
+            // Make View Categories button functional
+            document.getElementById('view-categories-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Create and show categories modal
+                const categoriesModal = document.createElement('div');
+                categoriesModal.className = 'categories-modal';
+                categoriesModal.innerHTML = `
+                    <div class="categories-modal-content">
+                        <div class="categories-modal-header">
+                            <h2>Browse Categories</h2>
+                            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="categories-grid">
+                            <a href="/tools" class="category-item">
+                                <i class="fas fa-th-large"></i>
+                                <span>All Tools</span>
+                            </a>
+                            <a href="/tools/image" class="category-item">
+                                <i class="fas fa-image"></i>
+                                <span>Image Tools</span>
+                            </a>
+                            <a href="/tools/text" class="category-item">
+                                <i class="fas fa-font"></i>
+                                <span>Text Tools</span>
+                            </a>
+                            <a href="/tools/code" class="category-item">
+                                <i class="fas fa-code"></i>
+                                <span>Code Tools</span>
+                            </a>
+                            <a href="/tools/conversion" class="category-item">
+                                <i class="fas fa-exchange-alt"></i>
+                                <span>Conversion Tools</span>
+                            </a>
+                            <a href="/tools/calculator" class="category-item">
+                                <i class="fas fa-calculator"></i>
+                                <span>Calculator Tools</span>
+                            </a>
+                            <a href="/tools/network" class="category-item">
+                                <i class="fas fa-network-wired"></i>
+                                <span>Network Tools</span>
+                            </a>
+                            <a href="/tools/security" class="category-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Security Tools</span>
+                            </a>
+                            <a href="/tools/audio" class="category-item">
+                                <i class="fas fa-volume-up"></i>
+                                <span>Audio Tools</span>
+                            </a>
+                            <a href="/tools/video" class="category-item">
+                                <i class="fas fa-video"></i>
+                                <span>Video Tools</span>
+                            </a>
+                            <a href="/tools/document" class="category-item">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Document Tools</span>
+                            </a>
+                            <a href="/tools/data" class="category-item">
+                                <i class="fas fa-database"></i>
+                                <span>Data Tools</span>
+                            </a>
+                            <a href="/tools/dev" class="category-item">
+                                <i class="fas fa-plug"></i>
+                                <span>API Tools</span>
+                            </a>
+                            <a href="/tools/other" class="category-item">
+                                <i class="fas fa-tools"></i>
+                                <span>Other Tools</span>
+                            </a>
+                        </div>
+                    </div>
+                `;
+                
+                // Add modal styles
+                const modalStyles = document.createElement('style');
+                modalStyles.textContent = `
+                    .categories-modal {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.8);
+                        backdrop-filter: blur(5px);
+                        -webkit-backdrop-filter: blur(5px);
+                        z-index: 2000;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        opacity: 0;
+                        transition: opacity 0.3s ease;
+                    }
+                    
+                    .categories-modal.active {
+                        opacity: 1;
+                    }
+                    
+                    .categories-modal-content {
+                        background: rgba(26, 26, 26, 0.95);
+                        border-radius: 15px;
+                        width: 90%;
+                        max-width: 800px;
+                        max-height: 90vh;
+                        overflow-y: auto;
+                        padding: 2rem;
+                        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+                        transform: translateY(20px);
+                        transition: transform 0.3s ease;
+                    }
+                    
+                    .categories-modal.active .categories-modal-content {
+                        transform: translateY(0);
+                    }
+                    
+                    .categories-modal-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 1.5rem;
+                        padding-bottom: 1rem;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    }
+                    
+                    .categories-modal-header h2 {
+                        font-size: 1.8rem;
+                        background: linear-gradient(45deg, var(--primary), var(--secondary));
+                        -webkit-background-clip: text;
+                        background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                        color: transparent;
+                        margin: 0;
+                    }
+                    
+                    .close-modal-btn {
+                        background: rgba(255, 255, 255, 0.1);
+                        border: none;
+                        color: white;
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .close-modal-btn:hover {
+                        background: rgba(255, 255, 255, 0.2);
+                        transform: rotate(90deg);
+                    }
+                    
+                    .categories-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                        gap: 1.5rem;
+                    }
+                    
+                    .category-item {
+                        background: rgba(255, 255, 255, 0.1);
+                        border-radius: 10px;
+                        padding: 1.5rem;
+                        text-align: center;
+                        color: white;
+                        text-decoration: none;
+                        transition: all 0.3s ease;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 1rem;
+                    }
+                    
+                    .category-item i {
+                        font-size: 2.5rem;
+                        color: var(--primary);
+                    }
+                    
+                    .category-item span {
+                        font-weight: 600;
+                    }
+                    
+                    .category-item:hover {
+                        background: rgba(255, 255, 255, 0.2);
+                        transform: translateY(-5px);
+                        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+                    }
+                    
+                    @media (max-width: 768px) {
+                        .categories-grid {
+                            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                        }
+                        
+                        .categories-modal-content {
+                            padding: 1.5rem;
+                        }
+                    }
+                    
+                    @media (max-width: 480px) {
+                        .categories-grid {
+                            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                        }
+                        
+                        .category-item {
+                            padding: 1rem;
+                        }
+                        
+                        .category-item i {
+                            font-size: 2rem;
+                        }
+                    }
+                `;
+                
+                document.head.appendChild(modalStyles);
+                document.body.appendChild(categoriesModal);
+                
+                // Animate modal in
+                setTimeout(() => {
+                    categoriesModal.classList.add('active');
+                }, 10);
+                
+                // Handle category selection in modal
+                categoriesModal.querySelectorAll('.category-item').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        const href = this.getAttribute('href');
+                        const category = href.split('/').pop(); // Get the last part of the URL
+                        
+                        // Close modal
+                        categoriesModal.classList.remove('active');
+                        setTimeout(() => {
+                            if (document.body.contains(categoriesModal)) {
+                                document.body.removeChild(categoriesModal);
+                            }
+                        }, 300);
+                        
+                        // Handle category selection
+                        if (category === 'tools') {
+                            resetView();
+                            return;
+                        }
+                        
+                        // Map URL categories to tool categories
+                        const categoryMap = {
+                            'image': 'image-tools',
+                            'text': 'text-tools',
+                            'code': 'code-tools',
+                            'conversion': 'conversion-tools',
+                            'calculator': 'calculator-tools',
+                            'network': 'network-tools',
+                            'security': 'security-tools',
+                            'audio': 'audio-tools',
+                            'video': 'video-tools',
+                            'document': 'document-tools',
+                            'data': 'data-tools',
+                            'dev': 'dev-tools',
+                            'other': 'other-tools'
+                        };
+                        
+                        const toolCategory = categoryMap[category];
+                        
+                        // Hide sections when filtering
+                        heroSection.style.display = 'none';
+                        aboutSection.style.display = 'none';
+                        footerSection.style.display = 'none';
+                        portfolioSection.style.marginTop = '70px';
+                        portfolioSection.style.marginBottom = '50px';
+                        returnButton.style.display = 'block';
+                        
+                        // Display filtered tools
+                        const filteredTools = tools.filter(tool => tool.category === toolCategory);
+                        displayTools(filteredTools);
+                        
+                        // Scroll to portfolio section
+                        const headerOffset = 70;
+                        const portfolioPosition = portfolioSection.getBoundingClientRect().top + window.pageYOffset;
+                        const offsetPosition = portfolioPosition - headerOffset;
+                        
+                        if ('scrollBehavior' in document.documentElement.style) {
+                            window.scrollTo({
+                                top: offsetPosition,
+                                behavior: 'smooth'
+                            });
+                        } else {
+                            window.scrollTo(0, offsetPosition);
+                        }
+                    });
+                });
+                
+                // Close modal when clicking close button or outside
+                categoriesModal.addEventListener('click', function(e) {
+                    if (e.target === categoriesModal || e.target.closest('.close-modal-btn')) {
+                        categoriesModal.classList.remove('active');
+                        setTimeout(() => {
+                            if (document.body.contains(categoriesModal)) {
+                                document.body.removeChild(categoriesModal);
+                            }
+                        }, 300);
+                    }
+                });
+            });
+
+            // Mobile menu toggle functionality
+            const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+            const body = document.body;
+            
+            // Function to toggle mobile menu
+            function toggleMobileMenu() {
+                mobileMenuToggle.classList.toggle('active');
+                navMenu.classList.toggle('active');
+                
+                // Toggle body scroll
+                if (navMenu.classList.contains('active')) {
+                    body.style.overflow = 'hidden';
+                    // Close any open dropdowns when opening menu
+                    document.querySelectorAll('.dropdown.active').forEach(dropdown => {
+                        dropdown.classList.remove('active');
+                        const content = dropdown.querySelector('.dropdown-content');
+                        if (content) content.style.maxHeight = '0px';
+                    });
+                } else {
+                    body.style.overflow = '';
+                }
+            }
+            
+            // Add click event to mobile menu toggle with stopPropagation
+            mobileMenuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleMobileMenu();
+            });
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!navMenu.contains(e.target) && 
+                    !mobileMenuToggle.contains(e.target) && 
+                    navMenu.classList.contains('active')) {
+                    toggleMobileMenu();
+                }
+            });
+            
+            // Handle dropdowns in mobile menu
+            const dropdowns = document.querySelectorAll('.dropdown');
+            dropdowns.forEach(dropdown => {
+                const trigger = dropdown.querySelector('.dropdown-trigger');
+                const content = dropdown.querySelector('.dropdown-content');
+                
+                trigger.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 768) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Close other dropdowns
+                        dropdowns.forEach(otherDropdown => {
+                            if (otherDropdown !== dropdown && otherDropdown.classList.contains('active')) {
+                                otherDropdown.classList.remove('active');
+                                const otherContent = otherDropdown.querySelector('.dropdown-content');
+                                if (otherContent) otherContent.style.maxHeight = '0px';
+                            }
+                        });
+                        
+                        // Toggle current dropdown
+                        dropdown.classList.toggle('active');
+                        
+                        // Animate dropdown content height
+                        if (dropdown.classList.contains('active')) {
+                            content.style.maxHeight = content.scrollHeight + 'px';
+                        } else {
+                            content.style.maxHeight = '0px';
+                        }
+                    }
+                });
+            });
+            
+            // Close mobile menu when clicking a link
+            navMenu.querySelectorAll('a:not(.dropdown-trigger)').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 768 && navMenu.classList.contains('active')) {
+                        toggleMobileMenu();
+                    }
+                });
+            });
+            
+            // Handle window resize
+            let mobileMenuResizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(mobileMenuResizeTimer);
+                mobileMenuResizeTimer = setTimeout(() => {
+                    if (window.innerWidth > 768) {
+                        // Reset mobile menu state
+                        mobileMenuToggle.classList.remove('active');
+                        navMenu.classList.remove('active');
+                        body.style.overflow = '';
+                        
+                        // Reset dropdowns
+                        dropdowns.forEach(dropdown => {
+                            dropdown.classList.remove('active');
+                            const content = dropdown.querySelector('.dropdown-content');
+                            if (content) content.style.maxHeight = '';
+                        });
+                    }
+                }, 250);
+            });
+        });
+    </script>
+
+    <!-- Add font loading script -->
+    <script>
+        // Font loading optimization
+        if ("fonts" in document) {
+            Promise.all([
+                document.fonts.load("400 1em Poppins"),
+                document.fonts.load("600 1em Poppins"),
+                document.fonts.load("700 1em Poppins")
+            ]).then(() => {
+                document.body.classList.remove("font-loading");
+                document.body.classList.add("font-loaded");
+            });
+        } else {
+            document.body.classList.add("font-loaded");
+        }
+        
+        // Optimize image loading
+        document.addEventListener("DOMContentLoaded", function() {
+            const images = document.querySelectorAll("img[loading='lazy']");
+            if ("loading" in HTMLImageElement.prototype) {
+                images.forEach(img => {
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                    }
+                });
+            } else {
+                // Fallback for browsers that don't support lazy loading
+                const script = document.createElement("script");
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js";
+                document.body.appendChild(script);
+            }
+        });
+    </script>
+</body>
+</html>

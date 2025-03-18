@@ -1,0 +1,143 @@
+<footer class="site-footer">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="footer-section">
+                    <img src="../assets/images/logo.svg" alt="Multi-Tools Logo" class="site-logo mb-4" style="filter: brightness(0) invert(1);">
+                    <p class="mb-4">Your one-stop destination for 100+ free online tools. Image converters, calculators, SEO tools, and more. Built with ❤️ for developers and creators.</p>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-2 col-md-6">
+                <div class="footer-section">
+                    <h5 class="mb-4">Quick Links</h5>
+                    <ul class="list-unstyled footer-links">
+                        <li><a href="/"><i class="fas fa-chevron-right me-2"></i>Home</a></li>
+                        <li><a href="#about"><i class="fas fa-chevron-right me-2"></i>About</a></li>
+                        <li><a href="#contact"><i class="fas fa-chevron-right me-2"></i>Contact</a></li>
+                        <li><a href="#blog"><i class="fas fa-chevron-right me-2"></i>Blog</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-6">
+                <div class="footer-section">
+                    <h5 class="mb-4">Categories</h5>
+                    <ul class="list-unstyled footer-links">
+                        <li><a href="#image"><i class="fas fa-chevron-right me-2"></i>Image Tools</a></li>
+                        <li><a href="#seo"><i class="fas fa-chevron-right me-2"></i>SEO Tools</a></li>
+                        <li><a href="#dev"><i class="fas fa-chevron-right me-2"></i>Developer Tools</a></li>
+                        <li><a href="#calculators"><i class="fas fa-chevron-right me-2"></i>Calculators</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="footer-section">
+                    <h5 class="mb-4">Newsletter</h5>
+                    <p class="mb-4">Subscribe to our newsletter for updates and new tools.</p>
+                    <form class="newsletter-form">
+                        <div class="input-group">
+                            <input type="email" class="form-control" placeholder="Enter your email" aria-label="Email for newsletter">
+                            <button class="btn btn-primary" type="submit">Subscribe</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <hr class="mt-4 mb-4 border-light opacity-10">
+
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="mb-3 mb-md-0">&copy; 2024 Multi-Tools. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <ul class="list-inline mb-0">
+                    <li class="list-inline-item"><a href="#privacy">Privacy Policy</a></li>
+                    <li class="list-inline-item">•</li>
+                    <li class="list-inline-item"><a href="#terms">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+.footer-section {
+    margin-bottom: 2rem;
+}
+
+.footer-links li {
+    margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+    display: inline-block;
+    transition: all var(--transition-speed);
+}
+
+.footer-links a i {
+    font-size: 0.75rem;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all var(--transition-speed);
+}
+
+.footer-links a:hover i {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.newsletter-form .input-group {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    padding: 0.25rem;
+}
+
+.newsletter-form .form-control {
+    background: transparent;
+    border: none;
+    color: white;
+    padding-left: 1.5rem;
+}
+
+.newsletter-form .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.newsletter-form .form-control:focus {
+    box-shadow: none;
+}
+
+.newsletter-form .btn {
+    border-radius: 50px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+.list-inline-item:not(:last-child) {
+    margin-right: 1.5rem;
+}
+
+@media (max-width: 767.98px) {
+    .footer-section {
+        text-align: center;
+    }
+
+    .social-links {
+        justify-content: center;
+    }
+
+    .footer-links a i {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+</style> 

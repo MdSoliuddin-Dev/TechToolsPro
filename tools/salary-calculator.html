@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7th CPC Salary Calculator - Multi-Tools</title>
+    <meta name="description" content="7th CPC Salary Calculator with basic pay, allowances, and deductions calculation.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .result-card {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: var(--text-secondary);
+        }
+
+        .result-value {
+            font-weight: bold;
+        }
+
+        .total-row {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+            border-top: 2px solid var(--primary);
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+        }
+
+        .pay-matrix-table {
+            font-size: 0.875rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .pay-matrix-table th {
+            position: sticky;
+            top: 0;
+            background: var(--background-color);
+            z-index: 1;
+        }
+
+        .info-tooltip {
+            cursor: help;
+            color: var(--primary);
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            .print-only {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-calculator me-2"></i>
+                            7th CPC Salary Calculator
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Calculator Form -->
+                        <form id="salaryForm" class="mb-4">
+                            <!-- Basic Details -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h5 class="mb-3">Basic Details</h5>
+                                    <div class="mb-3">
+                                        <label class="form-label">Pay Level</label>
+                                        <select class="form-select" id="payLevel" required>
+                                            <option value="">Select Pay Level</option>
+                                            <option value="1">Level 1</option>
+                                            <option value="2">Level 2</option>
+                                            <option value="3">Level 3</option>
+                                            <option value="4">Level 4</option>
+                                            <option value="5">Level 5</option>
+                                            <option value="6">Level 6</option>
+                                            <option value="7">Level 7</option>
+                                            <option value="8">Level 8</option>
+                                            <option value="9">Level 9</option>
+                                            <option value="10">Level 10</option>
+                                            <option value="11">Level 11</option>
+                                            <option value="12">Level 12</option>
+                                            <option value="13">Level 13</option>
+                                            <option value="14">Level 14</option>
+                                            <option value="15">Level 15</option>
+                                            <option value="16">Level 16</option>
+                                            <option value="17">Level 17</option>
+                                            <option value="18">Level 18</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Pay Cell</label>
+                                        <select class="form-select" id="payCell" required>
+                                            <option value="">Select Pay Cell</option>
+                                            <!-- Cells will be populated based on Pay Level -->
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">City Category</label>
+                                        <select class="form-select" id="cityCategory" required>
+                                            <option value="X">X (Metro Cities)</option>
+                                            <option value="Y">Y (Large Cities)</option>
+                                            <option value="Z">Z (Other Cities)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5 class="mb-3">Allowances & Deductions</h5>
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            Transport Allowance
+                                            <i class="fas fa-info-circle info-tooltip" title="Based on city category"></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₹</span>
+                                            <input type="number" class="form-control" id="transportAllowance" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            House Rent Allowance (HRA)
+                                            <i class="fas fa-info-circle info-tooltip" title="Based on city category"></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₹</span>
+                                            <input type="number" class="form-control" id="hraAmount" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            Dearness Allowance (DA)
+                                            <i class="fas fa-info-circle info-tooltip" title="Current DA rate"></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="daPercentage" value="42" required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Allowances -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="mb-3">Additional Allowances</h5>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">Children Education Allowance</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control" id="childrenEducation" value="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">Special Duty Allowance</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control" id="specialDuty" value="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">Other Allowances</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control" id="otherAllowances" value="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Deductions -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="mb-3">Deductions</h5>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    NPS Contribution
+                                                    <i class="fas fa-info-circle info-tooltip" title="10% of (Basic Pay + DA)"></i>
+                                                </label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control" id="npsContribution" readonly>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label class="form-label">Income Tax</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control" id="incomeTax" value="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label class="form-label">Professional Tax</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control" id="professionalTax" value="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label class="form-label">Other Deductions</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control" id="otherDeductions" value="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Calculate Button -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-calculator me-2"></i>Calculate Salary
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Salary Breakdown -->
+                        <div id="salaryBreakdown" class="d-none">
+                            <h5 class="mb-3">Salary Breakdown</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="result-card">
+                                        <h6 class="mb-3">Earnings</h6>
+                                        <div class="result-row">
+                                            <span class="result-label">Basic Pay</span>
+                                            <span class="result-value" id="basicPayResult">₹0</span>
+                                        </div>
+                                        <div class="result-row">
+                                            <span class="result-label">Dearness Allowance</span>
+                                            <span class="result-value" id="daResult">₹0</span>
+                                        </div>
+                                        <div class="result-row">
+                                            <span class="result-label">House Rent Allowance</span>
+                                            <span class="result-value" id="hraResult">₹0</span>
+                                        </div>
+                                        <div class="result-row">
+                                            <span class="result-label">Transport Allowance</span>
+                                            <span class="result-value" id="taResult">₹0</span>
+                                        </div>
+                                        <div class="result-row">
+                                            <span class="result-label">Other Allowances</span>
+                                            <span class="result-value" id="otherAllowancesResult">₹0</span>
+                                        </div>
+                                        <div class="result-row total-row">
+                                            <span class="result-label">Total Earnings</span>
+                                            <span class="result-value" id="totalEarnings">₹0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="result-card">
+                                        <h6 class="mb-3">Deductions</h6>
+                                        <div class="result-row">
+                                            <span class="result-label">NPS Contribution</span>
+                                            <span class="result-value" id="npsResult">₹0</span>
+                                        </div>
+                                        <div class="result-row">
+                                            <span class="result-label">Income Tax</span>
+                                            <span class="result-value" id="incomeTaxResult">₹0</span>
+                                        </div>
+                                        <div class="result-row">
+                                            <span class="result-label">Professional Tax</span>
+                                            <span class="result-value" id="professionalTaxResult">₹0</span>
+                                        </div>
+                                        <div class="result-row">
+                                            <span class="result-label">Other Deductions</span>
+                                            <span class="result-value" id="otherDeductionsResult">₹0</span>
+                                        </div>
+                                        <div class="result-row total-row">
+                                            <span class="result-label">Total Deductions</span>
+                                            <span class="result-value" id="totalDeductions">₹0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Net Salary -->
+                            <div class="result-card mt-3">
+                                <div class="result-row total-row">
+                                    <span class="result-label">Net Salary</span>
+                                    <span class="result-value" id="netSalary">₹0</span>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <button class="btn btn-outline-primary w-100 mb-2" onclick="printSalarySlip()">
+                                        <i class="fas fa-print me-2"></i>Print Salary Slip
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <button class="btn btn-outline-secondary w-100 mb-2" onclick="downloadPDF()">
+                                        <i class="fas fa-download me-2"></i>Download PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4 no-print">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4 no-print">
+                    <div class="card-body">
+                        <h2 class="h5">About 7th CPC Salary Calculator</h2>
+                        <p>Calculate your salary as per the 7th Central Pay Commission recommendations with detailed breakup of allowances and deductions.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Accurate calculations based on official 7th CPC pay matrix</li>
+                            <li>Automatic computation of HRA based on city category</li>
+                            <li>Support for all pay levels and cells</li>
+                            <li>Detailed salary breakdown</li>
+                            <li>Print and download options</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All calculations are performed locally in your browser for privacy.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        // Pay Matrix Data (Sample - Add complete data as needed)
+        const payMatrix = {
+            1: { cells: Array.from({length: 40}, (_, i) => 18000 + i * 500) },
+            2: { cells: Array.from({length: 40}, (_, i) => 19900 + i * 600) },
+            3: { cells: Array.from({length: 40}, (_, i) => 21700 + i * 700) },
+            // Add more levels...
+        };
+
+        // HRA Rates
+        const hraRates = {
+            'X': 0.24, // 24% for X category cities
+            'Y': 0.16, // 16% for Y category cities
+            'Z': 0.08  // 8% for Z category cities
+        };
+
+        // Transport Allowance Rates
+        const taRates = {
+            'X': 7200,
+            'Y': 3600,
+            'Z': 1800
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Pay Level Change Handler
+            document.getElementById('payLevel').addEventListener('change', updatePayCells);
+
+            // Initialize Form Submit Handler
+            document.getElementById('salaryForm').addEventListener('submit', calculateSalary);
+
+            // Initialize City Category Change Handler
+            document.getElementById('cityCategory').addEventListener('change', updateAllowances);
+
+            // Initialize Tooltips
+            const tooltips = document.querySelectorAll('.info-tooltip');
+            tooltips.forEach(tooltip => {
+                new bootstrap.Tooltip(tooltip);
+            });
+        });
+
+        function updatePayCells() {
+            const level = document.getElementById('payLevel').value;
+            const cellSelect = document.getElementById('payCell');
+            cellSelect.innerHTML = '<option value="">Select Pay Cell</option>';
+
+            if (level && payMatrix[level]) {
+                payMatrix[level].cells.forEach((pay, index) => {
+                    const option = document.createElement('option');
+                    option.value = index + 1;
+                    option.textContent = `Cell ${index + 1} (₹${pay})`;
+                    cellSelect.appendChild(option);
+                });
+            }
+        }
+
+        function updateAllowances() {
+            const level = document.getElementById('payLevel').value;
+            const cell = document.getElementById('payCell').value;
+            const city = document.getElementById('cityCategory').value;
+
+            if (level && cell && city) {
+                const basicPay = payMatrix[level].cells[cell - 1];
+                
+                // Update Transport Allowance
+                document.getElementById('transportAllowance').value = taRates[city];
+
+                // Update HRA
+                const hra = Math.round(basicPay * hraRates[city]);
+                document.getElementById('hraAmount').value = hra;
+            }
+        }
+
+        function calculateSalary(e) {
+            e.preventDefault();
+
+            const level = document.getElementById('payLevel').value;
+            const cell = document.getElementById('payCell').value;
+            const city = document.getElementById('cityCategory').value;
+            const daPercentage = parseFloat(document.getElementById('daPercentage').value);
+
+            if (level && cell && city) {
+                const basicPay = payMatrix[level].cells[cell - 1];
+                const da = Math.round(basicPay * daPercentage / 100);
+                const hra = Math.round(basicPay * hraRates[city]);
+                const ta = taRates[city];
+
+                // Additional Allowances
+                const childrenEducation = parseFloat(document.getElementById('childrenEducation').value) || 0;
+                const specialDuty = parseFloat(document.getElementById('specialDuty').value) || 0;
+                const otherAllowances = parseFloat(document.getElementById('otherAllowances').value) || 0;
+
+                // Calculate NPS
+                const nps = Math.round((basicPay + da) * 0.10);
+                document.getElementById('npsContribution').value = nps;
+
+                // Get Deductions
+                const incomeTax = parseFloat(document.getElementById('incomeTax').value) || 0;
+                const professionalTax = parseFloat(document.getElementById('professionalTax').value) || 0;
+                const otherDeductions = parseFloat(document.getElementById('otherDeductions').value) || 0;
+
+                // Calculate Totals
+                const totalEarnings = basicPay + da + hra + ta + childrenEducation + specialDuty + otherAllowances;
+                const totalDeductions = nps + incomeTax + professionalTax + otherDeductions;
+                const netSalary = totalEarnings - totalDeductions;
+
+                // Update Results
+                document.getElementById('basicPayResult').textContent = `₹${basicPay}`;
+                document.getElementById('daResult').textContent = `₹${da}`;
+                document.getElementById('hraResult').textContent = `₹${hra}`;
+                document.getElementById('taResult').textContent = `₹${ta}`;
+                document.getElementById('otherAllowancesResult').textContent = 
+                    `₹${childrenEducation + specialDuty + otherAllowances}`;
+                document.getElementById('totalEarnings').textContent = `₹${totalEarnings}`;
+
+                document.getElementById('npsResult').textContent = `₹${nps}`;
+                document.getElementById('incomeTaxResult').textContent = `₹${incomeTax}`;
+                document.getElementById('professionalTaxResult').textContent = `₹${professionalTax}`;
+                document.getElementById('otherDeductionsResult').textContent = `₹${otherDeductions}`;
+                document.getElementById('totalDeductions').textContent = `₹${totalDeductions}`;
+
+                document.getElementById('netSalary').textContent = `₹${netSalary}`;
+
+                // Show Results
+                document.getElementById('salaryBreakdown').classList.remove('d-none');
+            }
+        }
+
+        function printSalarySlip() {
+            window.print();
+        }
+
+        function downloadPDF() {
+            // Implement PDF download functionality
+            alert('PDF download functionality will be implemented soon.');
+        }
+    </script>
+</body>
+</html> 

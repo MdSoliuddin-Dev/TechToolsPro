@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to Base64 Converter - Multi-Tools</title>
+    <meta name="description" content="Convert images to Base64 format with advanced options. Support for multiple formats, batch processing, and optimization.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Highlight.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+    <style>
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: border 0.3s ease;
+            cursor: pointer;
+        }
+        .drop-zone:hover {
+            border-color: #0056b3;
+        }
+        .drop-zone.dragover {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-color: #0056b3;
+        }
+        .preview-container {
+            display: none;
+            margin-top: 1rem;
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .preview-item {
+            border: 1px solid #dee2e6;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            position: relative;
+        }
+        .preview-item img {
+            max-width: 100%;
+            height: auto;
+        }
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+        }
+        .output-container {
+            margin-top: 1rem;
+            display: none;
+        }
+        .code-container {
+            position: relative;
+            margin-top: 1rem;
+        }
+        .code-container pre {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 0;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            background-color: #f8f9fa;
+        }
+        .code-container .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            z-index: 1;
+        }
+        .format-preview {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+        .format-preview img {
+            max-width: 200px;
+            height: auto;
+        }
+        .size-info {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .progress-container {
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1><i class="fas fa-code me-2"></i>Image to Base64 Converter</h1>
+                <p class="tool-description">Convert your images to Base64 format with advanced options. Perfect for embedding images in CSS, HTML, or any other code.</p>
+            </div>
+
+            <!-- Tool Content -->
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-file-code fa-3x mb-3"></i>
+                        <h4>Drag & Drop your images here</h4>
+                        <p>or</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose Files
+                        </button>
+                        <input type="file" id="fileInput" hidden accept="image/*" multiple>
+                        <p class="mt-2 text-muted">Supports: JPG, PNG, WebP, GIF, SVG</p>
+                    </div>
+
+                    <div class="preview-container" id="previewContainer">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Conversion Settings</h5>
+                                
+                                <!-- Output Format -->
+                                <div class="mb-3">
+                                    <label class="form-label">Output Format</label>
+                                    <select class="form-select" id="outputFormat">
+                                        <option value="data-url">Data URL (data:image/...)</option>
+                                        <option value="raw">Raw Base64 String</option>
+                                        <option value="css">CSS Background</option>
+                                        <option value="html">HTML Image Tag</option>
+                                        <option value="markdown">Markdown Image</option>
+                                        <option value="json">JSON Object</option>
+                                    </select>
+                                </div>
+
+                                <!-- Image Processing -->
+                                <div class="mb-3">
+                                    <label class="form-label">Image Processing</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <select class="form-select" id="imageFormat">
+                                                <option value="original">Original Format</option>
+                                                <option value="image/jpeg">Convert to JPEG</option>
+                                                <option value="image/png">Convert to PNG</option>
+                                                <option value="image/webp">Convert to WebP</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <select class="form-select" id="imageSize">
+                                                <option value="original">Original Size</option>
+                                                <option value="optimize">Optimize Size</option>
+                                                <option value="custom">Custom Size</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Size Options (initially hidden) -->
+                                <div class="mb-3" id="customSizeOptions" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Max Width (px)</label>
+                                            <input type="number" class="form-control" id="maxWidth" value="800">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Quality (%)</label>
+                                            <input type="range" class="form-range" id="quality" min="1" max="100" value="80">
+                                            <div class="text-end">
+                                                <span id="qualityValue">80%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Advanced Options -->
+                                <div class="mb-3">
+                                    <label class="form-label">Advanced Options</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="stripMetadata" checked>
+                                        <label class="form-check-label" for="stripMetadata">
+                                            Strip metadata (reduces size)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="inlineOutput">
+                                        <label class="form-check-label" for="inlineOutput">
+                                            Generate inline output (no line breaks)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="urlEncode">
+                                        <label class="form-check-label" for="urlEncode">
+                                            URL encode output
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Batch Processing -->
+                                <div class="mb-3">
+                                    <label class="form-label">Batch Processing</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="combineOutput" checked>
+                                        <label class="form-check-label" for="combineOutput">
+                                            Combine all outputs into one file
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="generateVariables">
+                                        <label class="form-check-label" for="generateVariables">
+                                            Generate variable names
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Grid -->
+                        <div class="preview-grid" id="previewGrid"></div>
+
+                        <!-- Progress Bar -->
+                        <div class="progress-container">
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="text-center mt-3">
+                            <button class="btn btn-success" id="convertBtn">
+                                <i class="fas fa-code me-2"></i>Convert to Base64
+                            </button>
+                            <button class="btn btn-danger ms-2" id="clearBtn">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Output Container -->
+                    <div class="output-container" id="outputContainer">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Output</h5>
+                                
+                                <!-- Format Preview -->
+                                <div class="format-preview" id="formatPreview">
+                                    <h6>Preview</h6>
+                                    <div id="previewContent"></div>
+                                </div>
+
+                                <!-- Code Output -->
+                                <div class="code-container">
+                                    <button class="btn btn-sm btn-outline-primary copy-btn" id="copyBtn">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                    <pre><code class="language-plaintext" id="outputCode"></code></pre>
+                                </div>
+
+                                <!-- Download Options -->
+                                <div class="mt-3">
+                                    <button class="btn btn-primary" id="downloadBtn">
+                                        <i class="fas fa-download me-2"></i>Download Output
+                                    </button>
+                                    <div class="btn-group ms-2">
+                                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            Export As
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" data-format="js">JavaScript (.js)</a></li>
+                                            <li><a class="dropdown-item" href="#" data-format="css">CSS (.css)</a></li>
+                                            <li><a class="dropdown-item" href="#" data-format="json">JSON (.json)</a></li>
+                                            <li><a class="dropdown-item" href="#" data-format="txt">Text (.txt)</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Section -->
+            <div class="ad-section mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="ad-placeholder text-center">
+                            <div id="tool-ad-space" class="bg-light p-3">
+                                <p class="text-muted">Advertisement Space</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Highlight.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/components.js"></script>
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewGrid = document.getElementById('previewGrid');
+        const outputContainer = document.getElementById('outputContainer');
+        const outputCode = document.getElementById('outputCode');
+        const previewContent = document.getElementById('previewContent');
+        const convertBtn = document.getElementById('convertBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const quality = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        const imageSize = document.getElementById('imageSize');
+        const customSizeOptions = document.getElementById('customSizeOptions');
+
+        let files = [];
+
+        // Event Listeners
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        imageSize.addEventListener('change', () => {
+            customSizeOptions.style.display = 
+                imageSize.value === 'custom' ? 'block' : 'none';
+        });
+
+        quality.addEventListener('input', (e) => {
+            qualityValue.textContent = `${e.target.value}%`;
+        });
+
+        // Handle files
+        function handleFiles(newFiles) {
+            files = newFiles.filter(file => file.type.startsWith('image/'));
+            if (files.length === 0) {
+                alert('Please select valid image files.');
+                return;
+            }
+
+            previewGrid.innerHTML = '';
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewItem = createPreviewItem(file, e.target.result, index);
+                    previewGrid.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            previewContainer.style.display = 'block';
+            dropZone.style.display = 'none';
+            outputContainer.style.display = 'none';
+        }
+
+        // Create preview item
+        function createPreviewItem(file, src, index) {
+            const div = document.createElement('div');
+            div.className = 'preview-item';
+            div.innerHTML = `
+                <img src="${src}" alt="Preview ${index + 1}">
+                <button class="remove-btn" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="size-info">
+                    ${file.name}<br>
+                    ${formatFileSize(file.size)}
+                </div>
+            `;
+
+            div.querySelector('.remove-btn').addEventListener('click', () => {
+                files.splice(index, 1);
+                if (files.length === 0) {
+                    clearFiles();
+                } else {
+                    handleFiles(files);
+                }
+            });
+
+            return div;
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Convert images to Base64
+        async function convertToBase64() {
+            const progressBar = document.querySelector('.progress-bar');
+            const progressContainer = document.querySelector('.progress-container');
+            progressContainer.style.display = 'block';
+            
+            const format = document.getElementById('outputFormat').value;
+            const imageFormat = document.getElementById('imageFormat').value;
+            const imageSize = document.getElementById('imageSize').value;
+            const quality = document.getElementById('quality').value / 100;
+            const stripMetadata = document.getElementById('stripMetadata').checked;
+            const inlineOutput = document.getElementById('inlineOutput').checked;
+            const urlEncode = document.getElementById('urlEncode').checked;
+            const combineOutput = document.getElementById('combineOutput').checked;
+            const generateVariables = document.getElementById('generateVariables').checked;
+            
+            let output = '';
+            const results = [];
+            
+            for (let i = 0; i < files.length; i++) {
+                progressBar.style.width = `${(i / files.length) * 100}%`;
+                
+                const file = files[i];
+                const finalFormat = imageFormat === 'original' ? file.type : imageFormat;
+                const base64 = await processImage(file, {
+                    format: finalFormat,
+                    quality: quality,
+                    maxWidth: imageSize === 'custom' ? parseInt(document.getElementById('maxWidth').value) : null,
+                    stripMetadata: stripMetadata
+                });
+                
+                let result = base64;
+                const dataUrl = `data:${finalFormat};base64,${base64}`;
+                
+                if (format === 'data-url') {
+                    result = dataUrl;
+                } else if (format === 'css') {
+                    result = `background-image: url(${dataUrl});`;
+                } else if (format === 'html') {
+                    result = `<img src="${dataUrl}" alt="${file.name}">`;
+                } else if (format === 'markdown') {
+                    result = `![${file.name}](${dataUrl})`;
+                } else if (format === 'json') {
+                    result = JSON.stringify({
+                        name: file.name,
+                        type: finalFormat,
+                        size: base64.length,
+                        data: base64,
+                        dataUrl: dataUrl
+                    }, null, 2);
+                }
+                
+                if (generateVariables) {
+                    const varName = file.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                    result = `const ${varName} = "${result}";`;
+                }
+                
+                if (urlEncode) {
+                    result = encodeURIComponent(result);
+                }
+                
+                results.push({ result, dataUrl });
+            }
+            
+            output = combineOutput ? results.map(r => r.result).join(inlineOutput ? '' : '\n\n') : results[0].result;
+            outputCode.textContent = output;
+            hljs.highlightElement(outputCode);
+            
+            // Update preview using the data URL directly
+            updatePreview(results[0].dataUrl, results[0].result, format);
+            
+            outputContainer.style.display = 'block';
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+        }
+
+        // Process image
+        async function processImage(file, options) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (options.maxWidth && width > options.maxWidth) {
+                            height = Math.round((height * options.maxWidth) / width);
+                            width = options.maxWidth;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        // Enable image smoothing for better quality
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Get the correct MIME type
+                        const mimeType = options.format === 'original' ? file.type : options.format;
+                        const base64 = canvas.toDataURL(mimeType, options.quality)
+                            .replace(new RegExp(`^data:${mimeType};base64,`), '');
+                        
+                        resolve(base64);
+                    };
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Update preview
+        function updatePreview(dataUrl, result, format) {
+            try {
+                if (format === 'data-url' || format === 'raw') {
+                    // Always use the direct data URL for image preview
+                    previewContent.innerHTML = `<img src="${dataUrl}" alt="Preview">`;
+                } else if (format === 'css') {
+                    const div = document.createElement('div');
+                    div.style.cssText = `
+                        background-image: url(${dataUrl});
+                        width: 200px;
+                        height: 200px;
+                        background-size: contain;
+                        background-repeat: no-repeat;
+                        background-position: center;
+                        border: 1px solid #dee2e6;
+                        border-radius: 4px;
+                    `;
+                    previewContent.innerHTML = '';
+                    previewContent.appendChild(div);
+                } else if (format === 'html' || format === 'markdown') {
+                    // For HTML and Markdown, still show the image preview
+                    previewContent.innerHTML = `
+                        <div class="mb-3">
+                            <img src="${dataUrl}" alt="Preview">
+                        </div>
+                        <div class="mt-2 text-muted">
+                            <small>Generated ${format.toUpperCase()} code:</small>
+                            <pre class="mt-1"><code>${result}</code></pre>
+                        </div>
+                    `;
+                } else if (format === 'json') {
+                    // For JSON, show both the image and the formatted JSON
+                    previewContent.innerHTML = `
+                        <div class="mb-3">
+                            <img src="${dataUrl}" alt="Preview">
+                        </div>
+                        <div class="mt-2 text-muted">
+                            <small>Generated JSON structure shown in code panel below</small>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Preview error:', error);
+                previewContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Unable to preview this format
+                        <br>
+                        <small class="text-muted">${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+
+        // Copy to clipboard
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(outputCode.textContent).then(() => {
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                }, 2000);
+            });
+        });
+
+        // Download output
+        downloadBtn.addEventListener('click', () => {
+            const format = document.getElementById('outputFormat').value;
+            const extension = format === 'css' ? '.css' : 
+                            format === 'json' ? '.json' : '.txt';
+            
+            const blob = new Blob([outputCode.textContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `base64_output${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Clear files
+        function clearFiles() {
+            files = [];
+            previewGrid.innerHTML = '';
+            previewContainer.style.display = 'none';
+            outputContainer.style.display = 'none';
+            dropZone.style.display = 'block';
+            fileInput.value = '';
+        }
+
+        // Event listeners for convert and clear buttons
+        convertBtn.addEventListener('click', convertToBase64);
+        clearBtn.addEventListener('click', clearFiles);
+
+        // Export format handlers
+        document.querySelectorAll('[data-format]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const format = e.target.dataset.format;
+                const extension = `.${format}`;
+                
+                const blob = new Blob([outputCode.textContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `base64_output${extension}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Converter - Multi-Tools</title>
+    <meta name="description" content="Convert between different units of measurement including length, weight, temperature, and more.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .unit-card {
+            transition: all 0.2s;
+        }
+
+        .unit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .unit-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .converter-container {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+        }
+
+        .swap-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem auto;
+        }
+
+        .history-item {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            background: var(--background-color);
+        }
+
+        .formula-text {
+            font-family: monospace;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .unit-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-exchange-alt me-2"></i>
+                            Unit Converter
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Unit Categories -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3 col-6">
+                                <div class="card unit-card text-center" onclick="selectCategory('length')">
+                                    <div class="card-body">
+                                        <div class="unit-icon">
+                                            <i class="fas fa-ruler"></i>
+                                        </div>
+                                        <h5 class="card-title h6">Length</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="card unit-card text-center" onclick="selectCategory('weight')">
+                                    <div class="card-body">
+                                        <div class="unit-icon">
+                                            <i class="fas fa-weight"></i>
+                                        </div>
+                                        <h5 class="card-title h6">Weight</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="card unit-card text-center" onclick="selectCategory('temperature')">
+                                    <div class="card-body">
+                                        <div class="unit-icon">
+                                            <i class="fas fa-thermometer-half"></i>
+                                        </div>
+                                        <h5 class="card-title h6">Temperature</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="card unit-card text-center" onclick="selectCategory('area')">
+                                    <div class="card-body">
+                                        <div class="unit-icon">
+                                            <i class="fas fa-vector-square"></i>
+                                        </div>
+                                        <h5 class="card-title h6">Area</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="card unit-card text-center" onclick="selectCategory('volume')">
+                                    <div class="card-body">
+                                        <div class="unit-icon">
+                                            <i class="fas fa-cube"></i>
+                                        </div>
+                                        <h5 class="card-title h6">Volume</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="card unit-card text-center" onclick="selectCategory('speed')">
+                                    <div class="card-body">
+                                        <div class="unit-icon">
+                                            <i class="fas fa-tachometer-alt"></i>
+                                        </div>
+                                        <h5 class="card-title h6">Speed</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="card unit-card text-center" onclick="selectCategory('time')">
+                                    <div class="card-body">
+                                        <div class="unit-icon">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <h5 class="card-title h6">Time</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="card unit-card text-center" onclick="selectCategory('digital')">
+                                    <div class="card-body">
+                                        <div class="unit-icon">
+                                            <i class="fas fa-microchip"></i>
+                                        </div>
+                                        <h5 class="card-title h6">Digital</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Converter -->
+                        <div class="converter-container">
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="mb-3">
+                                        <label class="form-label">From</label>
+                                        <select class="form-select mb-2" id="fromUnit"></select>
+                                        <input type="number" class="form-control" id="fromValue" value="1" step="any">
+                                    </div>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <button class="btn btn-outline-primary swap-btn" onclick="swapUnits()">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="mb-3">
+                                        <label class="form-label">To</label>
+                                        <select class="form-select mb-2" id="toUnit"></select>
+                                        <input type="number" class="form-control" id="toValue" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="formula-text text-center mt-2" id="formula"></div>
+                        </div>
+
+                        <!-- Conversion History -->
+                        <div class="mt-4">
+                            <h5 class="mb-3">Recent Conversions</h5>
+                            <div id="history"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Unit Converter</h2>
+                        <p>Convert between different units of measurement with real-time calculation and history tracking.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Multiple conversion categories (length, weight, temperature, etc.)</li>
+                            <li>Real-time conversion</li>
+                            <li>Conversion formula display</li>
+                            <li>Unit swap functionality</li>
+                            <li>Conversion history</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All calculations are performed locally in your browser for accuracy and privacy.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        // Unit definitions
+        const units = {
+            length: {
+                meter: { name: 'Meters (m)', factor: 1 },
+                kilometer: { name: 'Kilometers (km)', factor: 1000 },
+                centimeter: { name: 'Centimeters (cm)', factor: 0.01 },
+                millimeter: { name: 'Millimeters (mm)', factor: 0.001 },
+                mile: { name: 'Miles (mi)', factor: 1609.344 },
+                yard: { name: 'Yards (yd)', factor: 0.9144 },
+                foot: { name: 'Feet (ft)', factor: 0.3048 },
+                inch: { name: 'Inches (in)', factor: 0.0254 }
+            },
+            weight: {
+                kilogram: { name: 'Kilograms (kg)', factor: 1 },
+                gram: { name: 'Grams (g)', factor: 0.001 },
+                milligram: { name: 'Milligrams (mg)', factor: 0.000001 },
+                pound: { name: 'Pounds (lb)', factor: 0.45359237 },
+                ounce: { name: 'Ounces (oz)', factor: 0.028349523125 }
+            },
+            temperature: {
+                celsius: {
+                    name: 'Celsius (°C)',
+                    toBase: x => x,
+                    fromBase: x => x
+                },
+                fahrenheit: {
+                    name: 'Fahrenheit (°F)',
+                    toBase: x => (x - 32) * 5/9,
+                    fromBase: x => x * 9/5 + 32
+                },
+                kelvin: {
+                    name: 'Kelvin (K)',
+                    toBase: x => x - 273.15,
+                    fromBase: x => x + 273.15
+                }
+            },
+            area: {
+                squareMeter: { name: 'Square Meters (m²)', factor: 1 },
+                squareKilometer: { name: 'Square Kilometers (km²)', factor: 1000000 },
+                squareMile: { name: 'Square Miles (mi²)', factor: 2589988.110336 },
+                acre: { name: 'Acres', factor: 4046.8564224 },
+                hectare: { name: 'Hectares (ha)', factor: 10000 }
+            },
+            volume: {
+                liter: { name: 'Liters (L)', factor: 1 },
+                milliliter: { name: 'Milliliters (mL)', factor: 0.001 },
+                cubicMeter: { name: 'Cubic Meters (m³)', factor: 1000 },
+                gallon: { name: 'Gallons (gal)', factor: 3.78541178 },
+                quart: { name: 'Quarts (qt)', factor: 0.946352946 }
+            },
+            speed: {
+                meterPerSecond: { name: 'Meters per Second (m/s)', factor: 1 },
+                kilometerPerHour: { name: 'Kilometers per Hour (km/h)', factor: 0.277777778 },
+                milePerHour: { name: 'Miles per Hour (mph)', factor: 0.44704 },
+                knot: { name: 'Knots (kn)', factor: 0.514444444 }
+            },
+            time: {
+                second: { name: 'Seconds (s)', factor: 1 },
+                minute: { name: 'Minutes (min)', factor: 60 },
+                hour: { name: 'Hours (h)', factor: 3600 },
+                day: { name: 'Days (d)', factor: 86400 },
+                week: { name: 'Weeks (wk)', factor: 604800 }
+            },
+            digital: {
+                byte: { name: 'Bytes (B)', factor: 1 },
+                kilobyte: { name: 'Kilobytes (KB)', factor: 1024 },
+                megabyte: { name: 'Megabytes (MB)', factor: 1048576 },
+                gigabyte: { name: 'Gigabytes (GB)', factor: 1073741824 },
+                terabyte: { name: 'Terabytes (TB)', factor: 1099511627776 }
+            }
+        };
+
+        let currentCategory = 'length';
+        const history = [];
+
+        // Initialize converter
+        function initConverter() {
+            const fromUnit = document.getElementById('fromUnit');
+            const toUnit = document.getElementById('toUnit');
+            
+            // Clear existing options
+            fromUnit.innerHTML = '';
+            toUnit.innerHTML = '';
+
+            // Add new options
+            const categoryUnits = units[currentCategory];
+            for (const [key, unit] of Object.entries(categoryUnits)) {
+                fromUnit.add(new Option(unit.name, key));
+                toUnit.add(new Option(unit.name, key));
+            }
+
+            // Set default "to" unit to second option
+            toUnit.selectedIndex = 1;
+
+            // Perform initial conversion
+            convert();
+        }
+
+        // Perform conversion
+        function convert() {
+            const fromUnit = document.getElementById('fromUnit');
+            const toUnit = document.getElementById('toUnit');
+            const fromValue = document.getElementById('fromValue');
+            const toValue = document.getElementById('toValue');
+            const formula = document.getElementById('formula');
+
+            const value = parseFloat(fromValue.value);
+            if (isNaN(value)) {
+                toValue.value = '';
+                formula.textContent = '';
+                return;
+            }
+
+            const categoryUnits = units[currentCategory];
+            const from = categoryUnits[fromUnit.value];
+            const to = categoryUnits[toUnit.value];
+
+            let result;
+            let formulaText;
+
+            if (currentCategory === 'temperature') {
+                // Special handling for temperature
+                const baseValue = from.toBase(value);
+                result = to.fromBase(baseValue);
+                formulaText = `Formula: ${fromUnit.value} → ${toUnit.value}`;
+            } else {
+                // Standard conversion using factors
+                result = value * from.factor / to.factor;
+                formulaText = `Formula: ${value} × ${from.factor} ÷ ${to.factor} = ${result}`;
+            }
+
+            toValue.value = result.toFixed(8).replace(/\.?0+$/, '');
+            formula.textContent = formulaText;
+
+            // Add to history
+            addToHistory(value, fromUnit.value, result, toUnit.value);
+        }
+
+        // Swap units
+        function swapUnits() {
+            const fromUnit = document.getElementById('fromUnit');
+            const toUnit = document.getElementById('toUnit');
+            const fromValue = document.getElementById('fromValue');
+            const toValue = document.getElementById('toValue');
+
+            // Swap selected units
+            const temp = fromUnit.value;
+            fromUnit.value = toUnit.value;
+            toUnit.value = temp;
+
+            // Swap values
+            fromValue.value = toValue.value;
+
+            // Perform conversion
+            convert();
+        }
+
+        // Select category
+        function selectCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.unit-card').forEach(card => {
+                card.classList.remove('border-primary');
+            });
+            event.currentTarget.classList.add('border-primary');
+            initConverter();
+        }
+
+        // Add conversion to history
+        function addToHistory(fromValue, fromUnit, toValue, toUnit) {
+            const historyDiv = document.getElementById('history');
+            const categoryUnits = units[currentCategory];
+
+            const item = {
+                fromValue,
+                fromUnit: categoryUnits[fromUnit].name,
+                toValue,
+                toUnit: categoryUnits[toUnit].name,
+                category: currentCategory
+            };
+
+            // Add to history array
+            history.unshift(item);
+            if (history.length > 10) history.pop();
+
+            // Update history display
+            historyDiv.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            ${item.fromValue} ${item.fromUnit.split(' ')[0]} = 
+                            ${item.toValue.toFixed(8).replace(/\.?0+$/, '')} ${item.toUnit.split(' ')[0]}
+                        </div>
+                        <small class="text-muted">${item.category}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Event listeners
+        document.getElementById('fromValue').addEventListener('input', convert);
+        document.getElementById('fromUnit').addEventListener('change', convert);
+        document.getElementById('toUnit').addEventListener('change', convert);
+
+        // Initialize with length category
+        initConverter();
+    </script>
+</body>
+</html> 

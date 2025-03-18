@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encoding Tools - Multi-Tools</title>
+    <meta name="description" content="Text encoding tools including Base64, URL encoding, and HTML entity encoding.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .encoding-area {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .encoding-box {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+        }
+
+        .encoding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .encoding-title {
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .encoding-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .encoding-textarea {
+            width: 100%;
+            min-height: 200px;
+            font-family: monospace;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+
+        .encoding-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .encoding-options {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .encoding-option {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .encoding-result {
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            padding: 1rem;
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .char-table {
+            width: 100%;
+            margin-bottom: 1rem;
+            border-collapse: collapse;
+        }
+
+        .char-table th,
+        .char-table td {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .char-table th {
+            background: var(--background-color);
+            font-weight: bold;
+        }
+
+        .char-preview {
+            font-family: monospace;
+            font-size: 1.25rem;
+        }
+
+        .char-code {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .encoding-area {
+                grid-template-columns: 1fr;
+            }
+
+            .encoding-options {
+                flex-direction: column;
+            }
+
+            .encoding-option {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-code me-2"></i>
+                            Encoding Tools
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tool Sections -->
+                        <ul class="nav nav-tabs mb-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#base64" type="button">
+                                    <i class="fas fa-exchange-alt me-2"></i>Base64
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#urlEncoding" type="button">
+                                    <i class="fas fa-link me-2"></i>URL Encoding
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#htmlEntities" type="button">
+                                    <i class="fas fa-code me-2"></i>HTML Entities
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Base64 Section -->
+                            <div class="tab-pane fade show active" id="base64" role="tabpanel">
+                                <div class="encoding-options">
+                                    <div class="encoding-option">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="base64UrlSafe">
+                                            <label class="form-check-label" for="base64UrlSafe">
+                                                URL-safe Base64
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="encoding-option">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="base64NoPadding">
+                                            <label class="form-check-label" for="base64NoPadding">
+                                                Remove padding (=)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="encoding-area">
+                                    <div class="encoding-box">
+                                        <div class="encoding-header">
+                                            <h6 class="encoding-title">Input Text</h6>
+                                            <div class="encoding-controls">
+                                                <button class="btn btn-sm btn-outline-secondary" id="clearBase64Input">
+                                                    <i class="fas fa-times me-1"></i>Clear
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary" id="pasteBase64">
+                                                    <i class="fas fa-paste me-1"></i>Paste
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control encoding-textarea" id="base64Input" placeholder="Enter text to encode..."></textarea>
+                                        <div class="encoding-info">
+                                            <span>Characters: <span id="base64InputCount">0</span></span>
+                                            <span>Bytes: <span id="base64InputBytes">0</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="encoding-box">
+                                        <div class="encoding-header">
+                                            <h6 class="encoding-title">Base64 Output</h6>
+                                            <div class="encoding-controls">
+                                                <button class="btn btn-sm btn-outline-secondary" id="clearBase64Output">
+                                                    <i class="fas fa-times me-1"></i>Clear
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary" id="copyBase64">
+                                                    <i class="fas fa-copy me-1"></i>Copy
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control encoding-textarea" id="base64Output" placeholder="Base64 encoded text will appear here..." readonly></textarea>
+                                        <div class="encoding-info">
+                                            <span>Length: <span id="base64OutputCount">0</span></span>
+                                            <span>Ratio: <span id="base64Ratio">0%</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- URL Encoding Section -->
+                            <div class="tab-pane fade" id="urlEncoding" role="tabpanel">
+                                <div class="encoding-options">
+                                    <div class="encoding-option">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="encodeAll">
+                                            <label class="form-check-label" for="encodeAll">
+                                                Encode all characters
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="encoding-option">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="upperCase">
+                                            <label class="form-check-label" for="upperCase">
+                                                Uppercase encoding
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="encoding-area">
+                                    <div class="encoding-box">
+                                        <div class="encoding-header">
+                                            <h6 class="encoding-title">Input URL</h6>
+                                            <div class="encoding-controls">
+                                                <button class="btn btn-sm btn-outline-secondary" id="clearUrlInput">
+                                                    <i class="fas fa-times me-1"></i>Clear
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary" id="pasteUrl">
+                                                    <i class="fas fa-paste me-1"></i>Paste
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control encoding-textarea" id="urlInput" placeholder="Enter URL or text to encode..."></textarea>
+                                        <div class="encoding-info">
+                                            <span>Characters: <span id="urlInputCount">0</span></span>
+                                            <span>Special chars: <span id="urlSpecialCount">0</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="encoding-box">
+                                        <div class="encoding-header">
+                                            <h6 class="encoding-title">Encoded URL</h6>
+                                            <div class="encoding-controls">
+                                                <button class="btn btn-sm btn-outline-secondary" id="clearUrlOutput">
+                                                    <i class="fas fa-times me-1"></i>Clear
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary" id="copyUrl">
+                                                    <i class="fas fa-copy me-1"></i>Copy
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control encoding-textarea" id="urlOutput" placeholder="Encoded URL will appear here..." readonly></textarea>
+                                        <div class="encoding-info">
+                                            <span>Length: <span id="urlOutputCount">0</span></span>
+                                            <span>Encoded chars: <span id="urlEncodedCount">0</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- HTML Entities Section -->
+                            <div class="tab-pane fade" id="htmlEntities" role="tabpanel">
+                                <div class="encoding-options">
+                                    <div class="encoding-option">
+                                        <select class="form-select" id="entityType">
+                                            <option value="named">Named entities (&amp;quot;)</option>
+                                            <option value="decimal">Decimal entities (&amp;#34;)</option>
+                                            <option value="hex">Hex entities (&amp;#x22;)</option>
+                                        </select>
+                                    </div>
+                                    <div class="encoding-option">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="encodeAll">
+                                            <label class="form-check-label" for="encodeAll">
+                                                Encode all characters
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="encoding-area">
+                                    <div class="encoding-box">
+                                        <div class="encoding-header">
+                                            <h6 class="encoding-title">Input HTML</h6>
+                                            <div class="encoding-controls">
+                                                <button class="btn btn-sm btn-outline-secondary" id="clearHtmlInput">
+                                                    <i class="fas fa-times me-1"></i>Clear
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary" id="pasteHtml">
+                                                    <i class="fas fa-paste me-1"></i>Paste
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control encoding-textarea" id="htmlInput" placeholder="Enter HTML or text to encode..."></textarea>
+                                        <div class="encoding-info">
+                                            <span>Characters: <span id="htmlInputCount">0</span></span>
+                                            <span>Special chars: <span id="htmlSpecialCount">0</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="encoding-box">
+                                        <div class="encoding-header">
+                                            <h6 class="encoding-title">Encoded HTML</h6>
+                                            <div class="encoding-controls">
+                                                <button class="btn btn-sm btn-outline-secondary" id="clearHtmlOutput">
+                                                    <i class="fas fa-times me-1"></i>Clear
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary" id="copyHtml">
+                                                    <i class="fas fa-copy me-1"></i>Copy
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control encoding-textarea" id="htmlOutput" placeholder="Encoded HTML will appear here..." readonly></textarea>
+                                        <div class="encoding-info">
+                                            <span>Length: <span id="htmlOutputCount">0</span></span>
+                                            <span>Encoded chars: <span id="htmlEncodedCount">0</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <h6>Common HTML Entities</h6>
+                                    <div class="table-responsive">
+                                        <table class="char-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Character</th>
+                                                    <th>Entity Name</th>
+                                                    <th>Entity Number</th>
+                                                    <th>Description</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="entityTable">
+                                                <!-- Entity rows will be added dynamically -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Encoding Tools</h2>
+                        <p>A comprehensive set of tools for encoding and decoding text in various formats, including Base64, URL encoding, and HTML entities.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Base64 encoding with URL-safe option</li>
+                            <li>URL encoding with customizable options</li>
+                            <li>HTML entity encoding with multiple formats</li>
+                            <li>Real-time encoding and decoding</li>
+                            <li>Character and byte count statistics</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All encoding operations are performed locally in your browser.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Base64 Elements
+            const base64Input = document.getElementById('base64Input');
+            const base64Output = document.getElementById('base64Output');
+            const base64UrlSafe = document.getElementById('base64UrlSafe');
+            const base64NoPadding = document.getElementById('base64NoPadding');
+            const base64InputCount = document.getElementById('base64InputCount');
+            const base64InputBytes = document.getElementById('base64InputBytes');
+            const base64OutputCount = document.getElementById('base64OutputCount');
+            const base64Ratio = document.getElementById('base64Ratio');
+
+            // URL Encoding Elements
+            const urlInput = document.getElementById('urlInput');
+            const urlOutput = document.getElementById('urlOutput');
+            const encodeAll = document.getElementById('encodeAll');
+            const upperCase = document.getElementById('upperCase');
+            const urlInputCount = document.getElementById('urlInputCount');
+            const urlSpecialCount = document.getElementById('urlSpecialCount');
+            const urlOutputCount = document.getElementById('urlOutputCount');
+            const urlEncodedCount = document.getElementById('urlEncodedCount');
+
+            // HTML Entity Elements
+            const htmlInput = document.getElementById('htmlInput');
+            const htmlOutput = document.getElementById('htmlOutput');
+            const entityType = document.getElementById('entityType');
+            const htmlInputCount = document.getElementById('htmlInputCount');
+            const htmlSpecialCount = document.getElementById('htmlSpecialCount');
+            const htmlOutputCount = document.getElementById('htmlOutputCount');
+            const htmlEncodedCount = document.getElementById('htmlEncodedCount');
+            const entityTable = document.getElementById('entityTable');
+
+            // Base64 Functions
+            function updateBase64() {
+                const input = base64Input.value;
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(input);
+                
+                let encoded = btoa(String.fromCharCode.apply(null, bytes));
+                
+                if (base64UrlSafe.checked) {
+                    encoded = encoded.replace(/\+/g, '-').replace(/\//g, '_');
+                }
+                
+                if (base64NoPadding.checked) {
+                    encoded = encoded.replace(/=+$/, '');
+                }
+                
+                base64Output.value = encoded;
+                
+                // Update statistics
+                base64InputCount.textContent = input.length;
+                base64InputBytes.textContent = bytes.length;
+                base64OutputCount.textContent = encoded.length;
+                base64Ratio.textContent = input.length ? Math.round((encoded.length / input.length) * 100) + '%' : '0%';
+            }
+
+            // URL Encoding Functions
+            function updateUrlEncoding() {
+                const input = urlInput.value;
+                let encoded;
+                let specialCount = 0;
+                let encodedCount = 0;
+
+                if (encodeAll.checked) {
+                    encoded = Array.from(input).map(char => {
+                        const hex = char.charCodeAt(0).toString(16);
+                        encodedCount++;
+                        return '%' + (upperCase.checked ? hex.toUpperCase() : hex);
+                    }).join('');
+                } else {
+                    encoded = input.replace(/[^a-zA-Z0-9-._~]/g, char => {
+                        specialCount++;
+                        encodedCount++;
+                        const hex = char.charCodeAt(0).toString(16);
+                        return '%' + (upperCase.checked ? hex.toUpperCase() : hex);
+                    });
+                }
+
+                urlOutput.value = encoded;
+
+                // Update statistics
+                urlInputCount.textContent = input.length;
+                urlSpecialCount.textContent = specialCount;
+                urlOutputCount.textContent = encoded.length;
+                urlEncodedCount.textContent = encodedCount;
+            }
+
+            // HTML Entity Functions
+            const commonEntities = [
+                { char: '"', name: '&quot;', decimal: '&#34;', hex: '&#x22;', desc: 'Quotation mark' },
+                { char: '&', name: '&amp;', decimal: '&#38;', hex: '&#x26;', desc: 'Ampersand' },
+                { char: '<', name: '&lt;', decimal: '&#60;', hex: '&#x3C;', desc: 'Less than' },
+                { char: '>', name: '&gt;', decimal: '&#62;', hex: '&#x3E;', desc: 'Greater than' },
+                { char: '\'', name: '&apos;', decimal: '&#39;', hex: '&#x27;', desc: 'Apostrophe' },
+                { char: '©', name: '&copy;', decimal: '&#169;', hex: '&#xA9;', desc: 'Copyright' },
+                { char: '®', name: '&reg;', decimal: '&#174;', hex: '&#xAE;', desc: 'Registered trademark' },
+                { char: '™', name: '&trade;', decimal: '&#8482;', hex: '&#x2122;', desc: 'Trademark' },
+                { char: '€', name: '&euro;', decimal: '&#8364;', hex: '&#x20AC;', desc: 'Euro' },
+                { char: '£', name: '&pound;', decimal: '&#163;', hex: '&#xA3;', desc: 'Pound' }
+            ];
+
+            function updateHtmlEncoding() {
+                const input = htmlInput.value;
+                let encoded;
+                let specialCount = 0;
+                let encodedCount = 0;
+
+                encoded = input.replace(/[<>&"']/g, char => {
+                    specialCount++;
+                    encodedCount++;
+                    const entity = commonEntities.find(e => e.char === char);
+                    if (entity) {
+                        switch (entityType.value) {
+                            case 'named': return entity.name;
+                            case 'decimal': return entity.decimal;
+                            case 'hex': return entity.hex;
+                        }
+                    }
+                    return char;
+                });
+
+                htmlOutput.value = encoded;
+
+                // Update statistics
+                htmlInputCount.textContent = input.length;
+                htmlSpecialCount.textContent = specialCount;
+                htmlOutputCount.textContent = encoded.length;
+                htmlEncodedCount.textContent = encodedCount;
+            }
+
+            function populateEntityTable() {
+                entityTable.innerHTML = commonEntities.map(entity => `
+                    <tr>
+                        <td class="char-preview">${entity.char}</td>
+                        <td class="char-code">${entity.name}</td>
+                        <td class="char-code">${entity.decimal}</td>
+                        <td>${entity.desc}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Event Listeners
+            base64Input.addEventListener('input', updateBase64);
+            base64UrlSafe.addEventListener('change', updateBase64);
+            base64NoPadding.addEventListener('change', updateBase64);
+
+            urlInput.addEventListener('input', updateUrlEncoding);
+            encodeAll.addEventListener('change', updateUrlEncoding);
+            upperCase.addEventListener('change', updateUrlEncoding);
+
+            htmlInput.addEventListener('input', updateHtmlEncoding);
+            entityType.addEventListener('change', updateHtmlEncoding);
+
+            // Copy buttons
+            document.querySelectorAll('[id^="copy"]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const outputId = button.id.replace('copy', '').toLowerCase() + 'Output';
+                    const output = document.getElementById(outputId);
+                    navigator.clipboard.writeText(output.value);
+                    
+                    const originalHtml = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check me-1"></i>Copied';
+                    setTimeout(() => {
+                        button.innerHTML = originalHtml;
+                    }, 1500);
+                });
+            });
+
+            // Paste buttons
+            document.querySelectorAll('[id^="paste"]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const inputId = button.id.replace('paste', '').toLowerCase() + 'Input';
+                    const input = document.getElementById(inputId);
+                    navigator.clipboard.readText().then(text => {
+                        input.value = text;
+                        input.dispatchEvent(new Event('input'));
+                    });
+                });
+            });
+
+            // Clear buttons
+            document.querySelectorAll('[id^="clear"]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.id.replace('clear', '').toLowerCase();
+                    const target = document.getElementById(targetId);
+                    target.value = '';
+                    target.dispatchEvent(new Event('input'));
+                });
+            });
+
+            // Initialize
+            populateEntityTable();
+        });
+    </script>
+</body>
+</html> 

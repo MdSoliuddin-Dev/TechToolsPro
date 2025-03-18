@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Tools - Multi-Tools</title>
+    <meta name="description" content="Data tools including JSON formatter, XML formatter, and CSV converter.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- CodeMirror -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <style>
+        .CodeMirror {
+            height: 300px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .editor-container {
+            margin-bottom: 1rem;
+        }
+
+        .editor-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .csv-grid {
+            max-height: 400px;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+        }
+
+        .csv-table {
+            margin: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .csv-table th,
+        .csv-table td {
+            padding: 0.5rem;
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            min-width: 100px;
+        }
+
+        .csv-table th {
+            position: sticky;
+            top: 0;
+            background: var(--background-color);
+            font-weight: bold;
+            text-align: left;
+            z-index: 1;
+        }
+
+        .csv-table th:last-child,
+        .csv-table td:last-child {
+            border-right: none;
+        }
+
+        .csv-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .error-message {
+            color: var(--danger);
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .success-message {
+            color: var(--success);
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .csv-grid {
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-database me-2"></i>
+                            Data Tools
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tool Sections -->
+                        <ul class="nav nav-tabs mb-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#json" type="button">
+                                    <i class="fas fa-code me-2"></i>JSON Formatter
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#xml" type="button">
+                                    <i class="fas fa-file-code me-2"></i>XML Formatter
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#csv" type="button">
+                                    <i class="fas fa-table me-2"></i>CSV Converter
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- JSON Formatter Section -->
+                            <div class="tab-pane fade show active" id="json" role="tabpanel">
+                                <div class="editor-container">
+                                    <div class="editor-label">
+                                        <label class="form-label">Input JSON</label>
+                                        <div class="editor-actions">
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="formatJSON()">
+                                                <i class="fas fa-magic me-2"></i>Format
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="minifyJSON()">
+                                                <i class="fas fa-compress-alt me-2"></i>Minify
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="copyJSON()">
+                                                <i class="fas fa-copy me-2"></i>Copy
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea id="jsonEditor"></textarea>
+                                    <div id="jsonError" class="error-message"></div>
+                                </div>
+                            </div>
+
+                            <!-- XML Formatter Section -->
+                            <div class="tab-pane fade" id="xml" role="tabpanel">
+                                <div class="editor-container">
+                                    <div class="editor-label">
+                                        <label class="form-label">Input XML</label>
+                                        <div class="editor-actions">
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="formatXML()">
+                                                <i class="fas fa-magic me-2"></i>Format
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="minifyXML()">
+                                                <i class="fas fa-compress-alt me-2"></i>Minify
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="copyXML()">
+                                                <i class="fas fa-copy me-2"></i>Copy
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea id="xmlEditor"></textarea>
+                                    <div id="xmlError" class="error-message"></div>
+                                </div>
+                            </div>
+
+                            <!-- CSV Converter Section -->
+                            <div class="tab-pane fade" id="csv" role="tabpanel">
+                                <div class="mb-3">
+                                    <div class="editor-label">
+                                        <label class="form-label">Input CSV</label>
+                                        <div class="editor-actions">
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="parseCSV()">
+                                                <i class="fas fa-table me-2"></i>Preview
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="convertToJSON()">
+                                                <i class="fas fa-code me-2"></i>To JSON
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="copyCSV()">
+                                                <i class="fas fa-copy me-2"></i>Copy
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea class="form-control" id="csvInput" rows="8" placeholder="Paste CSV data here..."></textarea>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="hasHeader" checked>
+                                    <label class="form-check-label" for="hasHeader">
+                                        First row is header
+                                    </label>
+                                </div>
+
+                                <div class="csv-grid">
+                                    <table class="csv-table" id="csvPreview">
+                                        <thead>
+                                            <tr>
+                                                <th>Preview will appear here</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Paste CSV data and click Preview</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Data Tools</h2>
+                        <p>A comprehensive set of tools for working with different data formats including JSON, XML, and CSV.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Format and validate JSON data</li>
+                            <li>Format and validate XML documents</li>
+                            <li>Convert between CSV and JSON formats</li>
+                            <li>Preview CSV data in table format</li>
+                            <li>Copy formatted results to clipboard</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All operations are performed locally in your browser for privacy.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize CodeMirror editors
+            const jsonEditor = CodeMirror.fromTextArea(document.getElementById('jsonEditor'), {
+                mode: 'application/json',
+                theme: 'monokai',
+                lineNumbers: true,
+                matchBrackets: true,
+                autoCloseBrackets: true,
+                indentUnit: 2
+            });
+
+            const xmlEditor = CodeMirror.fromTextArea(document.getElementById('xmlEditor'), {
+                mode: 'xml',
+                theme: 'monokai',
+                lineNumbers: true,
+                matchTags: true,
+                autoCloseTags: true,
+                indentUnit: 2
+            });
+
+            // JSON Functions
+            window.formatJSON = () => {
+                try {
+                    const input = jsonEditor.getValue();
+                    const parsed = JSON.parse(input);
+                    const formatted = JSON.stringify(parsed, null, 2);
+                    jsonEditor.setValue(formatted);
+                    document.getElementById('jsonError').textContent = '';
+                } catch (error) {
+                    document.getElementById('jsonError').textContent = `Error: ${error.message}`;
+                }
+            };
+
+            window.minifyJSON = () => {
+                try {
+                    const input = jsonEditor.getValue();
+                    const parsed = JSON.parse(input);
+                    const minified = JSON.stringify(parsed);
+                    jsonEditor.setValue(minified);
+                    document.getElementById('jsonError').textContent = '';
+                } catch (error) {
+                    document.getElementById('jsonError').textContent = `Error: ${error.message}`;
+                }
+            };
+
+            window.copyJSON = () => {
+                const text = jsonEditor.getValue();
+                copyToClipboard(text);
+            };
+
+            // XML Functions
+            function formatXMLString(xml) {
+                let formatted = '';
+                let indent = '';
+                const tab = '  ';
+                xml.split(/>\s*</).forEach(node => {
+                    if (node.match(/^\/\w/)) {
+                        indent = indent.substring(tab.length);
+                    }
+                    formatted += indent + '<' + node + '>\r\n';
+                    if (node.match(/^<?\w[^>]*[^\/]$/)) {
+                        indent += tab;
+                    }
+                });
+                return formatted.substring(1, formatted.length - 3);
+            }
+
+            window.formatXML = () => {
+                try {
+                    const input = xmlEditor.getValue();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(input, 'text/xml');
+                    if (doc.getElementsByTagName('parsererror').length > 0) {
+                        throw new Error('Invalid XML');
+                    }
+                    const formatted = formatXMLString(input);
+                    xmlEditor.setValue(formatted);
+                    document.getElementById('xmlError').textContent = '';
+                } catch (error) {
+                    document.getElementById('xmlError').textContent = `Error: ${error.message}`;
+                }
+            };
+
+            window.minifyXML = () => {
+                try {
+                    const input = xmlEditor.getValue();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(input, 'text/xml');
+                    if (doc.getElementsByTagName('parsererror').length > 0) {
+                        throw new Error('Invalid XML');
+                    }
+                    const minified = input.replace(/>\s+</g, '><').trim();
+                    xmlEditor.setValue(minified);
+                    document.getElementById('xmlError').textContent = '';
+                } catch (error) {
+                    document.getElementById('xmlError').textContent = `Error: ${error.message}`;
+                }
+            };
+
+            window.copyXML = () => {
+                const text = xmlEditor.getValue();
+                copyToClipboard(text);
+            };
+
+            // CSV Functions
+            function parseCSVLine(line) {
+                const result = [];
+                let cell = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        if (inQuotes && line[i + 1] === '"') {
+                            cell += '"';
+                            i++;
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
+                    } else if (char === ',' && !inQuotes) {
+                        result.push(cell);
+                        cell = '';
+                    } else {
+                        cell += char;
+                    }
+                }
+                
+                result.push(cell);
+                return result;
+            }
+
+            window.parseCSV = () => {
+                const input = document.getElementById('csvInput').value;
+                const hasHeader = document.getElementById('hasHeader').checked;
+                const lines = input.split(/\r?\n/).filter(line => line.trim());
+                
+                if (lines.length === 0) {
+                    document.getElementById('csvPreview').innerHTML = '<tr><td>No data to preview</td></tr>';
+                    return;
+                }
+
+                const data = lines.map(parseCSVLine);
+                let html = '';
+
+                if (hasHeader) {
+                    html += '<thead><tr>';
+                    data[0].forEach(header => {
+                        html += `<th>${header}</th>`;
+                    });
+                    html += '</tr></thead><tbody>';
+                    data.slice(1).forEach(row => {
+                        html += '<tr>';
+                        row.forEach(cell => {
+                            html += `<td>${cell}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    html += '</tbody>';
+                } else {
+                    html += '<tbody>';
+                    data.forEach(row => {
+                        html += '<tr>';
+                        row.forEach(cell => {
+                            html += `<td>${cell}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    html += '</tbody>';
+                }
+
+                document.getElementById('csvPreview').innerHTML = html;
+            };
+
+            window.convertToJSON = () => {
+                const input = document.getElementById('csvInput').value;
+                const hasHeader = document.getElementById('hasHeader').checked;
+                const lines = input.split(/\r?\n/).filter(line => line.trim());
+                
+                if (lines.length === 0) {
+                    document.getElementById('jsonError').textContent = 'No data to convert';
+                    return;
+                }
+
+                const data = lines.map(parseCSVLine);
+                let jsonData;
+
+                if (hasHeader) {
+                    const headers = data[0];
+                    jsonData = data.slice(1).map(row => {
+                        const obj = {};
+                        headers.forEach((header, i) => {
+                            obj[header] = row[i] || '';
+                        });
+                        return obj;
+                    });
+                } else {
+                    jsonData = data.map(row => row.map(cell => cell || ''));
+                }
+
+                jsonEditor.setValue(JSON.stringify(jsonData, null, 2));
+                document.querySelector('[data-bs-target="#json"]').click();
+            };
+
+            window.copyCSV = () => {
+                const text = document.getElementById('csvInput').value;
+                copyToClipboard(text);
+            };
+
+            // Clipboard Function
+            function copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    const message = document.createElement('div');
+                    message.className = 'success-message';
+                    message.textContent = 'Copied to clipboard!';
+                    document.activeElement.parentNode.appendChild(message);
+                    setTimeout(() => message.remove(), 2000);
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

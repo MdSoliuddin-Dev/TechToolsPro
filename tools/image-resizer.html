@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer - Multi-Tools</title>
+    <meta name="description" content="Resize your images online. Change dimensions, maintain aspect ratio, and optimize quality.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: border 0.3s ease;
+            cursor: pointer;
+        }
+        .drop-zone:hover {
+            border-color: #0056b3;
+        }
+        .drop-zone.dragover {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-color: #0056b3;
+        }
+        #preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 1rem;
+        }
+        .preview-container {
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+        .dimensions-info {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            margin-top: 1rem;
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .preview-item {
+            text-align: center;
+        }
+        .preview-item img {
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #dee2e6;
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+        }
+        .preview-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1><i class="fas fa-expand me-2"></i>Image Resizer</h1>
+                <p class="tool-description">Resize your images while maintaining quality. Perfect for social media, websites, or any other use.</p>
+            </div>
+
+            <!-- Tool Content -->
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                        <h4>Drag & Drop your image here</h4>
+                        <p>or</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose File
+                        </button>
+                        <input type="file" id="fileInput" hidden accept="image/*">
+                        <p class="mt-2 text-muted">Supports: JPG, PNG, WebP, GIF</p>
+                    </div>
+
+                    <div class="preview-container" id="previewContainer">
+                        <div class="preview-grid">
+                            <div class="preview-item">
+                                <div class="preview-label">Original Image</div>
+                                <img id="preview" alt="Original">
+                                <div class="dimensions-info">
+                                    Original size: <span id="originalSize">0 x 0</span>
+                                </div>
+                            </div>
+                            <div class="preview-item">
+                                <div class="preview-label">Preview Result</div>
+                                <img id="previewResized" alt="Preview">
+                                <div class="dimensions-info">
+                                    Resized: <span id="resizedSize">0 x 0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Add Resize Controls -->
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Resize Settings</h5>
+                                
+                                <!-- Resize Method -->
+                                <div class="mb-3">
+                                    <label class="form-label">Resize Method</label>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="resizeMethod" id="byPixels" checked>
+                                        <label class="btn btn-outline-primary" for="byPixels">By Pixels</label>
+                                        
+                                        <input type="radio" class="btn-check" name="resizeMethod" id="byPercentage">
+                                        <label class="btn btn-outline-primary" for="byPercentage">By Percentage</label>
+                                    </div>
+                                </div>
+
+                                <!-- Pixel Inputs -->
+                                <div id="pixelInputs">
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-5">
+                                            <label class="form-label">Width (px)</label>
+                                            <input type="number" class="form-control" id="width" min="1">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label">Height (px)</label>
+                                            <input type="number" class="form-control" id="height" min="1">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-check mt-4">
+                                                <input class="form-check-input" type="checkbox" id="maintainAspectRatio" checked>
+                                                <label class="form-check-label" for="maintainAspectRatio">
+                                                    <i class="fas fa-link"></i>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Percentage Input -->
+                                <div id="percentageInput" style="display: none;">
+                                    <div class="mb-3">
+                                        <label class="form-label">Scale Percentage</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="percentage" value="100" min="1" max="200">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Output Format -->
+                                <div class="mb-3">
+                                    <label class="form-label">Output Format</label>
+                                    <select class="form-select" id="outputFormat">
+                                        <option value="image/jpeg">JPEG</option>
+                                        <option value="image/png">PNG</option>
+                                        <option value="image/webp">WebP</option>
+                                    </select>
+                                </div>
+
+                                <!-- Quality Control -->
+                                <div class="mb-3">
+                                    <label class="form-label">Quality</label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input type="range" class="form-range flex-grow-1" id="quality" min="0" max="100" value="90">
+                                        <span id="qualityValue" style="min-width: 3rem;">90%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <button class="btn btn-primary" id="previewBtn">
+                                <i class="fas fa-eye me-2"></i>Preview Resize
+                            </button>
+                            <button class="btn btn-success ms-2" id="downloadBtn" disabled>
+                                <i class="fas fa-download me-2"></i>Download
+                            </button>
+                            <button class="btn btn-danger ms-2" id="clearBtn">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add new settings cards before the existing settings card -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Preset Sizes</h5>
+                            <div class="row g-2">
+                                <div class="col-md-3 col-6">
+                                    <button class="btn btn-outline-primary w-100" data-preset="social">
+                                        Social Media<br>
+                                        <small>1200x630</small>
+                                    </button>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <button class="btn btn-outline-primary w-100" data-preset="profile">
+                                        Profile Picture<br>
+                                        <small>400x400</small>
+                                    </button>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <button class="btn btn-outline-primary w-100" data-preset="hd">
+                                        HD Video<br>
+                                        <small>1920x1080</small>
+                                    </button>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <button class="btn btn-outline-primary w-100" data-preset="4k">
+                                        4K<br>
+                                        <small>3840x2160</small>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings -->
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Advanced Settings</h5>
+                            
+                            <!-- Resize Algorithm -->
+                            <div class="mb-3">
+                                <label class="form-label">Resize Algorithm</label>
+                                <select class="form-select" id="resizeAlgorithm">
+                                    <option value="bilinear">Bilinear (Balanced)</option>
+                                    <option value="bicubic">Bicubic (High Quality)</option>
+                                    <option value="nearest">Nearest Neighbor (Fast)</option>
+                                    <option value="lanczos">Lanczos (Best Quality)</option>
+                                </select>
+                                <div class="form-text">Choose the algorithm that best suits your needs</div>
+                            </div>
+
+                            <!-- Color Settings -->
+                            <div class="mb-3">
+                                <label class="form-label">Color Settings</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <select class="form-select" id="colorSpace">
+                                            <option value="rgb">RGB Color</option>
+                                            <option value="grayscale">Grayscale</option>
+                                            <option value="cmyk">CMYK (Print)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select class="form-select" id="colorDepth">
+                                            <option value="8">8-bit Color</option>
+                                            <option value="16">16-bit Color</option>
+                                            <option value="32">32-bit Color</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Batch Processing -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="enableBatch">
+                                    <label class="form-check-label" for="enableBatch">Enable Batch Processing</label>
+                                </div>
+                                <div id="batchSettings" style="display: none;">
+                                    <div class="mt-2">
+                                        <label class="form-label">Output Naming Pattern</label>
+                                        <input type="text" class="form-control" id="namingPattern" value="{name}_resized_{width}x{height}">
+                                        <div class="form-text">Available variables: {name}, {width}, {height}, {index}</div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="createSubfolder" checked>
+                                            <label class="form-check-label" for="createSubfolder">
+                                                Create subfolder for batch output
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Image Optimization -->
+                            <div class="mb-3">
+                                <label class="form-label">Image Optimization</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="stripMetadata" checked>
+                                    <label class="form-check-label" for="stripMetadata">
+                                        Strip metadata (EXIF, XMP, etc.)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="optimizeOutput">
+                                    <label class="form-check-label" for="optimizeOutput">
+                                        Optimize output file size
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Options -->
+                            <div class="mb-3">
+                                <label class="form-label">Advanced Options</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="smoothEdges" checked>
+                                    <label class="form-check-label" for="smoothEdges">
+                                        Enable edge smoothing
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="preserveTransparency" checked>
+                                    <label class="form-check-label" for="preserveTransparency">
+                                        Preserve transparency
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Section -->
+            <div class="ad-section mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="ad-placeholder text-center">
+                            <div id="tool-ad-space" class="bg-light p-3">
+                                <p class="text-muted">Advertisement Space</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/components.js"></script>
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const previewResized = document.getElementById('previewResized');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewBtn = document.getElementById('previewBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const originalSize = document.getElementById('originalSize');
+        const resizedSize = document.getElementById('resizedSize');
+        const width = document.getElementById('width');
+        const height = document.getElementById('height');
+        const percentage = document.getElementById('percentage');
+        const maintainAspectRatio = document.getElementById('maintainAspectRatio');
+        const quality = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        const outputFormat = document.getElementById('outputFormat');
+
+        let originalWidth = 0;
+        let originalHeight = 0;
+        let aspectRatio = 1;
+        let currentResizedBlob = null; // Store the current resized image blob
+
+        // Event Listeners
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Handle resize method change
+        document.querySelectorAll('input[name="resizeMethod"]').forEach(input => {
+            input.addEventListener('change', (e) => {
+                document.getElementById('pixelInputs').style.display = 
+                    e.target.id === 'byPixels' ? 'block' : 'none';
+                document.getElementById('percentageInput').style.display = 
+                    e.target.id === 'byPercentage' ? 'block' : 'none';
+            });
+        });
+
+        // Handle dimension inputs
+        width.addEventListener('input', () => {
+            if (maintainAspectRatio.checked) {
+                height.value = Math.round(width.value / aspectRatio);
+            }
+        });
+
+        height.addEventListener('input', () => {
+            if (maintainAspectRatio.checked) {
+                width.value = Math.round(height.value * aspectRatio);
+            }
+        });
+
+        quality.addEventListener('input', (e) => {
+            qualityValue.textContent = `${e.target.value}%`;
+        });
+
+        // Handle file selection
+        function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Please select a valid image file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.onload = () => {
+                    originalWidth = preview.naturalWidth;
+                    originalHeight = preview.naturalHeight;
+                    aspectRatio = originalWidth / originalHeight;
+                    originalSize.textContent = `${originalWidth} x ${originalHeight}`;
+                    width.value = originalWidth;
+                    height.value = originalHeight;
+                    previewContainer.style.display = 'block';
+                    dropZone.style.display = 'none';
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Preview resize
+        async function previewResize() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate dimensions
+            let newWidth, newHeight;
+            if (document.getElementById('byPixels').checked) {
+                newWidth = parseInt(width.value);
+                newHeight = parseInt(height.value);
+            } else {
+                const scale = parseInt(percentage.value) / 100;
+                newWidth = Math.round(originalWidth * scale);
+                newHeight = Math.round(originalHeight * scale);
+            }
+            
+            // Set canvas size
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            
+            // Apply resize algorithm
+            const algorithm = document.getElementById('resizeAlgorithm').value;
+            ctx.imageSmoothingEnabled = document.getElementById('smoothEdges').checked;
+            ctx.imageSmoothingQuality = algorithm === 'bicubic' || algorithm === 'lanczos' ? 'high' : 'medium';
+            
+            // Apply color space
+            const colorSpace = document.getElementById('colorSpace').value;
+            if (colorSpace === 'grayscale') {
+                ctx.filter = 'grayscale(100%)';
+            }
+            
+            // Draw resized image
+            ctx.drawImage(preview, 0, 0, newWidth, newHeight);
+            
+            // Update preview and dimensions
+            const format = outputFormat.value;
+            const qualityValue = parseInt(quality.value) / 100;
+            
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                previewResized.src = url;
+                currentResizedBlob = blob;
+                resizedSize.textContent = `${newWidth} x ${newHeight}`;
+                downloadBtn.disabled = false;
+                
+                // Show file size comparison
+                const originalFileSize = formatFileSize(preview.src.length * 0.75); // Approximate original size
+                const newFileSize = formatFileSize(blob.size);
+                resizedSize.textContent = `${newWidth} x ${newHeight} (${newFileSize})`;
+                
+                // Clean up old URL if it exists
+                URL.revokeObjectURL(previewResized.dataset.blobUrl);
+                previewResized.dataset.blobUrl = url;
+            }, format, qualityValue);
+        }
+
+        // Download resized image
+        function downloadResized() {
+            if (!currentResizedBlob) return;
+            
+            const format = outputFormat.value.split('/')[1];
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(currentResizedBlob);
+            a.download = `resized_image.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        }
+
+        // Clear image
+        function clearImage() {
+            preview.src = '';
+            previewResized.src = '';
+            previewContainer.style.display = 'none';
+            dropZone.style.display = 'block';
+            fileInput.value = '';
+            originalSize.textContent = '0 x 0';
+            resizedSize.textContent = '0 x 0';
+            width.value = '';
+            height.value = '';
+            percentage.value = '100';
+            downloadBtn.disabled = true;
+            currentResizedBlob = null;
+            
+            // Clean up blob URLs
+            if (previewResized.dataset.blobUrl) {
+                URL.revokeObjectURL(previewResized.dataset.blobUrl);
+                previewResized.dataset.blobUrl = '';
+            }
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Event listeners for buttons
+        previewBtn.addEventListener('click', previewResize);
+        downloadBtn.addEventListener('click', downloadResized);
+        clearBtn.addEventListener('click', clearImage);
+
+        // Add live preview updates when settings change
+        const updatePreviewDebounced = debounce(previewResize, 500);
+
+        // Add event listeners for live preview
+        [width, height, percentage, quality].forEach(input => {
+            input.addEventListener('input', updatePreviewDebounced);
+        });
+
+        [outputFormat, 'resizeAlgorithm', 'colorSpace', 'smoothEdges'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', previewResize);
+        });
+
+        // Debounce function to prevent too many preview updates
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Preset size buttons
+        document.querySelectorAll('[data-preset]').forEach(button => {
+            button.addEventListener('click', () => {
+                const preset = button.dataset.preset;
+                switch(preset) {
+                    case 'social':
+                        width.value = 1200;
+                        height.value = 630;
+                        break;
+                    case 'profile':
+                        width.value = 400;
+                        height.value = 400;
+                        break;
+                    case 'hd':
+                        width.value = 1920;
+                        height.value = 1080;
+                        break;
+                    case '4k':
+                        width.value = 3840;
+                        height.value = 2160;
+                        break;
+                }
+                document.getElementById('byPixels').checked = true;
+                document.getElementById('pixelInputs').style.display = 'block';
+                document.getElementById('percentageInput').style.display = 'none';
+            });
+        });
+
+        // Batch processing toggle
+        const enableBatch = document.getElementById('enableBatch');
+        const batchSettings = document.getElementById('batchSettings');
+        enableBatch.addEventListener('change', () => {
+            batchSettings.style.display = enableBatch.checked ? 'block' : 'none';
+            fileInput.multiple = enableBatch.checked;
+        });
+    </script>
+</body>
+</html> 

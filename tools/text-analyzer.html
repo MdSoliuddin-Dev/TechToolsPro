@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Analyzer - Multi-Tools</title>
+    <meta name="description" content="Analyze text for word count, readability, keyword density, and more with real-time statistics.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css" rel="stylesheet">
+    <style>
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 992px) {
+            .editor-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--background-color);
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .editor-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .editor-content {
+            position: relative;
+            flex-grow: 1;
+            min-height: 400px;
+        }
+
+        .text-input {
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+            padding: 1rem;
+            border: none;
+            background: transparent;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            resize: none;
+            color: var(--text-primary);
+        }
+
+        .text-input:focus {
+            outline: none;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            background: var(--background-color);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .analysis-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .analysis-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .analysis-icon {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+        .keyword-table {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .keyword-table th {
+            background: rgba(0, 0, 0, 0.03);
+            font-weight: 600;
+        }
+
+        .keyword-table td,
+        .keyword-table th {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .readability-meter {
+            height: 8px;
+            border-radius: var(--border-radius);
+            background: rgba(0, 0, 0, 0.1);
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+
+        .readability-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .readability-easy { background: #28a745; }
+        .readability-medium { background: #ffc107; }
+        .readability-hard { background: #dc3545; }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .sentiment-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+        }
+
+        .sentiment-positive {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .sentiment-neutral {
+            background: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+        }
+
+        .sentiment-negative {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .sentiment-icon {
+            font-size: 1.5rem;
+        }
+
+        @keyframes copied {
+            0%, 100% { opacity: 0; }
+            10%, 90% { opacity: 1; }
+        }
+
+        .copied-tooltip {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            animation: copied 2s ease-in-out;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Text Analyzer
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Basic Stats -->
+                        <div class="stats-container">
+                            <div class="stat-card">
+                                <div class="stat-value" id="wordCount">0</div>
+                                <div class="stat-label">Words</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="charCount">0</div>
+                                <div class="stat-label">Characters</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="sentenceCount">0</div>
+                                <div class="stat-label">Sentences</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="paragraphCount">0</div>
+                                <div class="stat-label">Paragraphs</div>
+                            </div>
+                        </div>
+
+                        <!-- Editor Container -->
+                        <div class="editor-container">
+                            <!-- Input Panel -->
+                            <div class="editor-panel">
+                                <div class="editor-header">
+                                    <h6 class="editor-title">Input Text</h6>
+                                    <div class="editor-actions">
+                                        <button class="btn btn-sm btn-outline-secondary" id="pasteBtn" title="Paste from clipboard">
+                                            <i class="fas fa-paste"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" id="clearBtn" title="Clear input">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="editor-content">
+                                    <textarea class="text-input" id="textInput" placeholder="Enter or paste your text here..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Analysis Panel -->
+                            <div class="editor-panel">
+                                <div class="editor-header">
+                                    <h6 class="editor-title">Analysis</h6>
+                                    <div class="editor-actions">
+                                        <button class="btn btn-sm btn-outline-primary" id="copyBtn" title="Copy analysis">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="downloadBtn" title="Download report">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="editor-content p-3">
+                                    <!-- Readability -->
+                                    <div class="analysis-section">
+                                        <div class="analysis-header">
+                                            <i class="fas fa-book-reader analysis-icon"></i>
+                                            <h6 class="mb-0">Readability</h6>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>Flesch Reading Ease</span>
+                                                <span id="fleschScore">0</span>
+                                            </div>
+                                            <div class="readability-meter">
+                                                <div class="readability-fill" id="fleschMeter"></div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>Grade Level</span>
+                                                <span id="gradeLevel">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Word Distribution -->
+                                    <div class="analysis-section">
+                                        <div class="analysis-header">
+                                            <i class="fas fa-chart-pie analysis-icon"></i>
+                                            <h6 class="mb-0">Word Distribution</h6>
+                                        </div>
+                                        <div class="chart-container">
+                                            <canvas id="wordLengthChart"></canvas>
+                                        </div>
+                                    </div>
+
+                                    <!-- Top Keywords -->
+                                    <div class="analysis-section">
+                                        <div class="analysis-header">
+                                            <i class="fas fa-key analysis-icon"></i>
+                                            <h6 class="mb-0">Top Keywords</h6>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="keyword-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Keyword</th>
+                                                        <th>Count</th>
+                                                        <th>Frequency</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="keywordTable"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sentiment Analysis -->
+                                    <div class="analysis-section">
+                                        <div class="analysis-header">
+                                            <i class="fas fa-smile analysis-icon"></i>
+                                            <h6 class="mb-0">Sentiment Analysis</h6>
+                                        </div>
+                                        <div id="sentimentIndicator" class="sentiment-indicator sentiment-neutral">
+                                            <i class="fas fa-meh sentiment-icon"></i>
+                                            <span>Neutral</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Text Analyzer</h2>
+                        <p>Analyze text for word count, readability, keyword density, and more with real-time statistics. Perfect for content writers, students, and anyone working with text.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Word, character, sentence, and paragraph counting</li>
+                            <li>Readability scoring (Flesch Reading Ease)</li>
+                            <li>Keyword density analysis</li>
+                            <li>Word length distribution</li>
+                            <li>Basic sentiment analysis</li>
+                            <li>Export analysis results</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All analysis is done locally in your browser. Your text is never sent to any server.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const textInput = document.getElementById('textInput');
+            const wordCount = document.getElementById('wordCount');
+            const charCount = document.getElementById('charCount');
+            const sentenceCount = document.getElementById('sentenceCount');
+            const paragraphCount = document.getElementById('paragraphCount');
+            const fleschScore = document.getElementById('fleschScore');
+            const fleschMeter = document.getElementById('fleschMeter');
+            const gradeLevel = document.getElementById('gradeLevel');
+            const keywordTable = document.getElementById('keywordTable');
+            const sentimentIndicator = document.getElementById('sentimentIndicator');
+            const pasteBtn = document.getElementById('pasteBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            // Initialize Chart.js
+            const ctx = document.getElementById('wordLengthChart').getContext('2d');
+            const wordLengthChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['1-3', '4-6', '7-9', '10+'],
+                    datasets: [{
+                        label: 'Word Length Distribution',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: '#0d6efd'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Calculate basic stats
+            function calculateStats(text) {
+                const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+                const chars = text.length;
+                const sentences = text.split(/[.!?]+/).filter(sentence => sentence.trim().length > 0);
+                const paragraphs = text.split(/\n\s*\n/).filter(para => para.trim().length > 0);
+
+                wordCount.textContent = words.length;
+                charCount.textContent = chars;
+                sentenceCount.textContent = sentences.length;
+                paragraphCount.textContent = paragraphs.length;
+
+                return { words, sentences, paragraphs };
+            }
+
+            // Calculate readability
+            function calculateReadability(text) {
+                const stats = calculateStats(text);
+                const words = stats.words.length;
+                const sentences = stats.sentences.length;
+                const syllables = countSyllables(text);
+
+                if (words === 0 || sentences === 0) return { score: 0, grade: 0 };
+
+                const score = 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / words);
+                const gradeScore = 0.39 * (words / sentences) + 11.8 * (syllables / words) - 15.59;
+
+                fleschScore.textContent = Math.round(score);
+                fleschMeter.style.width = `${Math.min(100, Math.max(0, score))}%`;
+                fleschMeter.className = `readability-fill readability-${score > 80 ? 'easy' : score > 60 ? 'medium' : 'hard'}`;
+                gradeLevel.textContent = Math.max(0, Math.round(gradeScore));
+
+                return { score, grade: gradeScore };
+            }
+
+            // Count syllables (simplified)
+            function countSyllables(text) {
+                return text.toLowerCase()
+                    .replace(/[^a-z]/g, '')
+                    .replace(/[^aeiouy]+/g, ' ')
+                    .trim()
+                    .split(' ')
+                    .filter(s => s.length > 0)
+                    .length;
+            }
+
+            // Analyze word distribution
+            function analyzeWordDistribution(words) {
+                const distribution = [0, 0, 0, 0]; // 1-3, 4-6, 7-9, 10+
+
+                words.forEach(word => {
+                    const length = word.length;
+                    if (length <= 3) distribution[0]++;
+                    else if (length <= 6) distribution[1]++;
+                    else if (length <= 9) distribution[2]++;
+                    else distribution[3]++;
+                });
+
+                wordLengthChart.data.datasets[0].data = distribution;
+                wordLengthChart.update();
+            }
+
+            // Analyze keywords
+            function analyzeKeywords(words) {
+                const stopWords = new Set(['the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at']);
+                const wordCount = {};
+                const totalWords = words.length;
+
+                words.forEach(word => {
+                    word = word.toLowerCase().replace(/[^a-z]/g, '');
+                    if (word && !stopWords.has(word)) {
+                        wordCount[word] = (wordCount[word] || 0) + 1;
+                    }
+                });
+
+                const keywords = Object.entries(wordCount)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+
+                keywordTable.innerHTML = keywords
+                    .map(([word, count]) => `
+                        <tr>
+                            <td>${word}</td>
+                            <td>${count}</td>
+                            <td>${((count / totalWords) * 100).toFixed(1)}%</td>
+                        </tr>
+                    `)
+                    .join('');
+            }
+
+            // Simple sentiment analysis
+            function analyzeSentiment(text) {
+                const positiveWords = new Set(['good', 'great', 'awesome', 'excellent', 'happy', 'love', 'wonderful', 'best']);
+                const negativeWords = new Set(['bad', 'awful', 'horrible', 'terrible', 'sad', 'hate', 'worst']);
+
+                const words = text.toLowerCase().split(/\s+/);
+                let positive = 0;
+                let negative = 0;
+
+                words.forEach(word => {
+                    if (positiveWords.has(word)) positive++;
+                    if (negativeWords.has(word)) negative++;
+                });
+
+                let sentiment, icon;
+                if (positive > negative) {
+                    sentiment = 'positive';
+                    icon = 'smile';
+                } else if (negative > positive) {
+                    sentiment = 'negative';
+                    icon = 'frown';
+                } else {
+                    sentiment = 'neutral';
+                    icon = 'meh';
+                }
+
+                sentimentIndicator.className = `sentiment-indicator sentiment-${sentiment}`;
+                sentimentIndicator.innerHTML = `
+                    <i class="fas fa-${icon} sentiment-icon"></i>
+                    <span>${sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}</span>
+                `;
+            }
+
+            // Update all analysis
+            function updateAnalysis() {
+                const text = textInput.value;
+                const stats = calculateStats(text);
+                calculateReadability(text);
+                analyzeWordDistribution(stats.words);
+                analyzeKeywords(stats.words);
+                analyzeSentiment(text);
+            }
+
+            // Event listeners
+            textInput.addEventListener('input', updateAnalysis);
+
+            pasteBtn.addEventListener('click', () => {
+                navigator.clipboard.readText().then(text => {
+                    textInput.value = text;
+                    updateAnalysis();
+                });
+            });
+
+            clearBtn.addEventListener('click', () => {
+                textInput.value = '';
+                updateAnalysis();
+            });
+
+            copyBtn.addEventListener('click', () => {
+                const stats = {
+                    words: wordCount.textContent,
+                    characters: charCount.textContent,
+                    sentences: sentenceCount.textContent,
+                    paragraphs: paragraphCount.textContent,
+                    readability: fleschScore.textContent,
+                    gradeLevel: gradeLevel.textContent
+                };
+
+                const report = `Text Analysis Report
+------------------------
+Words: ${stats.words}
+Characters: ${stats.characters}
+Sentences: ${stats.sentences}
+Paragraphs: ${stats.paragraphs}
+Readability Score: ${stats.readability}
+Grade Level: ${stats.gradeLevel}`;
+
+                navigator.clipboard.writeText(report).then(() => {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'copied-tooltip';
+                    tooltip.textContent = 'Analysis copied to clipboard!';
+                    document.body.appendChild(tooltip);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(tooltip);
+                    }, 2000);
+                });
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                const stats = {
+                    words: wordCount.textContent,
+                    characters: charCount.textContent,
+                    sentences: sentenceCount.textContent,
+                    paragraphs: paragraphCount.textContent,
+                    readability: fleschScore.textContent,
+                    gradeLevel: gradeLevel.textContent
+                };
+
+                const report = `Text Analysis Report
+------------------------
+Words: ${stats.words}
+Characters: ${stats.characters}
+Sentences: ${stats.sentences}
+Paragraphs: ${stats.paragraphs}
+Readability Score: ${stats.readability}
+Grade Level: ${stats.gradeLevel}
+
+Original Text:
+${textInput.value}`;
+
+                const blob = new Blob([report], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'text-analysis.txt';
+                link.click();
+                URL.revokeObjectURL(url);
+            });
+
+            // Initialize
+            updateAnalysis();
+        });
+    </script>
+</body>
+</html> 

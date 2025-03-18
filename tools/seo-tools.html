@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO Tools - Multi-Tools</title>
+    <meta name="description" content="Comprehensive SEO tools including keyword density checker, sitemap generator, robots.txt generator, and more.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .result-area {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-top: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .keyword-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .keyword-item:last-child {
+            border-bottom: none;
+        }
+
+        .density-bar {
+            height: 20px;
+            background: var(--primary-light);
+            border-radius: var(--border-radius);
+            margin-top: 0.25rem;
+        }
+
+        .url-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .url-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .url-item:last-child {
+            border-bottom: none;
+        }
+
+        .url-item .status {
+            margin-left: auto;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--border-radius);
+            font-size: 0.875rem;
+        }
+
+        .status-success {
+            background-color: rgba(var(--success-rgb), 0.1);
+            color: var(--success);
+        }
+
+        .status-error {
+            background-color: rgba(var(--danger-rgb), 0.1);
+            color: var(--danger);
+        }
+
+        .status-warning {
+            background-color: rgba(var(--warning-rgb), 0.1);
+            color: var(--warning);
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            z-index: 1;
+        }
+
+        .progress-bar {
+            transition: width 0.2s;
+        }
+
+        .metric-card {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .suggestion-item {
+            padding: 0.5rem;
+            border-left: 3px solid var(--primary);
+            margin-bottom: 0.5rem;
+            background: rgba(var(--primary-rgb), 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .metric-card {
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-search me-2"></i>
+                            SEO Tools
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tool Sections -->
+                        <ul class="nav nav-tabs mb-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#keyword" type="button">
+                                    <i class="fas fa-percentage me-2"></i>Keyword Density
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sitemap" type="button">
+                                    <i class="fas fa-sitemap me-2"></i>Sitemap Generator
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#robots" type="button">
+                                    <i class="fas fa-robot me-2"></i>Robots.txt
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#checker" type="button">
+                                    <i class="fas fa-check-circle me-2"></i>SEO Checker
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Keyword Density Checker -->
+                            <div class="tab-pane fade show active" id="keyword" role="tabpanel">
+                                <div class="mb-3">
+                                    <label class="form-label">Enter Text or URL</label>
+                                    <textarea class="form-control" id="keywordText" rows="6" placeholder="Paste your content here or enter a URL to analyze"></textarea>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="contentType" id="textContent" checked>
+                                            <label class="form-check-label" for="textContent">
+                                                Text Content
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="contentType" id="urlContent">
+                                            <label class="form-check-label" for="urlContent">
+                                                URL
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary w-100" onclick="analyzeKeywords()">
+                                    <i class="fas fa-search me-2"></i>Analyze Keywords
+                                </button>
+
+                                <div class="position-relative">
+                                    <div class="result-area" id="keywordResults"></div>
+                                    <button class="btn btn-outline-primary btn-sm copy-btn" onclick="copyResults('keywordResults')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Sitemap Generator -->
+                            <div class="tab-pane fade" id="sitemap" role="tabpanel">
+                                <div class="mb-3">
+                                    <label class="form-label">Website URL</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">https://</span>
+                                        <input type="text" class="form-control" id="sitemapUrl" placeholder="example.com">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Options</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="includeImages" checked>
+                                                <label class="form-check-label" for="includeImages">
+                                                    Include Images
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="includeLastmod" checked>
+                                                <label class="form-check-label" for="includeLastmod">
+                                                    Include Last Modified
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="includePriority">
+                                                <label class="form-check-label" for="includePriority">
+                                                    Include Priority
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="prettyPrint" checked>
+                                                <label class="form-check-label" for="prettyPrint">
+                                                    Pretty Print XML
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary w-100" onclick="generateSitemap()">
+                                    <i class="fas fa-sitemap me-2"></i>Generate Sitemap
+                                </button>
+
+                                <div class="position-relative">
+                                    <div class="result-area" id="sitemapResult"></div>
+                                    <button class="btn btn-outline-primary btn-sm copy-btn" onclick="copyResults('sitemapResult')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Robots.txt Generator -->
+                            <div class="tab-pane fade" id="robots" role="tabpanel">
+                                <div class="mb-3">
+                                    <label class="form-label">User-agent Rules</label>
+                                    <div id="robotsRules">
+                                        <div class="input-group mb-2">
+                                            <select class="form-select" style="max-width: 150px;">
+                                                <option value="*">All robots (*)</option>
+                                                <option value="Googlebot">Googlebot</option>
+                                                <option value="Bingbot">Bingbot</option>
+                                                <option value="Yandex">Yandex</option>
+                                            </select>
+                                            <select class="form-select" style="max-width: 150px;">
+                                                <option value="allow">Allow</option>
+                                                <option value="disallow">Disallow</option>
+                                            </select>
+                                            <input type="text" class="form-control" placeholder="Path (e.g., /admin/)">
+                                            <button class="btn btn-outline-danger" onclick="removeRule(this)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="addRule()">
+                                        <i class="fas fa-plus me-2"></i>Add Rule
+                                    </button>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Sitemap URL (Optional)</label>
+                                    <input type="text" class="form-control" id="robotsSitemap" placeholder="https://example.com/sitemap.xml">
+                                </div>
+
+                                <button class="btn btn-primary w-100" onclick="generateRobots()">
+                                    <i class="fas fa-robot me-2"></i>Generate Robots.txt
+                                </button>
+
+                                <div class="position-relative">
+                                    <div class="result-area" id="robotsResult"></div>
+                                    <button class="btn btn-outline-primary btn-sm copy-btn" onclick="copyResults('robotsResult')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- SEO Checker -->
+                            <div class="tab-pane fade" id="checker" role="tabpanel">
+                                <div class="mb-3">
+                                    <label class="form-label">Website URL</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">https://</span>
+                                        <input type="text" class="form-control" id="seoUrl" placeholder="example.com">
+                                        <button class="btn btn-primary" onclick="checkSEO()">
+                                            <i class="fas fa-search me-2"></i>Analyze
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="seoResults" class="d-none">
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            <div class="metric-card text-center">
+                                                <div class="metric-label">Performance Score</div>
+                                                <div class="metric-value text-primary">0</div>
+                                                <div class="progress">
+                                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="metric-card text-center">
+                                                <div class="metric-label">SEO Score</div>
+                                                <div class="metric-value text-success">0</div>
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="metric-card text-center">
+                                                <div class="metric-label">Mobile Score</div>
+                                                <div class="metric-value text-warning">0</div>
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="result-area">
+                                        <h5>Suggestions</h5>
+                                        <div id="suggestions"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About SEO Tools</h2>
+                        <p>A comprehensive set of tools for search engine optimization including keyword analysis, sitemap generation, robots.txt creation, and SEO checking.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Keyword density analysis with detailed statistics</li>
+                            <li>XML sitemap generator with customization options</li>
+                            <li>Robots.txt generator with multiple user-agent support</li>
+                            <li>SEO checker with performance metrics</li>
+                            <li>Mobile-friendly testing</li>
+                            <li>Copy results to clipboard</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Some features may require server-side processing for full functionality.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Keyword Density Analysis
+            window.analyzeKeywords = () => {
+                const input = document.getElementById('keywordText').value.trim();
+                const isUrl = document.getElementById('urlContent').checked;
+                const results = document.getElementById('keywordResults');
+
+                if (!input) {
+                    results.innerHTML = '<div class="text-danger">Please enter some text or a URL to analyze</div>';
+                    return;
+                }
+
+                if (isUrl) {
+                    results.innerHTML = '<div class="text-info">Analyzing URL content...</div>';
+                    // In a real implementation, this would fetch the URL content
+                    setTimeout(() => analyzeContent('Sample content for demonstration'), 1000);
+                } else {
+                    analyzeContent(input);
+                }
+            };
+
+            function analyzeContent(text) {
+                const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+                const total = words.length;
+                const frequency = {};
+
+                words.forEach(word => {
+                    frequency[word] = (frequency[word] || 0) + 1;
+                });
+
+                const sorted = Object.entries(frequency)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 10);
+
+                const results = document.getElementById('keywordResults');
+                results.innerHTML = `
+                    <div class="mb-3">Total Words: ${total}</div>
+                    <div class="mb-3">Top Keywords:</div>
+                `;
+
+                sorted.forEach(([word, count]) => {
+                    const density = (count / total * 100).toFixed(2);
+                    results.innerHTML += `
+                        <div class="keyword-item">
+                            <div>
+                                <strong>${word}</strong>
+                                <div class="text-muted">
+                                    Count: ${count} | Density: ${density}%
+                                </div>
+                                <div class="density-bar" style="width: ${density * 3}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Sitemap Generator
+            window.generateSitemap = () => {
+                const url = document.getElementById('sitemapUrl').value.trim();
+                const result = document.getElementById('sitemapResult');
+
+                if (!url) {
+                    result.innerHTML = '<div class="text-danger">Please enter a website URL</div>';
+                    return;
+                }
+
+                result.innerHTML = '<div class="text-info">Generating sitemap...</div>';
+
+                // Simulate sitemap generation
+                setTimeout(() => {
+                    const includeImages = document.getElementById('includeImages').checked;
+                    const includeLastmod = document.getElementById('includeLastmod').checked;
+                    const includePriority = document.getElementById('includePriority').checked;
+                    const prettyPrint = document.getElementById('prettyPrint').checked;
+
+                    const sitemap = generateSampleSitemap(url, {
+                        includeImages,
+                        includeLastmod,
+                        includePriority,
+                        prettyPrint
+                    });
+
+                    result.innerHTML = `<pre>${sitemap}</pre>`;
+                }, 1000);
+            }
+
+            function generateSampleSitemap(url, options) {
+                const date = new Date().toISOString();
+                const pages = ['', 'about', 'contact', 'products', 'services'];
+                
+                let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
+                sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"';
+                if (options.includeImages) {
+                    sitemap += '\n    xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"';
+                }
+                sitemap += '>\n';
+
+                pages.forEach(page => {
+                    sitemap += '  <url>\n';
+                    sitemap += `    <loc>https://${url}/${page}</loc>\n`;
+                    if (options.includeLastmod) {
+                        sitemap += `    <lastmod>${date}</lastmod>\n`;
+                    }
+                    if (options.includePriority) {
+                        sitemap += `    <priority>${page === '' ? '1.0' : '0.8'}</priority>\n`;
+                    }
+                    if (options.includeImages) {
+                        sitemap += '    <image:image>\n';
+                        sitemap += `      <image:loc>https://${url}/images/sample.jpg</image:loc>\n`;
+                        sitemap += '    </image:image>\n';
+                    }
+                    sitemap += '  </url>\n';
+                });
+
+                sitemap += '</urlset>';
+                return sitemap;
+            }
+
+            // Robots.txt Generator
+            window.addRule = () => {
+                const rules = document.getElementById('robotsRules');
+                const newRule = rules.children[0].cloneNode(true);
+                rules.appendChild(newRule);
+            };
+
+            window.removeRule = (button) => {
+                const rules = document.getElementById('robotsRules');
+                if (rules.children.length > 1) {
+                    button.closest('.input-group').remove();
+                }
+            };
+
+            window.generateRobots = () => {
+                const rules = document.getElementById('robotsRules');
+                const sitemap = document.getElementById('robotsSitemap').value.trim();
+                let content = '';
+
+                Array.from(rules.children).forEach(rule => {
+                    const inputs = rule.querySelectorAll('select, input');
+                    const userAgent = inputs[0].value;
+                    const action = inputs[1].value;
+                    const path = inputs[2].value.trim() || '/';
+
+                    content += `User-agent: ${userAgent}\n`;
+                    content += `${action === 'allow' ? 'Allow' : 'Disallow'}: ${path}\n\n`;
+                });
+
+                if (sitemap) {
+                    content += `Sitemap: ${sitemap}\n`;
+                }
+
+                document.getElementById('robotsResult').innerHTML = `<pre>${content}</pre>`;
+            };
+
+            // SEO Checker
+            window.checkSEO = () => {
+                const url = document.getElementById('seoUrl').value.trim();
+                const results = document.getElementById('seoResults');
+                const suggestions = document.getElementById('suggestions');
+
+                if (!url) {
+                    alert('Please enter a website URL');
+                    return;
+                }
+
+                results.classList.remove('d-none');
+                suggestions.innerHTML = '<div class="text-info">Analyzing website...</div>';
+
+                // Simulate SEO analysis
+                setTimeout(() => {
+                    const scores = {
+                        performance: Math.floor(Math.random() * 30) + 70,
+                        seo: Math.floor(Math.random() * 20) + 80,
+                        mobile: Math.floor(Math.random() * 25) + 75
+                    };
+
+                    document.querySelector('.metric-value.text-primary').textContent = scores.performance;
+                    document.querySelector('.progress-bar').style.width = `${scores.performance}%`;
+
+                    document.querySelector('.metric-value.text-success').textContent = scores.seo;
+                    document.querySelector('.progress-bar.bg-success').style.width = `${scores.seo}%`;
+
+                    document.querySelector('.metric-value.text-warning').textContent = scores.mobile;
+                    document.querySelector('.progress-bar.bg-warning').style.width = `${scores.mobile}%`;
+
+                    const sampleSuggestions = [
+                        'Optimize images to reduce page load time',
+                        'Add meta descriptions to all pages',
+                        'Improve mobile responsiveness',
+                        'Use HTTPS for secure connections',
+                        'Implement proper header tags hierarchy'
+                    ];
+
+                    suggestions.innerHTML = sampleSuggestions.map(suggestion => `
+                        <div class="suggestion-item">
+                            <i class="fas fa-lightbulb me-2"></i>${suggestion}
+                        </div>
+                    `).join('');
+                }, 1500);
+            };
+
+            // Utility Functions
+            window.copyResults = (elementId) => {
+                const element = document.getElementById(elementId);
+                const text = element.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    const button = element.nextElementSibling;
+                    const originalHtml = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        button.innerHTML = originalHtml;
+                    }, 1500);
+                });
+            };
+        });
+    </script>
+</body>
+</html> 

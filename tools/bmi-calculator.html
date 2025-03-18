@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI Calculator - Multi-Tools</title>
+    <meta name="description" content="Calculate your Body Mass Index (BMI) with our free online BMI calculator. Get instant results and health recommendations.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-weight me-2"></i>
+                            BMI Calculator
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <form id="bmiForm" class="mb-4">
+                            <div class="row g-3">
+                                <!-- Height Input -->
+                                <div class="col-md-6">
+                                    <label for="height" class="form-label">Height</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="height" required min="1" step="0.01">
+                                        <select class="form-select" id="heightUnit" style="max-width: 100px;">
+                                            <option value="cm">cm</option>
+                                            <option value="feet">feet</option>
+                                            <option value="meters">meters</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Weight Input -->
+                                <div class="col-md-6">
+                                    <label for="weight" class="form-label">Weight</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="weight" required min="1" step="0.01">
+                                        <select class="form-select" id="weightUnit" style="max-width: 100px;">
+                                            <option value="kg">kg</option>
+                                            <option value="lbs">lbs</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Calculate Button -->
+                                <div class="col-12 text-center">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-calculator me-2"></i>Calculate BMI
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Result Section -->
+                        <div id="resultSection" class="text-center p-4 border rounded" style="display: none;">
+                            <h2 class="h5 mb-3">Your BMI Result</h2>
+                            <div class="display-4 mb-3 text-primary" id="bmiValue">--</div>
+                            <p class="mb-2">Weight Status:</p>
+                            <h3 class="h5" id="bmiCategory">--</h3>
+                            <p class="small text-muted mt-3" id="bmiDescription"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About BMI Calculator</h2>
+                        <p>The Body Mass Index (BMI) is a simple calculation using your height and weight that is used to work out if your weight is healthy.</p>
+                        
+                        <h3 class="h5 mt-4">BMI Categories:</h3>
+                        <ul>
+                            <li>Underweight = <18.5</li>
+                            <li>Normal weight = 18.5–24.9</li>
+                            <li>Overweight = 25–29.9</li>
+                            <li>Obesity = BMI of 30 or greater</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            BMI is not used to diagnose body fatness or health of an individual but is used as a screening tool.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('bmiForm');
+            const resultSection = document.getElementById('resultSection');
+            const bmiValue = document.getElementById('bmiValue');
+            const bmiCategory = document.getElementById('bmiCategory');
+            const bmiDescription = document.getElementById('bmiDescription');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                calculateBMI();
+            });
+
+            function calculateBMI() {
+                let height = parseFloat(document.getElementById('height').value);
+                let weight = parseFloat(document.getElementById('weight').value);
+                const heightUnit = document.getElementById('heightUnit').value;
+                const weightUnit = document.getElementById('weightUnit').value;
+
+                // Convert height to meters
+                if (heightUnit === 'cm') {
+                    height = height / 100;
+                } else if (heightUnit === 'feet') {
+                    height = height * 0.3048;
+                }
+
+                // Convert weight to kg
+                if (weightUnit === 'lbs') {
+                    weight = weight * 0.453592;
+                }
+
+                // Calculate BMI
+                const bmi = weight / (height * height);
+                displayResult(bmi);
+            }
+
+            function displayResult(bmi) {
+                resultSection.style.display = 'block';
+                bmiValue.textContent = bmi.toFixed(1);
+
+                let category, description;
+                if (bmi < 18.5) {
+                    category = 'Underweight';
+                    description = 'You are in the underweight range. Consider consulting with a healthcare provider about healthy ways to gain weight.';
+                } else if (bmi < 25) {
+                    category = 'Normal Weight';
+                    description = 'You are in a healthy weight range. Maintain your healthy lifestyle with balanced diet and regular exercise.';
+                } else if (bmi < 30) {
+                    category = 'Overweight';
+                    description = 'You are in the overweight range. Consider healthy lifestyle changes and consult with a healthcare provider.';
+                } else {
+                    category = 'Obese';
+                    description = 'You are in the obese range. It is recommended to consult with a healthcare provider for personalized advice.';
+                }
+
+                bmiCategory.textContent = category;
+                bmiDescription.textContent = description;
+            }
+        });
+    </script>
+</body>
+</html> 

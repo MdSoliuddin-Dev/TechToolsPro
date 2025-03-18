@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tools - Multi-Tools</title>
+    <meta name="description" content="Time management tools including time zone converter, countdown timer, and stopwatch.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <style>
+        .time-display {
+            font-family: monospace;
+            font-size: 2.5rem;
+            text-align: center;
+            padding: 1rem;
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+        }
+
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .time-card {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+        }
+
+        .time-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .time-card-title {
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .time-card-body {
+            font-size: 1.25rem;
+            font-family: monospace;
+        }
+
+        .time-card-footer {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .control-buttons .btn {
+            flex: 1;
+        }
+
+        .lap-times {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-family: monospace;
+        }
+
+        .lap-item:last-child {
+            border-bottom: none;
+        }
+
+        .lap-number {
+            font-weight: bold;
+        }
+
+        .lap-time {
+            color: var(--primary);
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .timer-input {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .timer-input .form-control {
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .timer-progress {
+            height: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .time-display {
+                font-size: 2rem;
+            }
+
+            .control-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-clock me-2"></i>
+                            Time Tools
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tool Sections -->
+                        <ul class="nav nav-tabs mb-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#timeZone" type="button">
+                                    <i class="fas fa-globe me-2"></i>Time Zone
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#countdown" type="button">
+                                    <i class="fas fa-hourglass-half me-2"></i>Countdown
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#stopwatch" type="button">
+                                    <i class="fas fa-stopwatch me-2"></i>Stopwatch
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Time Zone Section -->
+                            <div class="tab-pane fade show active" id="timeZone" role="tabpanel">
+                                <div class="mb-3">
+                                    <label class="form-label">Reference Time</label>
+                                    <input type="datetime-local" class="form-control" id="referenceTime">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Time Zones</label>
+                                    <select class="form-select" id="timeZoneSelect" multiple>
+                                        <!-- Time zones will be populated dynamically -->
+                                    </select>
+                                </div>
+
+                                <div class="time-grid" id="timeZoneGrid"></div>
+                            </div>
+
+                            <!-- Countdown Section -->
+                            <div class="tab-pane fade" id="countdown" role="tabpanel">
+                                <div class="timer-input">
+                                    <div class="flex-fill">
+                                        <label class="form-label">Hours</label>
+                                        <input type="number" class="form-control" id="hoursInput" min="0" max="99" value="0">
+                                    </div>
+                                    <div class="flex-fill">
+                                        <label class="form-label">Minutes</label>
+                                        <input type="number" class="form-control" id="minutesInput" min="0" max="59" value="0">
+                                    </div>
+                                    <div class="flex-fill">
+                                        <label class="form-label">Seconds</label>
+                                        <input type="number" class="form-control" id="secondsInput" min="0" max="59" value="0">
+                                    </div>
+                                </div>
+
+                                <div class="time-display" id="countdownDisplay">00:00:00</div>
+                                <div class="progress timer-progress">
+                                    <div class="progress-bar" id="countdownProgress" role="progressbar"></div>
+                                </div>
+
+                                <div class="control-buttons">
+                                    <button class="btn btn-primary" id="startCountdown">
+                                        <i class="fas fa-play me-2"></i>Start
+                                    </button>
+                                    <button class="btn btn-warning" id="pauseCountdown" disabled>
+                                        <i class="fas fa-pause me-2"></i>Pause
+                                    </button>
+                                    <button class="btn btn-danger" id="resetCountdown" disabled>
+                                        <i class="fas fa-stop me-2"></i>Reset
+                                    </button>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="notifyCheckbox">
+                                    <label class="form-check-label" for="notifyCheckbox">
+                                        Notify when timer ends
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Stopwatch Section -->
+                            <div class="tab-pane fade" id="stopwatch" role="tabpanel">
+                                <div class="time-display" id="stopwatchDisplay">00:00:00.000</div>
+
+                                <div class="control-buttons">
+                                    <button class="btn btn-primary" id="startStopwatch">
+                                        <i class="fas fa-play me-2"></i>Start
+                                    </button>
+                                    <button class="btn btn-secondary" id="lapStopwatch" disabled>
+                                        <i class="fas fa-flag me-2"></i>Lap
+                                    </button>
+                                    <button class="btn btn-warning" id="pauseStopwatch" disabled>
+                                        <i class="fas fa-pause me-2"></i>Pause
+                                    </button>
+                                    <button class="btn btn-danger" id="resetStopwatch" disabled>
+                                        <i class="fas fa-stop me-2"></i>Reset
+                                    </button>
+                                </div>
+
+                                <div class="lap-times" id="lapTimes"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Time Tools</h2>
+                        <p>A comprehensive set of tools for managing and converting time, including time zone conversion, countdown timer, and stopwatch.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Time zone converter with support for all major time zones</li>
+                            <li>Countdown timer with notification support</li>
+                            <li>Precise stopwatch with lap timing</li>
+                            <li>Real-time updates and synchronization</li>
+                            <li>Mobile-friendly interface</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All time calculations are performed locally in your browser.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Time Zone Elements
+            const referenceTime = document.getElementById('referenceTime');
+            const timeZoneSelect = document.getElementById('timeZoneSelect');
+            const timeZoneGrid = document.getElementById('timeZoneGrid');
+
+            // Countdown Elements
+            const hoursInput = document.getElementById('hoursInput');
+            const minutesInput = document.getElementById('minutesInput');
+            const secondsInput = document.getElementById('secondsInput');
+            const countdownDisplay = document.getElementById('countdownDisplay');
+            const countdownProgress = document.getElementById('countdownProgress');
+            const startCountdown = document.getElementById('startCountdown');
+            const pauseCountdown = document.getElementById('pauseCountdown');
+            const resetCountdown = document.getElementById('resetCountdown');
+            const notifyCheckbox = document.getElementById('notifyCheckbox');
+
+            // Stopwatch Elements
+            const stopwatchDisplay = document.getElementById('stopwatchDisplay');
+            const startStopwatch = document.getElementById('startStopwatch');
+            const lapStopwatch = document.getElementById('lapStopwatch');
+            const pauseStopwatch = document.getElementById('pauseStopwatch');
+            const resetStopwatch = document.getElementById('resetStopwatch');
+            const lapTimes = document.getElementById('lapTimes');
+
+            // Time Zone Functions
+            function initializeTimeZones() {
+                const timeZones = Intl.supportedValuesOf('timeZone');
+                timeZones.forEach(zone => {
+                    const option = new Option(zone, zone);
+                    timeZoneSelect.appendChild(option);
+                });
+
+                $(timeZoneSelect).select2({
+                    placeholder: 'Select time zones...',
+                    theme: 'bootstrap-5'
+                });
+
+                // Set default reference time to now
+                const now = new Date();
+                const offset = now.getTimezoneOffset() * 60000;
+                const localTime = new Date(now - offset);
+                referenceTime.value = localTime.toISOString().slice(0, 16);
+            }
+
+            function updateTimeZones() {
+                const selectedZones = $(timeZoneSelect).val();
+                const reference = new Date(referenceTime.value);
+
+                timeZoneGrid.innerHTML = selectedZones.map(zone => {
+                    const time = reference.toLocaleString('en-US', {
+                        timeZone: zone,
+                        dateStyle: 'full',
+                        timeStyle: 'long'
+                    });
+
+                    const offset = new Date(reference).toLocaleString('en-US', {
+                        timeZone: zone,
+                        timeZoneName: 'longOffset'
+                    }).split(' ').pop();
+
+                    return `
+                        <div class="time-card">
+                            <div class="time-card-header">
+                                <h6 class="time-card-title">${zone}</h6>
+                                <span class="badge bg-secondary">${offset}</span>
+                            </div>
+                            <div class="time-card-body">${time}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Countdown Functions
+            let countdownInterval;
+            let countdownEndTime;
+            let countdownTotalSeconds;
+
+            function formatTime(hours, minutes, seconds) {
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            function startCountdownTimer() {
+                const hours = parseInt(hoursInput.value) || 0;
+                const minutes = parseInt(minutesInput.value) || 0;
+                const seconds = parseInt(secondsInput.value) || 0;
+
+                if (hours === 0 && minutes === 0 && seconds === 0) return;
+
+                countdownTotalSeconds = hours * 3600 + minutes * 60 + seconds;
+                countdownEndTime = Date.now() + countdownTotalSeconds * 1000;
+
+                updateCountdownControls(true);
+                updateCountdown();
+
+                countdownInterval = setInterval(updateCountdown, 1000);
+            }
+
+            function updateCountdown() {
+                const now = Date.now();
+                const remaining = Math.max(0, countdownEndTime - now);
+                const totalSeconds = Math.ceil(remaining / 1000);
+
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+
+                countdownDisplay.textContent = formatTime(hours, minutes, seconds);
+                countdownProgress.style.width = `${(totalSeconds / countdownTotalSeconds) * 100}%`;
+
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    updateCountdownControls(false);
+                    if (notifyCheckbox.checked) {
+                        notifyUser('Countdown Timer', 'Time is up!');
+                    }
+                }
+            }
+
+            function pauseCountdownTimer() {
+                clearInterval(countdownInterval);
+                countdownTotalSeconds = Math.ceil((countdownEndTime - Date.now()) / 1000);
+                startCountdown.disabled = false;
+                pauseCountdown.disabled = true;
+            }
+
+            function resetCountdownTimer() {
+                clearInterval(countdownInterval);
+                countdownDisplay.textContent = '00:00:00';
+                countdownProgress.style.width = '0%';
+                updateCountdownControls(false);
+            }
+
+            function updateCountdownControls(running) {
+                startCountdown.disabled = running;
+                pauseCountdown.disabled = !running;
+                resetCountdown.disabled = !running;
+                hoursInput.disabled = running;
+                minutesInput.disabled = running;
+                secondsInput.disabled = running;
+            }
+
+            // Stopwatch Functions
+            let stopwatchInterval;
+            let stopwatchStartTime;
+            let stopwatchElapsed = 0;
+            let lapCount = 0;
+            let lastLapTime = 0;
+
+            function formatStopwatchTime(ms) {
+                const hours = Math.floor(ms / 3600000);
+                const minutes = Math.floor((ms % 3600000) / 60000);
+                const seconds = Math.floor((ms % 60000) / 1000);
+                const milliseconds = ms % 1000;
+
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+            }
+
+            function startStopwatch() {
+                stopwatchStartTime = Date.now() - stopwatchElapsed;
+                updateStopwatchControls(true);
+                updateStopwatch();
+
+                stopwatchInterval = setInterval(updateStopwatch, 10);
+            }
+
+            function updateStopwatch() {
+                const now = Date.now();
+                stopwatchElapsed = now - stopwatchStartTime;
+                stopwatchDisplay.textContent = formatStopwatchTime(stopwatchElapsed);
+            }
+
+            function pauseStopwatch() {
+                clearInterval(stopwatchInterval);
+                updateStopwatchControls(false);
+            }
+
+            function resetStopwatch() {
+                clearInterval(stopwatchInterval);
+                stopwatchElapsed = 0;
+                lastLapTime = 0;
+                lapCount = 0;
+                stopwatchDisplay.textContent = formatStopwatchTime(0);
+                lapTimes.innerHTML = '';
+                updateStopwatchControls(false);
+            }
+
+            function addLap() {
+                lapCount++;
+                const lapTime = stopwatchElapsed - lastLapTime;
+                lastLapTime = stopwatchElapsed;
+
+                const lapItem = document.createElement('div');
+                lapItem.className = 'lap-item';
+                lapItem.innerHTML = `
+                    <span class="lap-number">Lap ${lapCount}</span>
+                    <span class="lap-time">${formatStopwatchTime(lapTime)}</span>
+                `;
+
+                lapTimes.insertBefore(lapItem, lapTimes.firstChild);
+            }
+
+            function updateStopwatchControls(running) {
+                startStopwatch.disabled = running;
+                lapStopwatch.disabled = !running;
+                pauseStopwatch.disabled = !running;
+                resetStopwatch.disabled = !running && stopwatchElapsed === 0;
+            }
+
+            // Notification Function
+            function notifyUser(title, message) {
+                if ('Notification' in window) {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            new Notification(title, { body: message });
+                        }
+                    });
+                }
+            }
+
+            // Event Listeners
+            referenceTime.addEventListener('change', updateTimeZones);
+            timeZoneSelect.addEventListener('change', updateTimeZones);
+
+            startCountdown.addEventListener('click', startCountdownTimer);
+            pauseCountdown.addEventListener('click', pauseCountdownTimer);
+            resetCountdown.addEventListener('click', resetCountdownTimer);
+
+            startStopwatch.addEventListener('click', startStopwatch);
+            pauseStopwatch.addEventListener('click', pauseStopwatch);
+            resetStopwatch.addEventListener('click', resetStopwatch);
+            lapStopwatch.addEventListener('click', addLap);
+
+            // Initialize
+            initializeTimeZones();
+            updateTimeZones();
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Tools - Multi-Tools</title>
+    <meta name="description" content="Encode and decode text and files to/from Base64 with support for multiple file types and real-time preview.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 992px) {
+            .editor-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--background-color);
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .editor-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .editor-content {
+            position: relative;
+            flex-grow: 1;
+            min-height: 300px;
+        }
+
+        .text-input {
+            width: 100%;
+            height: 100%;
+            min-height: 300px;
+            padding: 1rem;
+            border: none;
+            background: transparent;
+            font-family: monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            resize: none;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .text-input:focus {
+            outline: none;
+        }
+
+        .dropzone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            background: rgba(0, 0, 0, 0.02);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dropzone:hover,
+        .dropzone.dragover {
+            background: rgba(13, 110, 253, 0.05);
+            border-color: var(--primary-color);
+        }
+
+        .dropzone-icon {
+            font-size: 2rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .dropzone-text {
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .file-list {
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            background: var(--background-color);
+        }
+
+        .file-icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .file-info {
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .file-name {
+            font-size: 0.875rem;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .preview-container {
+            width: 100%;
+            height: 100%;
+            min-height: 300px;
+            padding: 1rem;
+            overflow: auto;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .preview-audio,
+        .preview-video {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .preview-text {
+            font-family: monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .tool-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--background-color);
+        }
+
+        .option-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .option-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        @keyframes copied {
+            0%, 100% { opacity: 0; }
+            10%, 90% { opacity: 1; }
+        }
+
+        .copied-tooltip {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            animation: copied 2s ease-in-out;
+            pointer-events: none;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-exchange-alt me-2"></i>
+                            Base64 Tools
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tool Options -->
+                        <div class="tool-options">
+                            <div class="option-group">
+                                <div class="option-label">Mode</div>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="mode" id="encodeMode" checked>
+                                    <label class="btn btn-outline-primary" for="encodeMode">
+                                        <i class="fas fa-lock me-2"></i>Encode
+                                    </label>
+                                    <input type="radio" class="btn-check" name="mode" id="decodeMode">
+                                    <label class="btn btn-outline-primary" for="decodeMode">
+                                        <i class="fas fa-unlock me-2"></i>Decode
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="option-group">
+                                <div class="option-label">Input Type</div>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="type" id="textType" checked>
+                                    <label class="btn btn-outline-secondary" for="textType">
+                                        <i class="fas fa-font me-2"></i>Text
+                                    </label>
+                                    <input type="radio" class="btn-check" name="type" id="fileType">
+                                    <label class="btn btn-outline-secondary" for="fileType">
+                                        <i class="fas fa-file me-2"></i>File
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="option-group">
+                                <div class="option-label">Text Format</div>
+                                <select class="form-select" id="textFormat">
+                                    <option value="utf8">UTF-8</option>
+                                    <option value="ascii">ASCII</option>
+                                    <option value="base64url">Base64URL</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Editor Container -->
+                        <div class="editor-container">
+                            <!-- Input Panel -->
+                            <div class="editor-panel">
+                                <div class="editor-header">
+                                    <h6 class="editor-title">Input</h6>
+                                    <div class="editor-actions">
+                                        <button class="btn btn-sm btn-outline-secondary" id="pasteBtn" title="Paste from clipboard">
+                                            <i class="fas fa-paste"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" id="clearBtn" title="Clear input">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="editor-content">
+                                    <!-- Text Input -->
+                                    <textarea class="text-input" id="textInput" placeholder="Enter text to encode/decode..."></textarea>
+                                    
+                                    <!-- File Input -->
+                                    <div class="dropzone" id="dropzone" style="display: none;">
+                                        <input type="file" id="fileInput" style="display: none;">
+                                        <i class="fas fa-cloud-upload-alt dropzone-icon"></i>
+                                        <div class="dropzone-text">
+                                            <p class="mb-1">Drag and drop files here</p>
+                                            <p class="mb-0">or click to select files</p>
+                                        </div>
+                                        <div class="file-list" id="fileList"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Output Panel -->
+                            <div class="editor-panel">
+                                <div class="editor-header">
+                                    <h6 class="editor-title">Output</h6>
+                                    <div class="editor-actions">
+                                        <button class="btn btn-sm btn-outline-primary" id="copyBtn" title="Copy to clipboard">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="downloadBtn" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="editor-content">
+                                    <div class="preview-container" id="previewContainer"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Base64 Tools</h2>
+                        <p>Convert text and files to and from Base64 encoding. Perfect for data transmission, embedding files in code, or working with binary data.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Text and file encoding/decoding</li>
+                            <li>Support for multiple text formats (UTF-8, ASCII, Base64URL)</li>
+                            <li>Drag and drop file support</li>
+                            <li>File preview for images, audio, video, and text</li>
+                            <li>Copy to clipboard and download options</li>
+                            <li>Real-time conversion</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All processing is done locally in your browser. Your data is never sent to any server.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const encodeMode = document.getElementById('encodeMode');
+            const decodeMode = document.getElementById('decodeMode');
+            const textType = document.getElementById('textType');
+            const fileType = document.getElementById('fileType');
+            const textFormat = document.getElementById('textFormat');
+            const textInput = document.getElementById('textInput');
+            const fileInput = document.getElementById('fileInput');
+            const dropzone = document.getElementById('dropzone');
+            const fileList = document.getElementById('fileList');
+            const previewContainer = document.getElementById('previewContainer');
+            const pasteBtn = document.getElementById('pasteBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            let currentFile = null;
+
+            // Toggle input type
+            function toggleInputType() {
+                const isFileMode = fileType.checked;
+                textInput.style.display = isFileMode ? 'none' : 'block';
+                dropzone.style.display = isFileMode ? 'flex' : 'none';
+                pasteBtn.style.display = isFileMode ? 'none' : 'block';
+            }
+
+            // Handle text conversion
+            function convertText() {
+                try {
+                    const text = textInput.value;
+                    if (!text) {
+                        previewContainer.innerHTML = '';
+                        return;
+                    }
+
+                    if (encodeMode.checked) {
+                        const encoded = btoa(unescape(encodeURIComponent(text)));
+                        previewContainer.innerHTML = `<pre class="preview-text">${encoded}</pre>`;
+                    } else {
+                        const decoded = decodeURIComponent(escape(atob(text)));
+                        previewContainer.innerHTML = `<pre class="preview-text">${decoded}</pre>`;
+                    }
+                } catch (error) {
+                    previewContainer.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+                }
+            }
+
+            // Handle file conversion
+            function handleFile(file) {
+                currentFile = file;
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    if (encodeMode.checked) {
+                        // Encode file
+                        const base64 = e.target.result.split(',')[1];
+                        previewContainer.innerHTML = `<pre class="preview-text">${base64}</pre>`;
+                    } else {
+                        // Decode and preview file
+                        try {
+                            const decoded = atob(file.data);
+                            const uint8Array = new Uint8Array(decoded.length);
+                            for (let i = 0; i < decoded.length; i++) {
+                                uint8Array[i] = decoded.charCodeAt(i);
+                            }
+                            const blob = new Blob([uint8Array], { type: file.type });
+                            const url = URL.createObjectURL(blob);
+
+                            if (file.type.startsWith('image/')) {
+                                previewContainer.innerHTML = `<img class="preview-image" src="${url}" alt="Preview">`;
+                            } else if (file.type.startsWith('audio/')) {
+                                previewContainer.innerHTML = `<audio class="preview-audio" controls src="${url}"></audio>`;
+                            } else if (file.type.startsWith('video/')) {
+                                previewContainer.innerHTML = `<video class="preview-video" controls src="${url}"></video>`;
+                            } else if (file.type.startsWith('text/')) {
+                                const textReader = new FileReader();
+                                textReader.onload = function(e) {
+                                    previewContainer.innerHTML = `<pre class="preview-text">${e.target.result}</pre>`;
+                                };
+                                textReader.readAsText(blob);
+                            } else {
+                                previewContainer.innerHTML = `<div class="preview-text">File decoded successfully. Click download to save.</div>`;
+                            }
+                        } catch (error) {
+                            previewContainer.innerHTML = `<div class="error-message">Error: Invalid Base64 data</div>`;
+                        }
+                    }
+                };
+
+                if (encodeMode.checked) {
+                    reader.readAsDataURL(file);
+                } else {
+                    reader.readAsText(file);
+                }
+
+                // Update file list
+                fileList.innerHTML = `
+                    <div class="file-item">
+                        <i class="fas fa-file file-icon"></i>
+                        <div class="file-info">
+                            <p class="file-name">${file.name}</p>
+                            <p class="file-size">${formatFileSize(file.size)}</p>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-sm btn-outline-danger" onclick="clearFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Clear file
+            window.clearFile = function() {
+                currentFile = null;
+                fileList.innerHTML = '';
+                previewContainer.innerHTML = '';
+                fileInput.value = '';
+            };
+
+            // Event listeners
+            textType.addEventListener('change', toggleInputType);
+            fileType.addEventListener('change', toggleInputType);
+            textInput.addEventListener('input', convertText);
+            encodeMode.addEventListener('change', () => currentFile ? handleFile(currentFile) : convertText());
+            decodeMode.addEventListener('change', () => currentFile ? handleFile(currentFile) : convertText());
+
+            dropzone.addEventListener('click', () => fileInput.click());
+            
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            });
+
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('dragover');
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+
+            pasteBtn.addEventListener('click', () => {
+                navigator.clipboard.readText().then(text => {
+                    textInput.value = text;
+                    convertText();
+                });
+            });
+
+            clearBtn.addEventListener('click', () => {
+                textInput.value = '';
+                clearFile();
+                convertText();
+            });
+
+            copyBtn.addEventListener('click', () => {
+                const text = previewContainer.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'copied-tooltip';
+                    tooltip.textContent = 'Copied to clipboard!';
+                    document.body.appendChild(tooltip);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(tooltip);
+                    }, 2000);
+                });
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                if (currentFile && !encodeMode.checked) {
+                    try {
+                        const decoded = atob(currentFile.data);
+                        const uint8Array = new Uint8Array(decoded.length);
+                        for (let i = 0; i < decoded.length; i++) {
+                            uint8Array[i] = decoded.charCodeAt(i);
+                        }
+                        const blob = new Blob([uint8Array], { type: currentFile.type });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = 'decoded_' + currentFile.name;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                    } catch (error) {
+                        console.error('Download error:', error);
+                    }
+                } else {
+                    const text = previewContainer.textContent;
+                    const blob = new Blob([text], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = encodeMode.checked ? 'encoded.txt' : 'decoded.txt';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                }
+            });
+
+            // Initialize
+            toggleInputType();
+        });
+    </script>
+</body>
+</html> 

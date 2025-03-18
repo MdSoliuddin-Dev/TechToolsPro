@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIF Maker - Multi-Tools</title>
+    <meta name="description" content="Create animated GIFs from images or video with advanced controls. Features frame management, animation settings, and optimization options.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Sortable.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- GIF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+    <!-- GIF.js Worker -->
+    <script>
+        // Preload worker script
+        let gifWorkerBlob = null;
+        
+        async function loadWorker() {
+            try {
+                const response = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js');
+                const workerText = await response.text();
+                const blob = new Blob([workerText], { type: 'application/javascript' });
+                gifWorkerBlob = URL.createObjectURL(blob);
+            } catch (error) {
+                console.error('Error loading GIF worker:', error);
+                alert('Failed to load GIF creation components. Please refresh the page.');
+            }
+        }
+        
+        loadWorker();
+    </script>
+    <style>
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: border 0.3s ease;
+            cursor: pointer;
+        }
+        .drop-zone:hover {
+            border-color: #0056b3;
+        }
+        .drop-zone.dragover {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-color: #0056b3;
+        }
+        .preview-container {
+            display: none;
+            margin-top: 1rem;
+        }
+        .frames-container {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            min-height: 200px;
+        }
+        .frame-item {
+            flex: 0 0 150px;
+            border: 1px solid #dee2e6;
+            border-radius: var(--border-radius);
+            padding: 0.5rem;
+            background: white;
+            cursor: move;
+            position: relative;
+        }
+        .frame-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            border: 1px solid #dee2e6;
+            border-radius: calc(var(--border-radius) - 2px);
+        }
+        .frame-item .frame-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+        .frame-item .frame-duration {
+            width: 60px;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        .frame-item .remove-frame {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #dc3545;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .preview-box {
+            border: 1px solid #dee2e6;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .preview-box img {
+            max-width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+        }
+        .animation-controls {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .frame-placeholder {
+            border: 2px dashed #dee2e6;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+        .progress-container {
+            margin-top: 1rem;
+            display: none;
+        }
+        .optimization-tips {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+        .frame-number {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0d6efd;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1><i class="fas fa-film me-2"></i>GIF Maker</h1>
+                <p class="tool-description">Create animated GIFs from images with advanced controls. Perfect for social media, presentations, and web content.</p>
+            </div>
+
+            <!-- Tool Content -->
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-film fa-3x mb-3"></i>
+                        <h4>Drag & Drop your images here</h4>
+                        <p>or</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose Files
+                        </button>
+                        <input type="file" id="fileInput" hidden accept="image/*" multiple>
+                        <p class="mt-2 text-muted">Supports: JPG, PNG, WebP, GIF</p>
+                    </div>
+
+                    <div class="preview-container" id="previewContainer">
+                        <!-- Preview Box -->
+                        <div class="preview-box">
+                            <img id="previewGif" alt="GIF Preview">
+                            <div class="animation-controls">
+                                <button class="btn btn-sm btn-outline-primary" id="playPauseBtn">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" id="prevFrameBtn">
+                                    <i class="fas fa-step-backward"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" id="nextFrameBtn">
+                                    <i class="fas fa-step-forward"></i>
+                                </button>
+                                <span class="btn btn-sm btn-outline-secondary" id="frameCounter">
+                                    Frame: 1/1
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Settings -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">GIF Settings</h5>
+                                
+                                <!-- Animation Settings -->
+                                <div class="mb-3">
+                                    <label class="form-label">Loop Type</label>
+                                    <select class="form-select" id="loopType">
+                                        <option value="infinite">Infinite Loop</option>
+                                        <option value="once">Play Once</option>
+                                        <option value="custom">Custom Loops</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Loop Count</label>
+                                    <input type="number" class="form-control" id="loopCount" value="0" min="0" disabled>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Default Duration (ms)</label>
+                                    <input type="number" class="form-control" id="defaultDuration" value="500" min="10" step="10">
+                                </div>
+
+                                <!-- Image Processing -->
+                                <div class="mb-3">
+                                    <label class="form-label">Image Processing</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <select class="form-select" id="resizeOption">
+                                                <option value="none">Original Size</option>
+                                                <option value="width">Fit to Width</option>
+                                                <option value="height">Fit to Height</option>
+                                                <option value="custom">Custom Size</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <select class="form-select" id="colorReduction">
+                                                <option value="256">256 Colors</option>
+                                                <option value="128">128 Colors</option>
+                                                <option value="64">64 Colors</option>
+                                                <option value="32">32 Colors</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Size Options -->
+                                <div class="mb-3" id="customSizeOptions" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Width (px)</label>
+                                            <input type="number" class="form-control" id="customWidth" value="800">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Height (px)</label>
+                                            <input type="number" class="form-control" id="customHeight" value="600">
+                                        </div>
+                                    </div>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="maintainAspectRatio" checked>
+                                        <label class="form-check-label" for="maintainAspectRatio">
+                                            Maintain aspect ratio
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Advanced Options -->
+                                <div class="mb-3">
+                                    <label class="form-label">Advanced Options</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="dithering" checked>
+                                        <label class="form-check-label" for="dithering">
+                                            Enable dithering
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="optimizeFrames" checked>
+                                        <label class="form-check-label" for="optimizeFrames">
+                                            Optimize similar frames
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="interlaced">
+                                        <label class="form-check-label" for="interlaced">
+                                            Interlaced GIF (progressive loading)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Frames Container -->
+                        <h5><i class="fas fa-film me-2"></i>Frames</h5>
+                        <p class="text-muted">Drag frames to reorder. Adjust individual frame durations as needed.</p>
+                        <div class="frames-container" id="framesContainer">
+                            <!-- Frames will be added here -->
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="progress-container">
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="text-center mt-3">
+                            <button class="btn btn-success" id="createGifBtn">
+                                <i class="fas fa-magic me-2"></i>Create GIF
+                            </button>
+                            <button class="btn btn-danger ms-2" id="clearBtn">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </button>
+                        </div>
+
+                        <!-- Optimization Tips -->
+                        <div class="optimization-tips">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Optimization Tips</h6>
+                            <ul class="mb-0" id="optimizationTips">
+                                <!-- Tips will be added dynamically -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Section -->
+            <div class="ad-section mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="ad-placeholder text-center">
+                            <div id="tool-ad-space" class="bg-light p-3">
+                                <p class="text-muted">Advertisement Space</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/components.js"></script>
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const framesContainer = document.getElementById('framesContainer');
+        const previewGif = document.getElementById('previewGif');
+        const createGifBtn = document.getElementById('createGifBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const prevFrameBtn = document.getElementById('prevFrameBtn');
+        const nextFrameBtn = document.getElementById('nextFrameBtn');
+        const frameCounter = document.getElementById('frameCounter');
+        const loopType = document.getElementById('loopType');
+        const loopCount = document.getElementById('loopCount');
+        const defaultDuration = document.getElementById('defaultDuration');
+        const resizeOption = document.getElementById('resizeOption');
+        const customSizeOptions = document.getElementById('customSizeOptions');
+        const optimizationTips = document.getElementById('optimizationTips');
+        const dithering = document.getElementById('dithering');
+        const optimizeFrames = document.getElementById('optimizeFrames');
+        const interlaced = document.getElementById('interlaced');
+        const colorReduction = document.getElementById('colorReduction');
+        const customWidth = document.getElementById('customWidth');
+        const customHeight = document.getElementById('customHeight');
+        const maintainAspectRatio = document.getElementById('maintainAspectRatio');
+
+        let frames = [];
+        let currentFrame = 0;
+        let isPlaying = false;
+        let playInterval = null;
+
+        // Initialize Sortable
+        new Sortable(framesContainer, {
+            animation: 150,
+            ghostClass: 'frame-placeholder',
+            onEnd: () => {
+                updateFrameNumbers();
+                updatePreview();
+            }
+        });
+
+        // Event Listeners
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        loopType.addEventListener('change', () => {
+            loopCount.disabled = loopType.value !== 'custom';
+            updateOptimizationTips();
+        });
+
+        resizeOption.addEventListener('change', () => {
+            customSizeOptions.style.display = 
+                resizeOption.value === 'custom' ? 'block' : 'none';
+            updateOptimizationTips();
+        });
+
+        // Maintain aspect ratio
+        customWidth.addEventListener('input', () => {
+            if (maintainAspectRatio.checked && frames.length > 0) {
+                const ratio = frames[0].image.height / frames[0].image.width;
+                customHeight.value = Math.round(customWidth.value * ratio);
+            }
+        });
+
+        customHeight.addEventListener('input', () => {
+            if (maintainAspectRatio.checked && frames.length > 0) {
+                const ratio = frames[0].image.width / frames[0].image.height;
+                customWidth.value = Math.round(customHeight.value * ratio);
+            }
+        });
+
+        // Check browser compatibility
+        function checkBrowserCompatibility() {
+            if (!window.Worker) {
+                alert('Your browser does not support Web Workers, which are required for GIF creation. Please use a modern browser.');
+                createGifBtn.disabled = true;
+                return false;
+            }
+
+            if (!window.Blob || !window.URL || !window.URL.createObjectURL) {
+                alert('Your browser does not support required features for GIF creation. Please use a modern browser.');
+                createGifBtn.disabled = true;
+                return false;
+            }
+
+            return true;
+        }
+
+        // Validate frame before adding
+        function validateFrame(image) {
+            const maxDimension = 4096; // Maximum reasonable dimension
+            const minDimension = 16;   // Minimum reasonable dimension
+            
+            if (image.width > maxDimension || image.height > maxDimension) {
+                alert(`Image too large. Maximum dimension is ${maxDimension}px.`);
+                return false;
+            }
+            
+            if (image.width < minDimension || image.height < minDimension) {
+                alert(`Image too small. Minimum dimension is ${minDimension}px.`);
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Handle files with validation
+        function handleFiles(files) {
+            const imageFiles = files.filter(file => 
+                file.type.startsWith('image/') && 
+                !file.type.includes('gif')
+            );
+
+            if (imageFiles.length === 0) {
+                alert('Please select valid image files (JPG, PNG, WebP).');
+                return;
+            }
+
+            if (imageFiles.length > 100) {
+                alert('Too many images selected. Maximum is 100 frames.');
+                return;
+            }
+
+            // Sort files by name to maintain sequence
+            imageFiles.sort((a, b) => a.name.localeCompare(b.name));
+
+            Promise.all(imageFiles.map(file => loadImage(file)))
+                .then(images => {
+                    const validImages = images.filter(validateFrame);
+                    if (validImages.length === 0) {
+                        alert('No valid images found. Please check image dimensions.');
+                        return;
+                    }
+                    
+                    validImages.forEach((image, index) => {
+                        addFrame(image, imageFiles[index]);
+                    });
+                    previewContainer.style.display = 'block';
+                    dropZone.style.display = 'none';
+                    updateOptimizationTips();
+                    updatePreview();
+                })
+                .catch(error => {
+                    console.error('Error loading images:', error);
+                    alert('An error occurred while loading the images. Please try again.');
+                });
+        }
+
+        // Load image
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Add frame
+        function addFrame(image, file) {
+            const frame = {
+                image: image,
+                duration: parseInt(defaultDuration.value),
+                file: file
+            };
+            frames.push(frame);
+
+            const frameElement = document.createElement('div');
+            frameElement.className = 'frame-item';
+            frameElement.innerHTML = `
+                <span class="frame-number">${frames.length}</span>
+                <img src="${image.src}" alt="Frame ${frames.length}">
+                <button class="remove-frame">×</button>
+                <div class="frame-controls">
+                    <input type="number" class="form-control form-control-sm frame-duration" 
+                           value="${frame.duration}" min="10" step="10">
+                    <small>ms</small>
+                </div>
+            `;
+
+            frameElement.querySelector('.remove-frame').addEventListener('click', () => {
+                const index = Array.from(framesContainer.children).indexOf(frameElement);
+                frames.splice(index, 1);
+                frameElement.remove();
+                updateFrameNumbers();
+                updatePreview();
+                updateOptimizationTips();
+            });
+
+            frameElement.querySelector('.frame-duration').addEventListener('change', (e) => {
+                const index = Array.from(framesContainer.children).indexOf(frameElement);
+                frames[index].duration = parseInt(e.target.value);
+                updatePreview();
+            });
+
+            framesContainer.appendChild(frameElement);
+        }
+
+        // Update frame numbers
+        function updateFrameNumbers() {
+            const frameElements = framesContainer.children;
+            for (let i = 0; i < frameElements.length; i++) {
+                frameElements[i].querySelector('.frame-number').textContent = i + 1;
+            }
+            frameCounter.textContent = `Frame: ${currentFrame + 1}/${frames.length}`;
+        }
+
+        // Update preview
+        function updatePreview() {
+            if (frames.length === 0) {
+                previewGif.src = '';
+                frameCounter.textContent = 'Frame: 0/0';
+                return;
+            }
+
+            previewGif.src = frames[currentFrame].image.src;
+            frameCounter.textContent = `Frame: ${currentFrame + 1}/${frames.length}`;
+
+            if (isPlaying) {
+                clearInterval(playInterval);
+                playAnimation();
+            }
+        }
+
+        // Play/Pause animation
+        playPauseBtn.addEventListener('click', () => {
+            if (frames.length === 0) return;
+            
+            isPlaying = !isPlaying;
+            playPauseBtn.innerHTML = isPlaying ? 
+                '<i class="fas fa-pause"></i>' : 
+                '<i class="fas fa-play"></i>';
+            
+            if (isPlaying) {
+                playAnimation();
+            } else {
+                clearInterval(playInterval);
+            }
+        });
+
+        // Play animation
+        function playAnimation() {
+            clearInterval(playInterval);
+            playInterval = setInterval(() => {
+                currentFrame = (currentFrame + 1) % frames.length;
+                updatePreview();
+            }, frames[currentFrame].duration);
+        }
+
+        // Previous frame
+        prevFrameBtn.addEventListener('click', () => {
+            if (frames.length === 0) return;
+            
+            isPlaying = false;
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            clearInterval(playInterval);
+            currentFrame = (currentFrame - 1 + frames.length) % frames.length;
+            updatePreview();
+        });
+
+        // Next frame
+        nextFrameBtn.addEventListener('click', () => {
+            if (frames.length === 0) return;
+            
+            isPlaying = false;
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            clearInterval(playInterval);
+            currentFrame = (currentFrame + 1) % frames.length;
+            updatePreview();
+        });
+
+        // Create GIF
+        createGifBtn.addEventListener('click', async () => {
+            if (frames.length === 0) {
+                alert('Please add some frames first.');
+                return;
+            }
+
+            if (!gifWorkerBlob) {
+                alert('GIF creation components are not ready. Please wait a moment and try again.');
+                return;
+            }
+
+            createGifBtn.disabled = true;
+            const progressBar = document.querySelector('.progress-bar');
+            const progressContainer = document.querySelector('.progress-container');
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            
+            try {
+                // Create temporary canvas for processing
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Set dimensions
+                const width = getOutputWidth();
+                const height = getOutputHeight();
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+
+                // Initialize GIF encoder
+                const gif = new GIF({
+                    workers: 4,
+                    quality: 10,
+                    width: width,
+                    height: height,
+                    workerScript: gifWorkerBlob,
+                    dither: dithering.checked,
+                    interlaced: interlaced.checked,
+                    transparent: null,
+                    background: '#ffffff',
+                    repeat: loopType.value === 'once' ? 1 : (loopType.value === 'custom' ? parseInt(loopCount.value) : 0)
+                });
+
+                // Process each frame
+                for (let i = 0; i < frames.length; i++) {
+                    const frame = frames[i];
+                    
+                    // Clear canvas
+                    tempCtx.fillStyle = '#ffffff';
+                    tempCtx.fillRect(0, 0, width, height);
+                    
+                    // Calculate dimensions to maintain aspect ratio
+                    const scale = Math.min(width / frame.image.width, height / frame.image.height);
+                    const drawWidth = frame.image.width * scale;
+                    const drawHeight = frame.image.height * scale;
+                    const x = (width - drawWidth) / 2;
+                    const y = (height - drawHeight) / 2;
+                    
+                    // Draw image with high quality
+                    tempCtx.imageSmoothingEnabled = true;
+                    tempCtx.imageSmoothingQuality = 'high';
+                    tempCtx.drawImage(frame.image, x, y, drawWidth, drawHeight);
+                    
+                    // Add frame to GIF
+                    gif.addFrame(tempCtx, {
+                        copy: true,
+                        delay: frame.duration,
+                        dispose: 2
+                    });
+                    
+                    // Update progress
+                    progressBar.style.width = `${Math.round((i + 1) * 50 / frames.length)}%`;
+                    
+                    // Allow UI to update
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
+
+                // Update progress during rendering
+                gif.on('progress', p => {
+                    progressBar.style.width = `${Math.round(50 + p * 50)}%`;
+                });
+
+                // Handle completion
+                gif.on('finished', blob => {
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Update preview
+                    previewGif.onload = () => {
+                        // Clean up old URL after new image loads
+                        if (previewGif.dataset.blobUrl) {
+                            URL.revokeObjectURL(previewGif.dataset.blobUrl);
+                        }
+                        previewGif.dataset.blobUrl = url;
+                    };
+                    previewGif.src = url;
+                    
+                    // Trigger download
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'animated.gif';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    // Clean up
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                    createGifBtn.disabled = false;
+                    
+                    // Clean up canvas
+                    tempCanvas.width = 0;
+                    tempCanvas.height = 0;
+                });
+
+                // Start rendering
+                gif.render();
+            } catch (error) {
+                console.error('Error creating GIF:', error);
+                alert('An error occurred while creating the GIF. Please try again.');
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                createGifBtn.disabled = false;
+            }
+        });
+
+        // Get output dimensions
+        function getOutputWidth() {
+            const option = resizeOption.value;
+            if (option === 'none') {
+                return Math.max(...frames.map(f => f.image.width));
+            } else if (option === 'custom') {
+                return Math.max(50, Math.min(2000, parseInt(customWidth.value) || 800));
+            } else {
+                const maxWidth = Math.max(...frames.map(f => f.image.width));
+                const targetWidth = option === 'width' ? 800 : Math.round((800 * maxWidth) / Math.max(...frames.map(f => f.image.height)));
+                return Math.max(50, Math.min(2000, targetWidth));
+            }
+        }
+
+        function getOutputHeight() {
+            const option = resizeOption.value;
+            if (option === 'none') {
+                return Math.max(...frames.map(f => f.image.height));
+            } else if (option === 'custom') {
+                return Math.max(50, Math.min(2000, parseInt(customHeight.value) || 600));
+            } else {
+                const maxHeight = Math.max(...frames.map(f => f.image.height));
+                const targetHeight = option === 'height' ? 600 : Math.round((600 * maxHeight) / Math.max(...frames.map(f => f.image.width)));
+                return Math.max(50, Math.min(2000, targetHeight));
+            }
+        }
+
+        // Update optimization tips
+        function updateOptimizationTips() {
+            const tips = [];
+            
+            if (frames.length > 50) {
+                tips.push('Large number of frames may result in a large file size. Consider reducing frames or increasing frame duration.');
+            }
+
+            const totalDuration = frames.reduce((sum, frame) => sum + frame.duration, 0);
+            if (totalDuration > 10000) {
+                tips.push('Long animation duration detected. Consider optimizing frame count or durations.');
+            }
+
+            const maxSize = Math.max(
+                ...frames.map(f => Math.max(f.image.width, f.image.height))
+            );
+            if (maxSize > 800) {
+                tips.push('Large image dimensions detected. Consider using resize options to optimize file size.');
+            }
+
+            if (parseInt(colorReduction.value) < 128 && !dithering.checked) {
+                tips.push('When using reduced colors, enabling dithering can improve image quality.');
+            }
+
+            optimizationTips.innerHTML = tips.map(tip => `<li>${tip}</li>`).join('');
+        }
+
+        // Clear frames
+        clearBtn.addEventListener('click', () => {
+            frames = [];
+            currentFrame = 0;
+            isPlaying = false;
+            clearInterval(playInterval);
+            framesContainer.innerHTML = '';
+            previewGif.src = '';
+            previewContainer.style.display = 'none';
+            dropZone.style.display = 'block';
+            fileInput.value = '';
+            optimizationTips.innerHTML = '';
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            frameCounter.textContent = 'Frame: 0/0';
+        });
+
+        // Initialize
+        updateOptimizationTips();
+        checkBrowserCompatibility();
+    </script>
+</body>
+</html> 

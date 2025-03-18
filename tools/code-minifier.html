@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Minifier - Multi-Tools</title>
+    <meta name="description" content="Code minification tools including CSS minifier, JavaScript minifier, and SQL formatter.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- CodeMirror -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
+    <!-- Terser -->
+    <script src="https://cdn.jsdelivr.net/npm/terser/dist/bundle.min.js"></script>
+    <!-- SQL Formatter -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql-formatter/4.0.2/sql-formatter.min.js"></script>
+    <style>
+        .CodeMirror {
+            height: 300px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stat-card {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .options-container {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-compress-alt me-2"></i>
+                            Code Minifier
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tool Sections -->
+                        <ul class="nav nav-tabs mb-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#css" type="button">
+                                    <i class="fab fa-css3 me-2"></i>CSS Minifier
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#js" type="button">
+                                    <i class="fab fa-js me-2"></i>JavaScript Minifier
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sql" type="button">
+                                    <i class="fas fa-database me-2"></i>SQL Formatter
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- CSS Minifier -->
+                            <div class="tab-pane fade show active" id="css" role="tabpanel">
+                                <div class="options-container mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="cssRemoveComments" checked>
+                                        <label class="form-check-label" for="cssRemoveComments">
+                                            Remove comments
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="cssRemoveWhitespace" checked>
+                                        <label class="form-check-label" for="cssRemoveWhitespace">
+                                            Remove unnecessary whitespace
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Input CSS</label>
+                                        <div class="position-relative">
+                                            <textarea id="cssInput"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Minified CSS</label>
+                                        <div class="position-relative">
+                                            <textarea id="cssOutput"></textarea>
+                                            <button class="btn btn-outline-primary btn-sm copy-btn" onclick="copyToClipboard('cssOutput')">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary w-100" onclick="minifyCSS()">
+                                    <i class="fas fa-compress-alt me-2"></i>Minify CSS
+                                </button>
+
+                                <div class="stats-container">
+                                    <div class="stat-card">
+                                        <div class="stat-label">Original Size</div>
+                                        <div class="stat-value" id="cssOriginalSize">0 B</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Minified Size</div>
+                                        <div class="stat-value" id="cssMinifiedSize">0 B</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Compression Ratio</div>
+                                        <div class="stat-value" id="cssCompressionRatio">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- JavaScript Minifier -->
+                            <div class="tab-pane fade" id="js" role="tabpanel">
+                                <div class="options-container mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="jsMangleNames" checked>
+                                        <label class="form-check-label" for="jsMangleNames">
+                                            Mangle variable names
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="jsCompress" checked>
+                                        <label class="form-check-label" for="jsCompress">
+                                            Apply compression
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Input JavaScript</label>
+                                        <div class="position-relative">
+                                            <textarea id="jsInput"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Minified JavaScript</label>
+                                        <div class="position-relative">
+                                            <textarea id="jsOutput"></textarea>
+                                            <button class="btn btn-outline-primary btn-sm copy-btn" onclick="copyToClipboard('jsOutput')">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary w-100" onclick="minifyJS()">
+                                    <i class="fas fa-compress-alt me-2"></i>Minify JavaScript
+                                </button>
+
+                                <div class="stats-container">
+                                    <div class="stat-card">
+                                        <div class="stat-label">Original Size</div>
+                                        <div class="stat-value" id="jsOriginalSize">0 B</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Minified Size</div>
+                                        <div class="stat-value" id="jsMinifiedSize">0 B</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Compression Ratio</div>
+                                        <div class="stat-value" id="jsCompressionRatio">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SQL Formatter -->
+                            <div class="tab-pane fade" id="sql" role="tabpanel">
+                                <div class="options-container mb-3">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Indent Style</label>
+                                            <select class="form-select" id="sqlIndentStyle">
+                                                <option value="standard">Standard</option>
+                                                <option value="tabularLeft">Tabular (Left)</option>
+                                                <option value="tabularRight">Tabular (Right)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Indent Size</label>
+                                            <select class="form-select" id="sqlIndentSize">
+                                                <option value="2">2 spaces</option>
+                                                <option value="4" selected>4 spaces</option>
+                                                <option value="8">8 spaces</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Input SQL</label>
+                                        <div class="position-relative">
+                                            <textarea id="sqlInput"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Formatted SQL</label>
+                                        <div class="position-relative">
+                                            <textarea id="sqlOutput"></textarea>
+                                            <button class="btn btn-outline-primary btn-sm copy-btn" onclick="copyToClipboard('sqlOutput')">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary w-100" onclick="formatSQL()">
+                                    <i class="fas fa-align-left me-2"></i>Format SQL
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Code Minifier</h2>
+                        <p>A comprehensive set of tools for code minification and formatting including CSS minifier, JavaScript minifier, and SQL formatter.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>CSS minification with customizable options</li>
+                            <li>JavaScript minification using Terser</li>
+                            <li>SQL formatting with multiple indent styles</li>
+                            <li>Real-time size statistics</li>
+                            <li>Syntax highlighting</li>
+                            <li>Copy to clipboard functionality</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All operations are performed locally in your browser for privacy.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize CodeMirror editors
+            const editors = {
+                cssInput: CodeMirror.fromTextArea(document.getElementById('cssInput'), {
+                    mode: 'css',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true
+                }),
+                cssOutput: CodeMirror.fromTextArea(document.getElementById('cssOutput'), {
+                    mode: 'css',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    readOnly: true
+                }),
+                jsInput: CodeMirror.fromTextArea(document.getElementById('jsInput'), {
+                    mode: 'javascript',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true
+                }),
+                jsOutput: CodeMirror.fromTextArea(document.getElementById('jsOutput'), {
+                    mode: 'javascript',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    readOnly: true
+                }),
+                sqlInput: CodeMirror.fromTextArea(document.getElementById('sqlInput'), {
+                    mode: 'sql',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true
+                }),
+                sqlOutput: CodeMirror.fromTextArea(document.getElementById('sqlOutput'), {
+                    mode: 'sql',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    readOnly: true
+                })
+            };
+
+            // CSS Minifier
+            window.minifyCSS = () => {
+                const css = editors.cssInput.getValue();
+                const removeComments = document.getElementById('cssRemoveComments').checked;
+                const removeWhitespace = document.getElementById('cssRemoveWhitespace').checked;
+
+                let minified = css;
+                
+                if (removeComments) {
+                    minified = minified.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
+                }
+                
+                if (removeWhitespace) {
+                    minified = minified
+                        .replace(/\s+/g, ' ')
+                        .replace(/\s*({|}|;|,|:)\s*/g, '$1')
+                        .replace(/;}/g, '}')
+                        .trim();
+                }
+
+                editors.cssOutput.setValue(minified);
+                updateStats('css', css, minified);
+            };
+
+            // JavaScript Minifier
+            window.minifyJS = async () => {
+                const js = editors.jsInput.getValue();
+                const mangleNames = document.getElementById('jsMangleNames').checked;
+                const compress = document.getElementById('jsCompress').checked;
+
+                try {
+                    const result = await Terser.minify(js, {
+                        mangle: mangleNames,
+                        compress: compress
+                    });
+
+                    editors.jsOutput.setValue(result.code);
+                    updateStats('js', js, result.code);
+                } catch (error) {
+                    alert('Error minifying JavaScript: ' + error.message);
+                }
+            };
+
+            // SQL Formatter
+            window.formatSQL = () => {
+                const sql = editors.sqlInput.getValue();
+                const indentStyle = document.getElementById('sqlIndentStyle').value;
+                const indentSize = parseInt(document.getElementById('sqlIndentSize').value);
+
+                try {
+                    const formatted = sqlFormatter.format(sql, {
+                        indent: ' '.repeat(indentSize),
+                        uppercase: true,
+                        linesBetweenQueries: 2
+                    });
+
+                    editors.sqlOutput.setValue(formatted);
+                } catch (error) {
+                    alert('Error formatting SQL: ' + error.message);
+                }
+            };
+
+            // Update Statistics
+            function updateStats(type, original, processed) {
+                const originalSize = new Blob([original]).size;
+                const processedSize = new Blob([processed]).size;
+                const ratio = Math.round((1 - processedSize / originalSize) * 100);
+
+                document.getElementById(`${type}OriginalSize`).textContent = formatSize(originalSize);
+                document.getElementById(`${type}MinifiedSize`).textContent = formatSize(processedSize);
+                document.getElementById(`${type}CompressionRatio`).textContent = `${ratio}%`;
+            }
+
+            // Utility Functions
+            function formatSize(bytes) {
+                const units = ['B', 'KB', 'MB'];
+                let size = bytes;
+                let unitIndex = 0;
+                
+                while (size >= 1024 && unitIndex < units.length - 1) {
+                    size /= 1024;
+                    unitIndex++;
+                }
+
+                return `${size.toFixed(1)} ${units[unitIndex]}`;
+            }
+
+            window.copyToClipboard = (editorId) => {
+                const text = editors[editorId].getValue();
+                navigator.clipboard.writeText(text).then(() => {
+                    const button = document.querySelector(`#${editorId}`).nextElementSibling;
+                    const originalHtml = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        button.innerHTML = originalHtml;
+                    }, 1500);
+                });
+            };
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Tools - Multi-Tools</title>
+    <meta name="description" content="Code formatting, syntax highlighting, and code manipulation tools.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../css/style.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- CodeMirror -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <!-- CodeMirror modes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
+    <!-- Prettier -->
+    <script src="https://unpkg.com/prettier@2.8.8/standalone.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.8/parser-babel.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.8/parser-html.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.8/parser-postcss.js"></script>
+    <!-- Highlight.js -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <!-- Add additional CodeMirror modes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/php/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/ruby/ruby.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/go/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/rust/rust.min.js"></script>
+    <!-- JavaScript-Obfuscator -->
+    <script src="https://cdn.jsdelivr.net/npm/javascript-obfuscator/dist/index.browser.js"></script>
+    <!-- Diff2Html -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html.min.js"></script>
+    <!-- ESLint -->
+    <script src="https://cdn.jsdelivr.net/npm/eslint-browser/dist/eslint.min.js"></script>
+    <!-- Add additional libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jshint/2.13.6/jshint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.7/beautify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.7/beautify-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.7/beautify-html.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/esprima/4.0.1/esprima.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/escodegen/2.1.0/escodegen.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
+    <style>
+        .CodeMirror {
+            height: 400px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+
+        .options-container {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            z-index: 10;
+        }
+
+        .preview-container {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            height: 400px;
+            overflow-y: auto;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stat-card {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">
+                            <i class="fas fa-code me-2"></i>
+                            Code Tools
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tool Sections -->
+                        <ul class="nav nav-tabs mb-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#formatter" type="button">
+                                    <i class="fas fa-align-left me-2"></i>Code Formatter
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#highlighter" type="button">
+                                    <i class="fas fa-paint-brush me-2"></i>Syntax Highlighter
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tools" type="button">
+                                    <i class="fas fa-tools me-2"></i>Code Tools
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#comparison" type="button">
+                                    <i class="fas fa-columns me-2"></i>Code Comparison
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#obfuscator" type="button">
+                                    <i class="fas fa-mask me-2"></i>Code Obfuscator
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#analyzer" type="button">
+                                    <i class="fas fa-chart-bar me-2"></i>Code Analyzer
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#documentation" type="button">
+                                    <i class="fas fa-book me-2"></i>Documentation
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Code Formatter -->
+                            <div class="tab-pane fade show active" id="formatter" role="tabpanel">
+                                <div class="options-container">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Language</label>
+                                            <select class="form-select" id="formatLanguage">
+                                                <option value="javascript">JavaScript</option>
+                                                <option value="html">HTML</option>
+                                                <option value="css">CSS</option>
+                                                <option value="json">JSON</option>
+                                                <option value="php">PHP</option>
+                                                <option value="python">Python</option>
+                                                <option value="ruby">Ruby</option>
+                                                <option value="go">Go</option>
+                                                <option value="rust">Rust</option>
+                                                <option value="sql">SQL</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Tab Width</label>
+                                            <select class="form-select" id="formatTabWidth">
+                                                <option value="2">2 spaces</option>
+                                                <option value="4" selected>4 spaces</option>
+                                                <option value="8">8 spaces</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Line Width</label>
+                                            <select class="form-select" id="formatLineWidth">
+                                                <option value="80">80 characters</option>
+                                                <option value="100">100 characters</option>
+                                                <option value="120">120 characters</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="formatSemicolons" checked>
+                                                <label class="form-check-label">Add semicolons</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="formatQuotes">
+                                                <label class="form-check-label">Use single quotes</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="formatBracketSpacing" checked>
+                                                <label class="form-check-label">Bracket spacing</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="formatAutoSave">
+                                                <label class="form-check-label">Auto-save</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="formatLivePreview" checked>
+                                                <label class="form-check-label">Live preview</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="formatMinify">
+                                                <label class="form-check-label">Minify output</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Input Code</label>
+                                        <div class="position-relative">
+                                            <textarea id="formatInput"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Formatted Code</label>
+                                        <div class="position-relative">
+                                            <textarea id="formatOutput"></textarea>
+                                            <button class="btn btn-outline-primary btn-sm copy-btn" onclick="copyToClipboard('formatOutput')">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary w-100" onclick="formatCode()">
+                                    <i class="fas fa-magic me-2"></i>Format Code
+                                </button>
+
+                                <!-- Add format history -->
+                                <div class="mt-3">
+                                    <h6>Format History</h6>
+                                    <div id="formatHistory" class="history-container"></div>
+                                </div>
+                            </div>
+
+                            <!-- Syntax Highlighter -->
+                            <div class="tab-pane fade" id="highlighter" role="tabpanel">
+                                <div class="options-container">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Language</label>
+                                            <select class="form-select" id="highlightLanguage">
+                                                <option value="javascript">JavaScript</option>
+                                                <option value="html">HTML</option>
+                                                <option value="css">CSS</option>
+                                                <option value="python">Python</option>
+                                                <option value="sql">SQL</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Theme</label>
+                                            <select class="form-select" id="highlightTheme">
+                                                <option value="default">Default</option>
+                                                <option value="monokai">Monokai</option>
+                                                <option value="github">GitHub</option>
+                                                <option value="vs">Visual Studio</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="highlightLines">
+                                                <label class="form-check-label">Line numbers</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="highlightWrap" checked>
+                                                <label class="form-check-label">Word wrap</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <select class="form-select" id="highlightFontSize">
+                                                <option value="12">12px</option>
+                                                <option value="14" selected>14px</option>
+                                                <option value="16">16px</option>
+                                                <option value="18">18px</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <select class="form-select" id="highlightExport">
+                                                <option value="html">HTML</option>
+                                                <option value="rtf">RTF</option>
+                                                <option value="pdf">PDF</option>
+                                                <option value="image">Image</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="highlightIntelliSense" checked>
+                                                <label class="form-check-label">IntelliSense</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="highlightMinimap">
+                                                <label class="form-check-label">Show minimap</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Input Code</label>
+                                        <div class="position-relative">
+                                            <textarea id="highlightInput"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Preview</label>
+                                        <div class="preview-container" id="highlightPreview"></div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <button class="btn btn-primary w-100" onclick="highlightCode()">
+                                            <i class="fas fa-paint-brush me-2"></i>Highlight Code
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button class="btn btn-outline-primary w-100" onclick="copyHighlightedCode()">
+                                            <i class="fas fa-code me-2"></i>Copy HTML
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Code Tools -->
+                            <div class="tab-pane fade" id="tools" role="tabpanel">
+                                <div class="options-container">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Input Code</label>
+                                            <div class="position-relative">
+                                                <textarea id="toolInput"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <button class="btn btn-outline-primary w-100 mb-2" onclick="removeComments()">
+                                                    <i class="fas fa-comment-slash me-2"></i>Remove Comments
+                                                </button>
+                                                <button class="btn btn-outline-primary w-100 mb-2" onclick="removeWhitespace()">
+                                                    <i class="fas fa-compress-alt me-2"></i>Remove Whitespace
+                                                </button>
+                                                <button class="btn btn-outline-primary w-100 mb-2" onclick="countLines()">
+                                                    <i class="fas fa-list-ol me-2"></i>Count Lines
+                                                </button>
+                                                <button class="btn btn-outline-primary w-100" onclick="validateSyntax()">
+                                                    <i class="fas fa-check-circle me-2"></i>Validate Syntax
+                                                </button>
+                                            </div>
+                                </div>
+                                    </div>
+                                </div>
+
+                                <div class="stats-container">
+                                    <div class="stat-card">
+                                        <div class="stat-label">Total Lines</div>
+                                        <div class="stat-value" id="totalLines">0</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Code Lines</div>
+                                        <div class="stat-value" id="codeLines">0</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Comment Lines</div>
+                                        <div class="stat-value" id="commentLines">0</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Blank Lines</div>
+                                        <div class="stat-value" id="blankLines">0</div>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-3">
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-primary w-100 mb-2" onclick="convertCase('upper')">
+                                            <i class="fas fa-arrow-up me-2"></i>UPPERCASE
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-primary w-100 mb-2" onclick="convertCase('lower')">
+                                            <i class="fas fa-arrow-down me-2"></i>lowercase
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-primary w-100 mb-2" onclick="indentCode()">
+                                            <i class="fas fa-indent me-2"></i>Indent Code
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-primary w-100 mb-2" onclick="wrapLines()">
+                                            <i class="fas fa-align-left me-2"></i>Wrap Lines
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="stats-container mt-3">
+                                    <div class="stat-card">
+                                        <div class="stat-label">Complexity</div>
+                                        <div class="stat-value" id="codeComplexity">0</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Functions</div>
+                                        <div class="stat-value" id="functionCount">0</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Variables</div>
+                                        <div class="stat-value" id="variableCount">0</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Code Comparison -->
+                            <div class="tab-pane fade" id="comparison" role="tabpanel">
+                                <div class="options-container">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Original Code</label>
+                                            <div class="position-relative">
+                                                <textarea id="compareOriginal"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Modified Code</label>
+                                            <div class="position-relative">
+                                                <textarea id="compareModified"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <button class="btn btn-primary w-100" onclick="compareCode()">
+                                                <i class="fas fa-columns me-2"></i>Compare Code
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="preview-container mt-3" id="diffOutput"></div>
+
+                                <div class="row mt-3">
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="diffViewMode">
+                                            <option value="side-by-side">Side by Side</option>
+                                            <option value="unified">Unified View</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="diffIgnoreWhitespace" checked>
+                                            <label class="form-check-label">Ignore whitespace</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="diffHighlightLine" checked>
+                                            <label class="form-check-label">Highlight changes</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stats-container mt-3">
+                                    <div class="stat-card">
+                                        <div class="stat-label">Added Lines</div>
+                                        <div class="stat-value" id="addedLines">0</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Removed Lines</div>
+                                        <div class="stat-value" id="removedLines">0</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Modified Lines</div>
+                                        <div class="stat-value" id="modifiedLines">0</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Code Obfuscator -->
+                            <div class="tab-pane fade" id="obfuscator" role="tabpanel">
+                                <div class="options-container">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="obfCompact" checked>
+                                                <label class="form-check-label">Compact code</label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="obfMangle" checked>
+                                                <label class="form-check-label">Mangle variable names</label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="obfDeadCode">
+                                                <label class="form-check-label">Add dead code</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="obfDebugProtection">
+                                                <label class="form-check-label">Debug protection</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label class="form-label">Input JavaScript Code</label>
+                                            <div class="position-relative">
+                                                <textarea id="obfuscatorInput"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="obfEncrypt">
+                                                <label class="form-check-label">Encrypt strings</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="obfControlFlow">
+                                                <label class="form-check-label">Control flow flattening</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <select class="form-select" id="obfEncoding">
+                                                <option value="none">No encoding</option>
+                                                <option value="base64">Base64</option>
+                                                <option value="hex">Hexadecimal</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <button class="btn btn-primary w-100" onclick="obfuscateCode()">
+                                                <i class="fas fa-mask me-2"></i>Obfuscate Code
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="preview-container mt-3" id="obfuscatedOutput"></div>
+
+                                <div class="stats-container mt-3">
+                                    <div class="stat-card">
+                                        <div class="stat-label">Size Reduction</div>
+                                        <div class="stat-value" id="obfSizeReduction">0%</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Complexity Score</div>
+                                        <div class="stat-value" id="obfComplexity">0</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Security Score</div>
+                                        <div class="stat-value" id="obfSecurity">0</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Code Analyzer -->
+                            <div class="tab-pane fade" id="analyzer" role="tabpanel">
+                                <div class="options-container">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Input Code</label>
+                                            <div class="position-relative">
+                                                <textarea id="analyzerInput"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <button class="btn btn-outline-primary w-100 mb-2" onclick="analyzeCode()">
+                                                    <i class="fas fa-microscope me-2"></i>Analyze Code
+                                                </button>
+                                                <button class="btn btn-outline-primary w-100 mb-2" onclick="generateAST()">
+                                                    <i class="fas fa-project-diagram me-2"></i>Generate AST
+                                                </button>
+                                                <button class="btn btn-outline-primary w-100 mb-2" onclick="findDuplicates()">
+                                                    <i class="fas fa-clone me-2"></i>Find Duplicates
+                                                </button>
+                                                <button class="btn btn-outline-primary w-100" onclick="suggestImprovements()">
+                                                    <i class="fas fa-lightbulb me-2"></i>Suggest Improvements
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Code Metrics</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="stats-container">
+                                                    <div class="stat-card">
+                                                        <div class="stat-label">Cyclomatic Complexity</div>
+                                                        <div class="stat-value" id="cyclomaticComplexity">0</div>
+                                                    </div>
+                                                    <div class="stat-card">
+                                                        <div class="stat-label">Maintainability Index</div>
+                                                        <div class="stat-value" id="maintainabilityIndex">0</div>
+                                                    </div>
+                                                    <div class="stat-card">
+                                                        <div class="stat-label">Code Coverage</div>
+                                                        <div class="stat-value" id="codeCoverage">0%</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Code Quality</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="qualityChart"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Analysis Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="analysisResults" class="analysis-results"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Documentation -->
+                            <div class="tab-pane fade" id="documentation" role="tabpanel">
+                                <div class="options-container">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Code Input</label>
+                                            <div class="position-relative">
+                                                <textarea id="docInput"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Documentation Preview</label>
+                                            <div class="preview-container" id="docPreview"></div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <button class="btn btn-primary w-100" onclick="generateDocs()">
+                                                <i class="fas fa-book me-2"></i>Generate Documentation
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-3">
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Documentation Style</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <select class="form-select" id="docStyle">
+                                                    <option value="jsdoc">JSDoc</option>
+                                                    <option value="markdown">Markdown</option>
+                                                    <option value="swagger">Swagger/OpenAPI</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Include</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="docIncludeFunctions" checked>
+                                                    <label class="form-check-label">Functions</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="docIncludeClasses" checked>
+                                                    <label class="form-check-label">Classes</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="docIncludeTypes" checked>
+                                                    <label class="form-check-label">Types</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Export Options</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <select class="form-select mb-2" id="docExport">
+                                                    <option value="html">HTML</option>
+                                                    <option value="md">Markdown</option>
+                                                    <option value="pdf">PDF</option>
+                                                </select>
+                                                <button class="btn btn-outline-primary w-100" onclick="exportDocs()">
+                                                    <i class="fas fa-file-export me-2"></i>Export
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="ad-space mt-4">
+                    <div class="text-center p-3">
+                        Advertisement Space
+                    </div>
+                </div>
+
+                <!-- Tool Information -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5">About Code Tools</h2>
+                        <p>A comprehensive set of tools for code formatting, syntax highlighting, and code manipulation.</p>
+                        
+                        <h3 class="h5 mt-4">Features:</h3>
+                        <ul>
+                            <li>Code formatting with customizable options</li>
+                            <li>Syntax highlighting for multiple languages</li>
+                            <li>Code statistics and analysis</li>
+                            <li>Comment and whitespace removal</li>
+                            <li>Syntax validation</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All operations are performed locally in your browser for privacy and security.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize CodeMirror editors
+            const editors = {
+                formatInput: CodeMirror.fromTextArea(document.getElementById('formatInput'), {
+                    mode: 'javascript',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true
+                }),
+                formatOutput: CodeMirror.fromTextArea(document.getElementById('formatOutput'), {
+                    mode: 'javascript',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    readOnly: true
+                }),
+                highlightInput: CodeMirror.fromTextArea(document.getElementById('highlightInput'), {
+                    mode: 'javascript',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true
+                }),
+                toolInput: CodeMirror.fromTextArea(document.getElementById('toolInput'), {
+                    mode: 'javascript',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true
+                }),
+                compareOriginal: CodeMirror.fromTextArea(document.getElementById('compareOriginal'), {
+                    mode: 'javascript',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    matchBrackets: true
+                }),
+                compareModified: CodeMirror.fromTextArea(document.getElementById('compareModified'), {
+                    mode: 'javascript',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    matchBrackets: true
+                }),
+                obfuscatorInput: CodeMirror.fromTextArea(document.getElementById('obfuscatorInput'), {
+                    mode: 'javascript',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    matchBrackets: true
+                }),
+                analyzerInput: CodeMirror.fromTextArea(document.getElementById('analyzerInput'), {
+                    mode: 'javascript',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true
+                }),
+                docInput: CodeMirror.fromTextArea(document.getElementById('docInput'), {
+                    mode: 'javascript',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true
+                })
+            };
+
+            // Enhanced format code
+            window.formatCode = () => {
+                const language = document.getElementById('formatLanguage').value;
+                const tabWidth = parseInt(document.getElementById('formatTabWidth').value);
+                const lineWidth = parseInt(document.getElementById('formatLineWidth').value);
+                const useSemicolons = document.getElementById('formatSemicolons').checked;
+                const useSingleQuotes = document.getElementById('formatQuotes').checked;
+                const useBracketSpacing = document.getElementById('formatBracketSpacing').checked;
+
+                try {
+                    const code = editors.formatInput.getValue();
+                    let formatted;
+
+                    const options = {
+                        printWidth: lineWidth,
+                        tabWidth: tabWidth,
+                        useTabs: false,
+                        semi: useSemicolons,
+                        singleQuote: useSingleQuotes,
+                        bracketSpacing: useBracketSpacing
+                    };
+
+                    switch (language) {
+                        case 'javascript':
+                            formatted = prettier.format(code, {
+                                ...options,
+                                parser: 'babel',
+                                plugins: prettierPlugins
+                            });
+                            break;
+                        case 'html':
+                            formatted = prettier.format(code, {
+                                ...options,
+                                parser: 'html',
+                                plugins: prettierPlugins
+                            });
+                            break;
+                        case 'css':
+                            formatted = prettier.format(code, {
+                                ...options,
+                                parser: 'css',
+                                plugins: prettierPlugins
+                            });
+                            break;
+                        case 'json':
+                            formatted = prettier.format(code, {
+                                ...options,
+                                parser: 'json',
+                                plugins: prettierPlugins
+                            });
+                            break;
+                    }
+
+                    editors.formatOutput.setValue(formatted);
+
+                    // Add to format history
+                    addToFormatHistory(code, formatted);
+                } catch (error) {
+                    alert('Error formatting code: ' + error.message);
+                }
+            };
+
+            // Format history
+            function addToFormatHistory(original, formatted) {
+                const history = document.getElementById('formatHistory');
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <div class="history-meta">
+                        <span>Formatted at ${new Date().toLocaleTimeString()}</span>
+                        <button class="btn btn-sm btn-outline-primary" onclick="restoreFormat(this)">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    </div>
+                `;
+                item.dataset.original = original;
+                item.dataset.formatted = formatted;
+                history.insertBefore(item, history.firstChild);
+
+                if (history.children.length > 5) {
+                    history.removeChild(history.lastChild);
+                }
+            }
+
+            // Enhanced highlight code
+            window.highlightCode = () => {
+                const language = document.getElementById('highlightLanguage').value;
+                const theme = document.getElementById('highlightTheme').value;
+                const showLines = document.getElementById('highlightLines').checked;
+                const wordWrap = document.getElementById('highlightWrap').checked;
+                const fontSize = document.getElementById('highlightFontSize').value;
+
+                try {
+                    const code = editors.highlightInput.getValue();
+                    const highlighted = hljs.highlight(code, { language }).value;
+                    
+                    document.getElementById('highlightPreview').innerHTML = `
+                        <pre style="font-size: ${fontSize}px; ${wordWrap ? 'white-space: pre-wrap;' : ''}">
+                            ${showLines ? addLineNumbers(highlighted) : highlighted}
+                        </pre>
+                    `;
+                } catch (error) {
+                    alert('Error highlighting code: ' + error.message);
+                }
+            };
+
+            // Add line numbers to highlighted code
+            function addLineNumbers(code) {
+                const lines = code.split('\n');
+                return lines.map((line, i) => 
+                    `<span class="line-number">${i + 1}</span>${line}`
+                ).join('\n');
+            }
+
+            // Enhanced code tools
+            window.convertCase = (type) => {
+                const code = editors.toolInput.getValue();
+                let result = code;
+
+                switch (type) {
+                    case 'upper':
+                        result = code.toUpperCase();
+                        break;
+                    case 'lower':
+                        result = code.toLowerCase();
+                        break;
+                }
+
+                editors.toolInput.setValue(result);
+                updateCodeMetrics();
+            };
+
+            window.indentCode = () => {
+                const code = editors.toolInput.getValue();
+                const language = editors.toolInput.getOption('mode');
+                let result;
+
+                switch (language) {
+                    case 'javascript':
+                        result = js_beautify(code);
+                        break;
+                    case 'css':
+                        result = css_beautify(code);
+                        break;
+                    case 'html':
+                        result = html_beautify(code);
+                        break;
+                    default:
+                        result = code;
+                }
+
+                editors.toolInput.setValue(result);
+                updateCodeMetrics();
+            };
+
+            window.wrapLines = () => {
+                const code = editors.toolInput.getValue();
+                const width = 80;
+                const lines = code.split('\n');
+                const wrapped = lines.map(line => {
+                    if (line.length <= width) return line;
+                    const words = line.split(/\s+/);
+                    let result = '';
+                    let currentLine = '';
+                    
+                    words.forEach(word => {
+                        if ((currentLine + word).length > width) {
+                            result += currentLine.trim() + '\n';
+                            currentLine = '';
+                        }
+                        currentLine += word + ' ';
+                    });
+                    
+                    return result + currentLine.trim();
+                }).join('\n');
+
+                editors.toolInput.setValue(wrapped);
+                updateCodeMetrics();
+            };
+
+            // Update code metrics
+            function updateCodeMetrics() {
+                const code = editors.toolInput.getValue();
+                
+                // Calculate complexity
+                const complexity = calculateComplexity(code);
+                document.getElementById('codeComplexity').textContent = complexity;
+
+                // Count functions
+                const functionCount = (code.match(/function\s+\w+\s*\(/g) || []).length;
+                document.getElementById('functionCount').textContent = functionCount;
+
+                // Count variables
+                const varCount = (code.match(/var\s+\w+|let\s+\w+|const\s+\w+/g) || []).length;
+                document.getElementById('variableCount').textContent = varCount;
+            }
+
+            // Calculate code complexity
+            function calculateComplexity(code) {
+                let complexity = 0;
+                complexity += (code.match(/if|else|for|while|do|switch|case|catch/g) || []).length;
+                complexity += (code.match(/\?/g) || []).length; // Ternary operators
+                complexity += (code.match(/&&|\|\|/g) || []).length; // Logical operators
+                return complexity;
+            }
+
+            // Enhanced code comparison
+            window.compareCode = () => {
+                const original = editors.compareOriginal.getValue();
+                const modified = editors.compareModified.getValue();
+                const viewMode = document.getElementById('diffViewMode').value;
+                const ignoreWhitespace = document.getElementById('diffIgnoreWhitespace').checked;
+                const highlightLine = document.getElementById('diffHighlightLine').checked;
+                
+                const diff = Diff2Html.create(
+                    Diff2Html.createPatch('code.txt', original, modified),
+                    {
+                        drawFileList: false,
+                        matching: 'lines',
+                        outputFormat: viewMode,
+                        renderNothingWhenEmpty: true,
+                        matchingMaxComparisons: ignoreWhitespace ? 0 : 2500,
+                        highlightCode: highlightLine
+                    }
+                );
+                
+                document.getElementById('diffOutput').innerHTML = diff;
+                updateDiffStats(original, modified);
+            };
+
+            // Update diff statistics
+            function updateDiffStats(original, modified) {
+                const originalLines = original.split('\n');
+                const modifiedLines = modified.split('\n');
+                
+                let added = 0;
+                let removed = 0;
+                let modified = 0;
+
+                // Simple diff algorithm
+                const maxLen = Math.max(originalLines.length, modifiedLines.length);
+                for (let i = 0; i < maxLen; i++) {
+                    if (i >= originalLines.length) {
+                        added++;
+                    } else if (i >= modifiedLines.length) {
+                        removed++;
+                    } else if (originalLines[i] !== modifiedLines[i]) {
+                        modified++;
+                    }
+                }
+
+                document.getElementById('addedLines').textContent = added;
+                document.getElementById('removedLines').textContent = removed;
+                document.getElementById('modifiedLines').textContent = modified;
+            }
+
+            // Enhanced code obfuscation
+            window.obfuscateCode = () => {
+                const code = editors.obfuscatorInput.getValue();
+                const options = {
+                    compact: document.getElementById('obfCompact').checked,
+                    controlFlowFlattening: document.getElementById('obfControlFlow').checked,
+                    deadCodeInjection: document.getElementById('obfDeadCode').checked,
+                    debugProtection: document.getElementById('obfDebugProtection').checked,
+                    mangle: document.getElementById('obfMangle').checked,
+                    renameGlobals: false,
+                    rotateStringArray: true,
+                    selfDefending: true,
+                    stringArray: true,
+                    stringArrayEncoding: [document.getElementById('obfEncoding').value],
+                    unicodeEscapeSequence: document.getElementById('obfEncrypt').checked
+                };
+
+                try {
+                    const result = JavaScriptObfuscator.obfuscate(code, options);
+                    const obfuscated = result.getObfuscatedCode();
+                    
+                    document.getElementById('obfuscatedOutput').innerHTML = `
+                        <pre><code class="javascript">${obfuscated}</code></pre>
+                    `;
+                    hljs.highlightElement(document.querySelector('#obfuscatedOutput code'));
+                    
+                    // Update statistics
+                    updateObfuscationStats(code, obfuscated);
+                } catch (error) {
+                    alert('Error obfuscating code: ' + error.message);
+                }
+            };
+
+            // Update obfuscation statistics
+            function updateObfuscationStats(original, obfuscated) {
+                // Calculate size reduction
+                const reduction = ((original.length - obfuscated.length) / original.length * 100).toFixed(1);
+                document.getElementById('obfSizeReduction').textContent = `${reduction}%`;
+
+                // Calculate complexity score
+                const complexity = calculateComplexity(obfuscated);
+                document.getElementById('obfComplexity').textContent = complexity;
+
+                // Calculate security score (based on various factors)
+                const security = calculateSecurityScore(original, obfuscated);
+                document.getElementById('obfSecurity').textContent = security;
+            }
+
+            // Calculate security score
+            function calculateSecurityScore(original, obfuscated) {
+                let score = 0;
+                
+                // Variable name mangling
+                score += (obfuscated.match(/[a-z]{1,2}\d*=/g) || []).length;
+                
+                // String encryption
+                score += (obfuscated.match(/['"][0-9a-f]+['"]|\\x[0-9a-f]{2}/g) || []).length;
+                
+                // Control flow complexity
+                score += calculateComplexity(obfuscated) - calculateComplexity(original);
+                
+                return Math.min(100, Math.max(0, score));
+            }
+
+            // File handling
+            window.uploadFile = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.js,.html,.css,.json,.php,.py,.rb,.go,.rs,.sql';
+                
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = (event) => {
+                        const content = event.target.result;
+                        const extension = file.name.split('.').pop();
+                        
+                        // Set appropriate editor mode
+                        editors.formatInput.setOption('mode', extension);
+                        editors.formatInput.setValue(content);
+                    };
+                    
+                    reader.readAsText(file);
+                };
+                
+                input.click();
+            };
+
+            window.downloadFile = () => {
+                const code = editors.formatOutput.getValue() || editors.formatInput.getValue();
+                const blob = new Blob([code], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'code.' + editors.formatInput.getOption('mode');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+
+            // Code Analyzer functions
+            window.analyzeCode = () => {
+                const code = editors.analyzerInput.getValue();
+                try {
+                    const ast = esprima.parse(code, { loc: true, range: true });
+                    const metrics = analyzeMetrics(ast);
+                    
+                    document.getElementById('cyclomaticComplexity').textContent = metrics.complexity;
+                    document.getElementById('maintainabilityIndex').textContent = metrics.maintainability;
+                    document.getElementById('codeCoverage').textContent = metrics.coverage + '%';
+                    
+                    // Update analysis results
+                    const results = document.getElementById('analysisResults');
+                    results.innerHTML = generateAnalysisReport(metrics);
+                } catch (error) {
+                    alert('Error analyzing code: ' + error.message);
+                }
+            };
+
+            function analyzeMetrics(ast) {
+                let metrics = {
+                    complexity: 0,
+                    maintainability: 0,
+                    coverage: 0,
+                    duplicates: [],
+                    suggestions: []
+                };
+
+                // Calculate cyclomatic complexity
+                function calculateComplexity(node) {
+                    let complexity = 1;
+                    estraverse.traverse(node, {
+                        enter: function(node) {
+                            switch(node.type) {
+                                case 'IfStatement':
+                                case 'WhileStatement':
+                                case 'DoWhileStatement':
+                                case 'ForStatement':
+                                case 'ForInStatement':
+                                case 'ForOfStatement':
+                                case 'ConditionalExpression':
+                                    complexity++;
+                                    break;
+                                case 'SwitchCase':
+                                    if (node.test !== null) {
+                                        complexity++;
+                                    }
+                                    break;
+                            }
+                        }
+                    });
+                    return complexity;
+                }
+
+                metrics.complexity = calculateComplexity(ast);
+                
+                // Calculate maintainability index
+                const halsteadVolume = calculateHalsteadMetrics(ast).volume;
+                const cyclomaticComplexity = metrics.complexity;
+                const linesOfCode = ast.loc.end.line;
+                metrics.maintainability = Math.max(0, (171 - 5.2 * Math.log(halsteadVolume) - 0.23 * cyclomaticComplexity - 16.2 * Math.log(linesOfCode)) * 100 / 171);
+                
+                // Estimate code coverage
+                metrics.coverage = estimateCodeCoverage(ast);
+                
+                return metrics;
+            }
+
+            function calculateHalsteadMetrics(ast) {
+                let operators = new Set();
+                let operands = new Set();
+                
+                estraverse.traverse(ast, {
+                    enter: function(node) {
+                        switch(node.type) {
+                            case 'BinaryExpression':
+                            case 'LogicalExpression':
+                                operators.add(node.operator);
+                                break;
+                            case 'Identifier':
+                                operands.add(node.name);
+                                break;
+                            case 'Literal':
+                                operands.add(node.value);
+                                break;
+                        }
+                    }
+                });
+                
+                const n1 = operators.size;
+                const n2 = operands.size;
+                const N1 = operators.size;
+                const N2 = operands.size;
+                
+                const vocabulary = n1 + n2;
+                const length = N1 + N2;
+                const volume = length * Math.log2(vocabulary);
+                
+                return { volume };
+            }
+
+            function estimateCodeCoverage(ast) {
+                let totalNodes = 0;
+                let coveredNodes = 0;
+                
+                estraverse.traverse(ast, {
+                    enter: function(node) {
+                        totalNodes++;
+                        if (node.type !== 'BlockStatement') {
+                            coveredNodes++;
+                        }
+                    }
+                });
+                
+                return Math.round((coveredNodes / totalNodes) * 100);
+            }
+
+            function generateAnalysisReport(metrics) {
+                return `
+                    <div class="analysis-section">
+                        <h5>Code Complexity Analysis</h5>
+                        <p>The code has a cyclomatic complexity of ${metrics.complexity}.</p>
+                        <p>Maintainability Index: ${metrics.maintainability.toFixed(2)}</p>
+                        <p>Estimated Code Coverage: ${metrics.coverage}%</p>
+                    </div>
+                    <div class="analysis-section">
+                        <h5>Suggestions for Improvement</h5>
+                        <ul>
+                            ${generateSuggestions(metrics)}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            function generateSuggestions(metrics) {
+                const suggestions = [];
+                
+                if (metrics.complexity > 10) {
+                    suggestions.push('Consider breaking down complex functions into smaller, more manageable pieces.');
+                }
+                if (metrics.maintainability < 65) {
+                    suggestions.push('Code maintainability could be improved by adding more documentation and reducing complexity.');
+                }
+                if (metrics.coverage < 80) {
+                    suggestions.push('Increase code coverage by adding more test cases.');
+                }
+                
+                return suggestions.map(s => `<li>${s}</li>`).join('');
+            }
+
+            // Documentation Generator
+            window.generateDocs = () => {
+                const code = editors.docInput.getValue();
+                const style = document.getElementById('docStyle').value;
+                const includeFunctions = document.getElementById('docIncludeFunctions').checked;
+                const includeClasses = document.getElementById('docIncludeClasses').checked;
+                const includeTypes = document.getElementById('docIncludeTypes').checked;
+                
+                try {
+                    const ast = esprima.parse(code, { 
+                        loc: true, 
+                        range: true,
+                        comment: true
+                    });
+                    
+                    const docs = generateDocumentation(ast, {
+                        style,
+                        includeFunctions,
+                        includeClasses,
+                        includeTypes
+                    });
+                    
+                    const preview = document.getElementById('docPreview');
+                    preview.innerHTML = marked.parse(docs);
+                } catch (error) {
+                    alert('Error generating documentation: ' + error.message);
+                }
+            };
+
+            function generateDocumentation(ast, options) {
+                let docs = '';
+                
+                if (options.style === 'jsdoc') {
+                    docs = generateJSDoc(ast, options);
+                } else if (options.style === 'markdown') {
+                    docs = generateMarkdown(ast, options);
+                } else if (options.style === 'swagger') {
+                    docs = generateSwagger(ast, options);
+                }
+                
+                return docs;
+            }
+
+            function generateJSDoc(ast, options) {
+                let docs = '';
+                
+                estraverse.traverse(ast, {
+                    enter: function(node) {
+                        switch(node.type) {
+                            case 'FunctionDeclaration':
+                                if (options.includeFunctions) {
+                                    docs += generateFunctionDoc(node);
+                                }
+                                break;
+                            case 'ClassDeclaration':
+                                if (options.includeClasses) {
+                                    docs += generateClassDoc(node);
+                                }
+                                break;
+                            case 'TypeAlias':
+                                if (options.includeTypes) {
+                                    docs += generateTypeDoc(node);
+                                }
+                                break;
+                        }
+                    }
+                });
+                
+                return docs;
+            }
+
+            function generateFunctionDoc(node) {
+                return `
+/**
+ * ${node.id.name}
+ * @function
+ * ${node.params.map(p => `* @param {*} ${p.name}`).join('\n')}
+ * @returns {*}
+ */
+`;
+            }
+
+            // Export functionality
+            window.exportDocs = () => {
+                const format = document.getElementById('docExport').value;
+                const content = document.getElementById('docPreview').innerHTML;
+                
+                switch (format) {
+                    case 'html':
+                        exportHTML(content);
+                        break;
+                    case 'md':
+                        exportMarkdown(content);
+                        break;
+                    case 'pdf':
+                        exportPDF(content);
+                        break;
+                }
+            };
+
+            function exportHTML(content) {
+                const html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Documentation</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; }
+                            pre { background: #f5f5f5; padding: 1em; }
+                        </style>
+                    </head>
+                    <body>
+                        ${content}
+                    </body>
+                    </html>
+                `;
+                
+                downloadFile(html, 'documentation.html', 'text/html');
+            }
+
+            function downloadFile(content, filename, type) {
+                const blob = new Blob([content], { type });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+        });
+    </script>
+</body>
+</html> 
